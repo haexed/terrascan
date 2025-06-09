@@ -5,6 +5,13 @@ All notable changes to Terrascan will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.1] - 2025-06-09
+
+### Fixed
+- **Documentation Currency**: Updated DEPLOYMENT.md hosting recommendations from 2024 to 2025
+- **GitHub Repository URLs**: Fixed URLs typo
+- **Date References**: Ensures all documentation reflects current year (2025)
+
 ## [1.1.0] - 2025-06-09
 
 ### Changed
