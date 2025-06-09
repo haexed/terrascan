@@ -448,39 +448,58 @@ def providers_page():
         return f"Providers Error: {e}", 500
 
 @app.route('/operational')
-def operational_page():
-    """Operational costs and Railway hosting monitoring page"""
+def operational():
+    """Operational costs and Railway hosting monitoring page."""
     try:
-        # Get Railway configuration from environment
-        railway_token = os.getenv('RAILWAY_API_TOKEN')
-        railway_project_id = os.getenv('RAILWAY_PROJECT_ID')
+        # Get Railway configuration
+        api_token = os.getenv('RAILWAY_API_TOKEN')
+        project_id = os.getenv('RAILWAY_PROJECT_ID')
         
         operational_data = {
-            'has_railway_config': bool(railway_token and railway_project_id),
-            'project_id': railway_project_id,
+            'has_railway_config': bool(api_token and project_id),
+            'project_id': project_id,
             'current_usage': 0.0,
             'budget_limit': 10.0,
+            'api_error': None,
             'resource_breakdown': {
                 'cpu': {'usage': '0 vCPU hours', 'cost': 0.0, 'percentage': 0},
                 'memory': {'usage': '0 GB hours', 'cost': 0.0, 'percentage': 0},
                 'network': {'usage': '0 GB', 'cost': 0.0, 'percentage': 0},
                 'storage': {'usage': '0 GB', 'cost': 0.0, 'percentage': 0}
-            }
+            },
+            'deployment_logs': [],
+            'traffic_stats': {
+                'total_requests': None,
+                'avg_response_time': None,
+                'error_rate': None,
+                'active_users': None
+            },
+            'http_logs': []
         }
         
-        # If Railway credentials are configured, fetch real data
-        if railway_token and railway_project_id:
+        if api_token and project_id:
             try:
-                railway_data = fetch_railway_usage(railway_token, railway_project_id)
-                if railway_data:
-                    operational_data.update(railway_data)
-            except Exception as api_error:
-                print(f"Railway API Error: {api_error}")
-                operational_data['api_error'] = str(api_error)
+                # Fetch Railway usage data
+                railway_data = fetch_railway_usage(api_token, project_id)
+                operational_data.update(railway_data)
+                
+                # Fetch deployment logs
+                deployment_logs = fetch_railway_deployment_logs(api_token, project_id)
+                operational_data['deployment_logs'] = deployment_logs
+                
+                # Fetch traffic analytics
+                traffic_data = fetch_railway_traffic_analytics(api_token, project_id)
+                operational_data['traffic_stats'] = traffic_data.get('stats', operational_data['traffic_stats'])
+                operational_data['http_logs'] = traffic_data.get('http_logs', [])
+                
+            except Exception as e:
+                operational_data['api_error'] = f"Railway API error: {str(e)}"
+                print(f"Railway API error: {e}")
         
         return render_template('operational.html', operational_data=operational_data)
     except Exception as e:
-        return f"Operational Error: {e}", 500
+        print(f"Operational page error: {e}")
+        return render_template('error.html', error="Failed to load operational page"), 500
 
 def fetch_railway_usage(token, project_id):
     """Fetch real usage data from Railway's GraphQL API"""
@@ -689,6 +708,193 @@ def api_refresh_railway_costs():
         
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/api/deployment-logs')
+def api_deployment_logs():
+    """API endpoint for Railway deployment logs."""
+    try:
+        api_token = os.getenv('RAILWAY_API_TOKEN')
+        project_id = os.getenv('RAILWAY_PROJECT_ID')
+        
+        if not api_token or not project_id:
+            return jsonify({'error': 'Railway API credentials not configured'}), 400
+            
+        logs = fetch_railway_deployment_logs(api_token, project_id)
+        return jsonify({'logs': logs})
+        
+    except Exception as e:
+        print(f"Deployment logs API error: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/traffic-analytics')
+def api_traffic_analytics():
+    """API endpoint for Railway traffic analytics."""
+    try:
+        api_token = os.getenv('RAILWAY_API_TOKEN')
+        project_id = os.getenv('RAILWAY_PROJECT_ID')
+        
+        if not api_token or not project_id:
+            return jsonify({'error': 'Railway API credentials not configured'}), 400
+            
+        traffic_data = fetch_railway_traffic_analytics(api_token, project_id)
+        return jsonify(traffic_data)
+        
+    except Exception as e:
+        print(f"Traffic analytics API error: {e}")
+        return jsonify({'error': str(e)}), 500
+
+def fetch_railway_deployment_logs(api_token, project_id):
+    """Fetch recent deployment logs from Railway API."""
+    try:
+        url = "https://backboard.railway.com/graphql/v2"
+        headers = {
+            "Authorization": f"Bearer {api_token}",
+            "Content-Type": "application/json"
+        }
+        
+        # GraphQL query for deployment logs
+        query = """
+        query GetDeploymentLogs($projectId: String!) {
+            deploymentLogs(
+                projectId: $projectId,
+                filter: { limit: 10 }
+            ) {
+                timestamp
+                message
+                deploymentId
+                severity
+            }
+        }
+        """
+        
+        variables = {
+            'projectId': project_id
+        }
+        
+        response = requests.post(url, json={'query': query, 'variables': variables}, headers=headers)
+        
+        if response.status_code == 200:
+            data = response.json()
+            print(f"Deployment logs response: {data}")
+            
+            logs = data.get('data', {}).get('deploymentLogs', [])
+            
+            # Format logs for display
+            formatted_logs = []
+            for log in logs[:10]:  # Limit to 10 most recent
+                formatted_logs.append({
+                    'timestamp': log.get('timestamp', 'Unknown'),
+                    'message': log.get('message', 'No message'),
+                    'deployment_id': log.get('deploymentId'),
+                    'status': 'success' if log.get('severity', '').lower() != 'error' else 'error'
+                })
+            
+            return formatted_logs
+            
+        else:
+            print(f"Deployment logs API error {response.status_code}: {response.text}")
+            return []
+            
+    except Exception as e:
+        print(f"Railway deployment logs fetch error: {e}")
+        return []
+
+def fetch_railway_traffic_analytics(api_token, project_id):
+    """Fetch HTTP traffic analytics from Railway API."""
+    try:
+        url = "https://backboard.railway.com/graphql/v2"
+        headers = {
+            "Authorization": f"Bearer {api_token}",
+            "Content-Type": "application/json"
+        }
+        
+        # GraphQL query for HTTP logs and metrics
+        query = """
+        query GetTrafficAnalytics($projectId: String!) {
+            httpLogs(
+                projectId: $projectId,
+                filter: { limit: 20 }
+            ) {
+                timestamp
+                method
+                path
+                statusCode
+                responseTimeMs
+                userAgent
+                ipAddress
+            }
+        }
+        """
+        
+        variables = {
+            'projectId': project_id
+        }
+        
+        response = requests.post(url, json={'query': query, 'variables': variables}, headers=headers)
+        
+        if response.status_code == 200:
+            data = response.json()
+            print(f"Traffic analytics response: {data}")
+            
+            http_logs = data.get('data', {}).get('httpLogs', [])
+            
+            # Calculate traffic statistics
+            total_requests = len(http_logs)
+            error_count = sum(1 for log in http_logs if log.get('statusCode', 200) >= 400)
+            error_rate = round((error_count / total_requests * 100), 1) if total_requests > 0 else 0
+            
+            response_times = [log.get('responseTimeMs', 0) for log in http_logs if log.get('responseTimeMs')]
+            avg_response_time = round(sum(response_times) / len(response_times)) if response_times else 0
+            
+            # Get unique IP addresses for active users estimate
+            unique_ips = set(log.get('ipAddress') for log in http_logs if log.get('ipAddress'))
+            active_users = len(unique_ips)
+            
+            # Format HTTP logs for display
+            formatted_logs = []
+            for log in http_logs[:15]:  # Show last 15 requests
+                formatted_logs.append({
+                    'timestamp': log.get('timestamp', 'Unknown'),
+                    'method': log.get('method', 'GET'),
+                    'path': log.get('path', '/'),
+                    'status': log.get('statusCode', 200),
+                    'response_time': log.get('responseTimeMs', 0),
+                    'user_agent': log.get('userAgent', 'Unknown')[:100]  # Truncate long user agents
+                })
+            
+            return {
+                'stats': {
+                    'total_requests': total_requests,
+                    'avg_response_time': avg_response_time,
+                    'error_rate': error_rate,
+                    'active_users': active_users
+                },
+                'http_logs': formatted_logs
+            }
+            
+        else:
+            print(f"Traffic analytics API error {response.status_code}: {response.text}")
+            return {
+                'stats': {
+                    'total_requests': None,
+                    'avg_response_time': None,
+                    'error_rate': None,
+                    'active_users': None
+                },
+                'http_logs': []
+            }
+            
+    except Exception as e:
+        print(f"Railway traffic analytics fetch error: {e}")
+        return {
+            'stats': {
+                'total_requests': None,
+                'avg_response_time': None,
+                'error_rate': None,
+                'active_users': None
+            },
+            'http_logs': []
+        }
 
 # Error handlers
 @app.errorhandler(404)

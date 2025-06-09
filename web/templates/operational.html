@@ -125,6 +125,117 @@ RAILWAY_PROJECT_ID=a4df12f8-47e7-4cb3-8f82-7f454cccc835</pre>
             <small class="text-muted">Automatic shutdown at 100%</small>
         </div>
     </div>
+
+    <!-- Railway Deployment Logs -->
+    <div class="card">
+        <h3>🚀 Deployment Activity</h3>
+        <p class="text-muted">Recent Railway deployment logs and build status</p>
+
+        <div id="deployment-logs-container">
+            {% if operational_data.deployment_logs %}
+            {% for log in operational_data.deployment_logs %}
+            <div class="log-item log-{{ log.status }}">
+                <div class="log-header">
+                    <div>
+                        <strong>{{ log.timestamp }}</strong> |
+                        <span class="task-status status-{{ 'active' if log.status == 'success' else 'inactive' }}">
+                            {{ log.status.upper() }}
+                        </span>
+                        {% if log.deployment_id %}
+                        | <code>{{ log.deployment_id[:8] }}...</code>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="log-content" style="display: block;">
+                    <pre>{{ log.message }}</pre>
+                </div>
+            </div>
+            {% endfor %}
+            {% else %}
+            <div class="stat-box" style="background: #f8f9fa; color: #6c757d;">
+                <strong>📋 No deployment logs available</strong><br>
+                <small>Deployment logs will appear here when available from Railway API</small>
+            </div>
+            {% endif %}
+        </div>
+
+        <button class="run-btn" onclick="refreshDeploymentLogs()" id="deploymentLogsBtn">
+            <i class="fas fa-sync"></i> Refresh Deployment Logs
+        </button>
+    </div>
+
+    <!-- Traffic Analytics -->
+    <div class="card">
+        <h3>📊 Traffic Analytics</h3>
+        <p class="text-muted">HTTP request monitoring and usage patterns</p>
+
+        <div class="stats-grid">
+            <div class="stat-box">
+                <span class="stat-value" id="total-requests">{{ operational_data.traffic_stats.total_requests or '--'
+                    }}</span>
+                <div class="stat-label">Total Requests</div>
+                <div class="text-muted">Last 24 hours</div>
+            </div>
+            <div class="stat-box">
+                <span class="stat-value" id="avg-response-time">{{ operational_data.traffic_stats.avg_response_time or
+                    '--' }}ms</span>
+                <div class="stat-label">Avg Response Time</div>
+                <div class="text-muted">Last hour</div>
+            </div>
+            <div class="stat-box">
+                <span class="stat-value" id="error-rate">{{ operational_data.traffic_stats.error_rate or '0' }}%</span>
+                <div class="stat-label">Error Rate</div>
+                <div class="text-muted">4xx/5xx responses</div>
+            </div>
+            <div class="stat-box">
+                <span class="stat-value" id="active-users">{{ operational_data.traffic_stats.active_users or '--'
+                    }}</span>
+                <div class="stat-label">Active Users</div>
+                <div class="text-muted">Current session</div>
+            </div>
+        </div>
+
+        <!-- Recent HTTP Logs -->
+        <div class="mt-4" id="http-logs-container">
+            <h4>🌐 Recent HTTP Requests</h4>
+            {% if operational_data.http_logs %}
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Time</th>
+                        <th>Method</th>
+                        <th>Path</th>
+                        <th>Status</th>
+                        <th>Response Time</th>
+                        <th>User Agent</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for request in operational_data.http_logs %}
+                    <tr>
+                        <td>{{ request.timestamp }}</td>
+                        <td><span class="status-badge">{{ request.method }}</span></td>
+                        <td><code>{{ request.path }}</code></td>
+                        <td><span class="task-status status-{{ 'active' if request.status < 400 else 'inactive' }}">{{
+                                request.status }}</span></td>
+                        <td>{{ request.response_time }}ms</td>
+                        <td><small>{{ request.user_agent[:50] }}...</small></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <div class="stat-box" style="background: #f8f9fa; color: #6c757d;">
+                <strong>📡 No traffic data available</strong><br>
+                <small>HTTP request logs will appear here when available from Railway API</small>
+            </div>
+            {% endif %}
+        </div>
+
+        <button class="run-btn" onclick="refreshTrafficData()" id="trafficBtn">
+            <i class="fas fa-sync"></i> Refresh Traffic Data
+        </button>
+    </div>
 </div>
 
 <!-- Initialize operational data for JavaScript -->

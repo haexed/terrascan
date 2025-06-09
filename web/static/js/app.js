@@ -261,4 +261,191 @@ function initOperationalPage() {
         // Update days remaining daily
         setInterval(updateDaysRemaining, 24 * 60 * 60 * 1000);
     }
+}
+
+// Refresh Railway operational data
+async function refreshRailwayData() {
+    const btn = document.getElementById('refreshBtn');
+    const originalText = btn.innerHTML;
+
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Refreshing...';
+    btn.disabled = true;
+
+    try {
+        const response = await fetch('/operational');
+        if (response.ok) {
+            // Reload the page to show updated data
+            window.location.reload();
+        } else {
+            console.error('Failed to refresh Railway data');
+            btn.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Error';
+        }
+    } catch (error) {
+        console.error('Error refreshing Railway data:', error);
+        btn.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Error';
+    } finally {
+        setTimeout(() => {
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+        }, 2000);
+    }
+}
+
+// Refresh Railway deployment logs
+async function refreshDeploymentLogs() {
+    const btn = document.getElementById('deploymentLogsBtn');
+    const container = document.getElementById('deployment-logs-container');
+    const originalText = btn.innerHTML;
+
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Fetching Logs...';
+    btn.disabled = true;
+
+    try {
+        const response = await fetch('/api/deployment-logs');
+        if (response.ok) {
+            const data = await response.json();
+            updateDeploymentLogsUI(data.logs);
+        } else {
+            console.error('Failed to fetch deployment logs');
+            showLogError(container, 'Failed to fetch deployment logs from Railway API');
+        }
+    } catch (error) {
+        console.error('Error fetching deployment logs:', error);
+        showLogError(container, 'Network error while fetching deployment logs');
+    } finally {
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+    }
+}
+
+// Refresh traffic analytics data
+async function refreshTrafficData() {
+    const btn = document.getElementById('trafficBtn');
+    const container = document.getElementById('http-logs-container');
+    const originalText = btn.innerHTML;
+
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Fetching Traffic...';
+    btn.disabled = true;
+
+    try {
+        const response = await fetch('/api/traffic-analytics');
+        if (response.ok) {
+            const data = await response.json();
+            updateTrafficAnalyticsUI(data);
+        } else {
+            console.error('Failed to fetch traffic analytics');
+            showLogError(container, 'Failed to fetch traffic data from Railway API');
+        }
+    } catch (error) {
+        console.error('Error fetching traffic analytics:', error);
+        showLogError(container, 'Network error while fetching traffic analytics');
+    } finally {
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+    }
+}
+
+// Update deployment logs UI
+function updateDeploymentLogsUI(logs) {
+    const container = document.getElementById('deployment-logs-container');
+
+    if (!logs || logs.length === 0) {
+        container.innerHTML = `
+            <div class="stat-box" style="background: #f8f9fa; color: #6c757d;">
+                <strong>📋 No recent deployment logs</strong><br>
+                <small>No deployment activity found in the last 24 hours</small>
+            </div>
+        `;
+        return;
+    }
+
+    let html = '';
+    logs.forEach(log => {
+        const statusClass = log.status === 'success' ? 'active' : 'inactive';
+        html += `
+            <div class="log-item log-${log.status}">
+                <div class="log-header">
+                    <div>
+                        <strong>${log.timestamp}</strong> |
+                        <span class="task-status status-${statusClass}">
+                            ${log.status.toUpperCase()}
+                        </span>
+                        ${log.deployment_id ? `| <code>${log.deployment_id.substring(0, 8)}...</code>` : ''}
+                    </div>
+                </div>
+                <div class="log-content" style="display: block;">
+                    <pre>${log.message}</pre>
+                </div>
+            </div>
+        `;
+    });
+
+    container.innerHTML = html;
+}
+
+// Update traffic analytics UI
+function updateTrafficAnalyticsUI(data) {
+    // Update stat boxes
+    document.getElementById('total-requests').textContent = data.stats.total_requests || '--';
+    document.getElementById('avg-response-time').textContent = data.stats.avg_response_time ? `${data.stats.avg_response_time}ms` : '--';
+    document.getElementById('error-rate').textContent = data.stats.error_rate ? `${data.stats.error_rate}%` : '0%';
+    document.getElementById('active-users').textContent = data.stats.active_users || '--';
+
+    // Update HTTP logs table
+    const container = document.getElementById('http-logs-container');
+    const tableContainer = container.querySelector('table') ? container : container.querySelector('h4').parentElement;
+
+    if (!data.http_logs || data.http_logs.length === 0) {
+        const errorDiv = `
+            <div class="stat-box" style="background: #f8f9fa; color: #6c757d;">
+                <strong>📡 No recent traffic data</strong><br>
+                <small>No HTTP requests found in the monitoring period</small>
+            </div>
+        `;
+        tableContainer.innerHTML = '<h4>🌐 Recent HTTP Requests</h4>' + errorDiv;
+        return;
+    }
+
+    let tableHtml = `
+        <h4>🌐 Recent HTTP Requests</h4>
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Time</th>
+                    <th>Method</th>
+                    <th>Path</th>
+                    <th>Status</th>
+                    <th>Response Time</th>
+                    <th>User Agent</th>
+                </tr>
+            </thead>
+            <tbody>
+    `;
+
+    data.http_logs.forEach(request => {
+        const statusClass = request.status < 400 ? 'active' : 'inactive';
+        tableHtml += `
+            <tr>
+                <td>${request.timestamp}</td>
+                <td><span class="status-badge">${request.method}</span></td>
+                <td><code>${request.path}</code></td>
+                <td><span class="task-status status-${statusClass}">${request.status}</span></td>
+                <td>${request.response_time}ms</td>
+                <td><small>${request.user_agent.substring(0, 50)}...</small></td>
+            </tr>
+        `;
+    });
+
+    tableHtml += '</tbody></table>';
+    tableContainer.innerHTML = tableHtml;
+}
+
+// Show error message in log containers
+function showLogError(container, message) {
+    container.innerHTML = `
+        <div class="stat-box" style="background: #f8d7da; color: #721c24;">
+            <strong>❌ Error</strong><br>
+            <small>${message}</small>
+        </div>
+    `;
 } 
