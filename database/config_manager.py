@@ -26,8 +26,8 @@ class ConfigManager:
                     config_value TEXT NOT NULL,
                     data_type TEXT NOT NULL DEFAULT 'string',
                     description TEXT,
-                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    created_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    updated_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                     UNIQUE(provider_key, config_key)
                 )
             """)
@@ -42,8 +42,8 @@ class ConfigManager:
                     config_value TEXT NOT NULL,
                     data_type TEXT NOT NULL DEFAULT 'string',
                     description TEXT,
-                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    created_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    updated_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                     UNIQUE(provider_key, dataset_name, config_key)
                 )
             """)
@@ -56,8 +56,8 @@ class ConfigManager:
                     config_value TEXT NOT NULL,
                     data_type TEXT NOT NULL DEFAULT 'string',
                     description TEXT,
-                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                    created_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    updated_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 )
             """)
             
@@ -84,7 +84,7 @@ class ConfigManager:
         with get_db_connection() as conn:
             conn.execute("""
                 INSERT OR REPLACE INTO provider_config 
-                (provider_key, config_key, config_value, data_type, description, updated_at)
+                (provider_key, config_key, config_value, data_type, description, updated_date)
                 VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
             """, (provider_key, config_key, value_str, data_type, description))
             conn.commit()
@@ -110,7 +110,7 @@ class ConfigManager:
         with get_db_connection() as conn:
             conn.execute("""
                 INSERT OR REPLACE INTO dataset_config 
-                (provider_key, dataset_name, config_key, config_value, data_type, description, updated_at)
+                (provider_key, dataset_name, config_key, config_value, data_type, description, updated_date)
                 VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
             """, (provider_key, dataset_name, config_key, value_str, data_type, description))
             conn.commit()
@@ -136,7 +136,7 @@ class ConfigManager:
         with get_db_connection() as conn:
             conn.execute("""
                 INSERT OR REPLACE INTO system_config 
-                (config_key, config_value, data_type, description, updated_at)
+                (config_key, config_value, data_type, description, updated_date)
                 VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)
             """, (config_key, value_str, data_type, description))
             conn.commit()

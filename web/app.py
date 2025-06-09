@@ -145,7 +145,7 @@ def data_page():
         # Get recent data samples
         recent_data = execute_query("""
             SELECT * FROM metric_data 
-            ORDER BY created_at DESC 
+            ORDER BY created_date DESC 
             LIMIT 50
         """)
         
@@ -205,7 +205,7 @@ def api_fire_data():
             FROM metric_data 
             WHERE provider_key = 'nasa_firms' 
             AND dataset = 'active_fires'
-            AND created_at > datetime('now', '-7 days')
+            AND created_date > datetime('now', '-7 days')
             ORDER BY timestamp DESC
             LIMIT 1000
         """)
@@ -230,7 +230,7 @@ def api_providers():
             SELECT p.*, 
                    COUNT(DISTINCT md.dataset) as dataset_count,
                    COUNT(md.id) as total_records,
-                   MAX(md.created_at) as last_data_collected
+                   MAX(md.created_date) as last_data_collected
             FROM provider p
             LEFT JOIN metric_data md ON p.key = md.provider_key
             GROUP BY p.id

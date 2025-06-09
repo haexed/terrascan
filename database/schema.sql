@@ -19,8 +19,8 @@ CREATE TABLE task (
     timeout_seconds INTEGER DEFAULT 300,    -- Max execution time
     
     active BOOLEAN DEFAULT 1,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    created_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 -- Task execution history (what happened when we ran tasks)
@@ -45,7 +45,7 @@ CREATE TABLE task_log (
     triggered_by TEXT,                 -- 'cron', 'user_request', 'manual'
     trigger_parameters TEXT,           -- JSON with override parameters for this run
     
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    created_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 -- Providers (data sources we can fetch from)
@@ -60,7 +60,7 @@ CREATE TABLE provider (
     rate_limit_per_hour INTEGER,
     documentation_url TEXT,
     active BOOLEAN DEFAULT 1,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    created_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 -- Environmental metrics (the actual data we collect)
@@ -77,7 +77,7 @@ CREATE TABLE metric_data (
     metadata TEXT,                     -- JSON with additional context
     confidence REAL DEFAULT 1.0,
     task_log_id INTEGER REFERENCES task_log(id),  -- Which task run collected this
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    created_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 -- Public cost tracking for transparency
@@ -86,7 +86,7 @@ CREATE TABLE cost_summary (
     total_cost_cents INTEGER DEFAULT 0,
     total_requests INTEGER DEFAULT 0,
     total_records INTEGER DEFAULT 0,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    created_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 -- Indexes for performance

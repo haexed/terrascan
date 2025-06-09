@@ -79,7 +79,7 @@ def calculate_daily_costs(days_back: int = 7) -> Dict[str, Any]:
                     total_runs INTEGER DEFAULT 0,
                     total_records INTEGER DEFAULT 0,
                     success_rate REAL DEFAULT 0,
-                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                    created_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 )
             """)
             

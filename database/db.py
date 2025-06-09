@@ -84,7 +84,7 @@ def get_tasks(active_only: bool = True) -> List[Dict]:
     query = "SELECT * FROM task"
     if active_only:
         query += " WHERE active = 1"
-    query += " ORDER BY created_at DESC"
+    query += " ORDER BY created_date DESC"
     
     return execute_query(query)
 
