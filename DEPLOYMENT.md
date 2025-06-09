@@ -1,7 +1,6 @@
 # 🚀 Terrascan Deployment Guide
 
-## **🌐 Hosting Recommendations 2024**
-
+## **🌐 Hosting Recommendations**
 ### **🥇 Recommended: Hetzner VPS (Best Value)**
 **Perfect for Terrascan's geological timescale approach!**
 
@@ -51,7 +50,7 @@ usermod -aG sudo deploy
 su - deploy
 
 # 3. Clone and deploy
-git clone https://github.com/yourusername/terrascan.git
+git clone https://github.com/haexed/terrascan.git
 cd terrascan
 chmod +x deploy.sh
 ./deploy.sh
@@ -239,10 +238,10 @@ jobs:
 
 ```bash
 # Hetzner VPS Quick Deploy
-curl -fsSL https://raw.githubusercontent.com/yourusername/terrascan/main/deploy.sh | bash
+curl -fsSL https://raw.githubusercontent.com/haexed/terrascan/main/deploy.sh | bash
 
 # Or manual:
-git clone https://github.com/yourusername/terrascan.git
+git clone https://github.com/haexed/terrascan.git
 cd terrascan
 ./deploy.sh
 
