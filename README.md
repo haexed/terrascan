@@ -310,6 +310,10 @@ See **[DEPLOYMENT.md](DEPLOYMENT.md)** for complete hosting guide.
 
 **MIT License** - Use Terrascan however you want, just keep environmental data free!
 
+**Development Team**:
+- **Stig Grindland** - Project Manager, Systems Architecture, Vision & Direction
+- **Claude (Anthropic)** - Lead Developer, Code Implementation, Technical Architecture
+
 **Data Sources**:
 - NASA FIRMS for fire detection data
 - NOAA Ocean Service for water level and temperature
