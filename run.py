@@ -28,18 +28,23 @@ def main():
     tasks = get_tasks()
     print(f"✅ Found {len(tasks)} tasks in database")
     
-    # Run a sample task to test the system
-    print("🧪 Testing task system...")
-    from tasks.runner import TaskRunner
-    runner = TaskRunner()
+    # Run a sample task to test the system (skip in production)
+    is_production = os.getenv('RAILWAY_ENVIRONMENT_NAME') == 'production'
     
-    # Try to run the NASA fires task
-    result = runner.run_task('nasa_fires_global', triggered_by='startup_test')
-    
-    if result['success']:
-        print(f"✅ Test task completed successfully! Processed {result.get('records_processed', 0)} records")
+    if not is_production:
+        print("🧪 Testing task system...")
+        from tasks.runner import TaskRunner
+        runner = TaskRunner()
+        
+        # Try to run the NASA fires task
+        result = runner.run_task('nasa_fires_global', triggered_by='startup_test')
+        
+        if result['success']:
+            print(f"✅ Test task completed successfully! Processed {result.get('records_processed', 0)} records")
+        else:
+            print(f"⚠️ Test task failed: {result['error']}")
     else:
-        print(f"⚠️ Test task failed: {result['error']}")
+        print("🚀 Production mode: Skipping startup test for faster boot")
     
     # Start web interface
     print("\n🌐 Starting web interface...")
