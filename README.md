@@ -11,7 +11,7 @@
 ## 🚀 **Quick Start**
 
 ```bash
-git clone https://github.com/heaxed/terrascan.git
+git clone https://github.com/haexed/terrascan.git
 cd terrascan
 
 # Install dependencies
@@ -230,7 +230,7 @@ python3 run.py
 ### **Production (VPS Recommended)**
 ```bash
 # One-command deployment
-curl -fsSL https://raw.githubusercontent.com/heaxed/terrascan/main/deploy.sh | bash
+curl -fsSL https://raw.githubusercontent.com/haexed/terrascan/main/deploy.sh | bash
 ```
 
 **Recommended hosting**: Hetzner VPS (€4.15/month) - perfect for SQLite + Python workloads.
