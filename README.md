@@ -111,7 +111,7 @@ python3 run.py
 - Geographic distribution of monitoring points
 - Statistical summaries and data quality indicators
 
-### **�� Metrics Analysis** *(New!)*
+### **📊 Metrics Analysis** *(New!)*
 - Comprehensive overview of all environmental metrics (fire brightness, water levels, air quality)
 - Statistical analysis: min/max/average values per metric
 - Geographic coverage: unique monitoring locations
