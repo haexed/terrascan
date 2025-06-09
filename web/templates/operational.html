@@ -1,0 +1,191 @@
+{# HTML linter: Jinja2 template - ignore template syntax errors #}
+{% extends "base.html" %}
+
+{% block title %}Operational Costs - Terrascan{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="header">
+        <h1>💰 Operational Costs</h1>
+        <p>Real-time Railway hosting costs and budget monitoring</p>
+    </div>
+
+    <!-- Railway API Status -->
+    <div class="card">
+        <h3>🚂 Railway Integration Status</h3>
+        {% if operational_data.has_railway_config %}
+        <div class="stat-box" style="background: #d4edda; color: #155724;">
+            <strong>✅ Railway API Connected</strong><br>
+            Project ID: <code>{{ operational_data.project_id }}</code><br>
+            API token configured and ready to fetch usage data.
+            {% if operational_data.api_error %}
+            <br><strong>⚠️ API Warning:</strong> {{ operational_data.api_error }}
+            {% endif %}
+        </div>
+        {% else %}
+        <div class="stat-box" style="background: #fff3cd; color: #856404;">
+            <strong>⚠️ Railway API Not Configured</strong><br>
+            Please add your Railway API credentials to the <code>.env</code> file:
+            <pre class="mt-3">RAILWAY_API_TOKEN=your_token_here
+RAILWAY_PROJECT_ID=a4df12f8-47e7-4cb3-8f82-7f454cccc835</pre>
+        </div>
+        {% endif %}
+
+        <button class="run-btn" onclick="refreshRailwayData()" id="refreshBtn">
+            <i class="fas fa-sync"></i> Refresh Railway Data
+        </button>
+    </div>
+
+    <!-- Cost Overview -->
+    <div class="stats-grid">
+        <div class="stat-box">
+            <span class="stat-value" id="current-usage">${{ "%.2f"|format(operational_data.current_usage) }}</span>
+            <div class="stat-label">Current Usage</div>
+            <div class="text-muted">This billing cycle</div>
+        </div>
+        <div class="stat-box">
+            <span class="stat-value">${{ "%.2f"|format(operational_data.budget_limit) }}</span>
+            <div class="stat-label">Budget Target</div>
+            <div class="text-muted">Monthly limit</div>
+        </div>
+        <div class="stat-box">
+            <span class="stat-value" id="budget-percentage">{{ "%.0f"|format((operational_data.current_usage /
+                operational_data.budget_limit * 100) if operational_data.budget_limit > 0 else 0) }}%</span>
+            <div class="stat-label">Budget Used</div>
+            <div class="text-muted">Of ${{ "%.0f"|format(operational_data.budget_limit) }} budget</div>
+        </div>
+        <div class="stat-box">
+            <span class="stat-value" id="days-remaining">--</span>
+            <div class="stat-label">Days Remaining</div>
+            <div class="text-muted">In billing cycle</div>
+        </div>
+    </div>
+
+    <!-- Resource Breakdown -->
+    <div class="card">
+        <h3>📊 Resource Breakdown</h3>
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Resource</th>
+                    <th>Usage</th>
+                    <th>Cost</th>
+                    <th>% of Total</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>🖥️ CPU</td>
+                    <td>{{ operational_data.resource_breakdown.cpu.usage }}</td>
+                    <td>${{ "%.2f"|format(operational_data.resource_breakdown.cpu.cost) }}</td>
+                    <td><span class="status-badge">{{ operational_data.resource_breakdown.cpu.percentage }}%</span></td>
+                </tr>
+                <tr>
+                    <td>🧠 Memory</td>
+                    <td>{{ operational_data.resource_breakdown.memory.usage }}</td>
+                    <td>${{ "%.2f"|format(operational_data.resource_breakdown.memory.cost) }}</td>
+                    <td><span class="status-badge">{{ operational_data.resource_breakdown.memory.percentage }}%</span>
+                    </td>
+                </tr>
+                <tr>
+                    <td>🌐 Network</td>
+                    <td>{{ operational_data.resource_breakdown.network.usage }}</td>
+                    <td>${{ "%.2f"|format(operational_data.resource_breakdown.network.cost) }}</td>
+                    <td><span class="status-badge">{{ operational_data.resource_breakdown.network.percentage }}%</span>
+                    </td>
+                </tr>
+                <tr>
+                    <td>💾 Storage</td>
+                    <td>{{ operational_data.resource_breakdown.storage.usage }}</td>
+                    <td>${{ "%.2f"|format(operational_data.resource_breakdown.storage.cost) }}</td>
+                    <td><span class="status-badge">{{ operational_data.resource_breakdown.storage.percentage }}%</span>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Cost Controls -->
+    <div class="card">
+        <h3>🛡️ Cost Controls</h3>
+        <div class="mb-3">
+            <strong>Budget Alert ($8.00)</strong>
+            <div class="progress-bar">
+                <div class="progress-fill" style="width: {{ " %.0f"|format((operational_data.current_usage / 8.0 * 100)
+                    if operational_data.current_usage else 0) }}%; background-color: #ffc107;"></div>
+            </div>
+            <small class="text-muted">Alert at 80% of budget</small>
+        </div>
+        <div class="mb-3">
+            <strong>Hard Limit ($10.00)</strong>
+            <div class="progress-bar">
+                <div class="progress-fill" style="width: {{ " %.0f"|format((operational_data.current_usage / 10.0 * 100)
+                    if operational_data.current_usage else 0) }}%; background-color: #dc3545;"></div>
+            </div>
+            <small class="text-muted">Automatic shutdown at 100%</small>
+        </div>
+    </div>
+
+    <!-- Railway Integration Details -->
+    <div class="card">
+        <h3>🚆 Railway Integration</h3>
+        <div class="stats-grid">
+            <div class="stat-box">
+                <div class="stat-label">API Configuration</div>
+                <ul style="list-style: none; padding: 0; margin: 10px 0;">
+                    <li>✅ GraphQL Endpoint Connected</li>
+                    <li>✅ Project ID Configured</li>
+                    <li>✅ Authentication Token Active</li>
+                </ul>
+            </div>
+            <div class="stat-box">
+                <div class="stat-label">Monitoring Features</div>
+                <ul style="list-style: none; padding: 0; margin: 10px 0;">
+                    <li>✅ Real-time Usage Tracking</li>
+                    <li>✅ Cost Breakdown Analysis</li>
+                    <li>✅ Budget Alert Integration</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="stat-box mt-3" style="background: #e3f2fd;">
+            <strong>💡 Railway API Integration:</strong> This page uses Railway's GraphQL API to fetch real-time usage
+            and cost data.
+            All cost calculations use Railway's 2025 pricing: CPU $20/vCPU/month, Memory $10/GB/month, Network $0.05/GB,
+            Storage $0.15/GB/month.
+        </div>
+    </div>
+</div>
+
+<!-- Initialize operational data for JavaScript -->
+<script>
+    window.operationalData = {
+        hasRailwayConfig: {{ 'true' if operational_data.has_railway_config else 'false' }},
+    projectId: '{{ operational_data.project_id or "" }}',
+        currentUsage: { { operational_data.current_usage } },
+    budgetLimit: { { operational_data.budget_limit } },
+    resourceBreakdown: {
+        cpu: {
+            usage: '{{ operational_data.resource_breakdown.cpu.usage }}',
+                cost: { { operational_data.resource_breakdown.cpu.cost } },
+            percentage: { { operational_data.resource_breakdown.cpu.percentage } }
+        },
+        memory: {
+            usage: '{{ operational_data.resource_breakdown.memory.usage }}',
+                cost: { { operational_data.resource_breakdown.memory.cost } },
+            percentage: { { operational_data.resource_breakdown.memory.percentage } }
+        },
+        network: {
+            usage: '{{ operational_data.resource_breakdown.network.usage }}',
+                cost: { { operational_data.resource_breakdown.network.cost } },
+            percentage: { { operational_data.resource_breakdown.network.percentage } }
+        },
+        storage: {
+            usage: '{{ operational_data.resource_breakdown.storage.usage }}',
+                cost: { { operational_data.resource_breakdown.storage.cost } },
+            percentage: { { operational_data.resource_breakdown.storage.percentage } }
+        }
+    }
+};
+</script>
+{% endblock %}

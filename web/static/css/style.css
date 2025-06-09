@@ -383,3 +383,50 @@ code {
         transform: rotate(360deg);
     }
 }
+
+/* Operational Costs Page Styles */
+.progress-bar {
+    width: 100%;
+    height: 20px;
+    background-color: #e9ecef;
+    border-radius: 10px;
+    overflow: hidden;
+    margin: 0.5rem 0;
+}
+
+.progress-fill {
+    height: 100%;
+    transition: width 0.3s ease;
+    border-radius: 10px;
+}
+
+.status-badge {
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 0.8em;
+    font-weight: bold;
+    background: #e9ecef;
+    color: #495057;
+}
+
+.stat-card {
+    background: white;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    text-align: center;
+}
+
+.stat-card .stat-value {
+    font-size: 2em;
+    font-weight: bold;
+    color: #667eea;
+    display: block;
+    margin-bottom: 10px;
+}
+
+.stat-card .stat-label {
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 5px;
+}

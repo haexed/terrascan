@@ -5,6 +5,39 @@ All notable changes to Terrascan will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.2] - 2025-06-09
+
+### Added
+- **💰 Operational Costs Page**: Complete Railway hosting cost monitoring with real-time usage tracking
+  - Live Railway API integration via GraphQL for current usage and resource breakdown
+  - Real-time cost monitoring with $10 budget limit and automatic alerts at 80%
+  - Resource breakdown by CPU, Memory, Network, and Storage with percentage analysis
+  - Progress bars for budget alerts ($8.00) and hard limits ($10.00) with automatic shutdown
+  - Interactive refresh functionality to fetch latest Railway usage data
+  - Railway integration status with API token validation and error reporting
+  - Professional styling integrated with existing Terrascan CSS framework
+
+### Enhanced
+- **🎨 CSS Architecture**: Added operational-specific styles to `web/static/css/style.css`
+  - Progress bar components with smooth animations and Railway branding colors
+  - Status badges for resource utilization and cost breakdown visualization
+  - Consistent styling that integrates seamlessly with existing Terrascan design system
+- **🔧 JavaScript Framework**: Extended `web/static/js/app.js` with operational functions
+  - `refreshRailwayData()` function for real-time cost data updates
+  - `updateDaysRemaining()` for billing cycle countdown calculation
+  - Proper error handling and loading states for Railway API calls
+- **🔌 API Integration**: New `/api/railway/refresh` endpoint for cost data updates
+  - Railway GraphQL API integration with 2025 pricing calculations
+  - Environment variable configuration for Railway credentials
+  - Comprehensive error handling and fallback data for API failures
+
+### Technical Implementation
+- **Railway Cost API**: Direct integration with Railway's GraphQL v2 endpoint (`https://backboard.railway.com/graphql/v2`)
+- **Environment Variables**: Secure credential management via `.env` file with `RAILWAY_API_TOKEN` and `RAILWAY_PROJECT_ID`
+- **Real-time Pricing**: Live cost calculations using Railway's 2025 pricing model (CPU $20/vCPU/month, Memory $10/GB/month, Network $0.05/GB, Storage $0.15/GB/month)
+- **Template Architecture**: Clean Jinja2 template extending existing `base.html` with proper data binding
+- **Cost Controls**: Automated budget monitoring with progressive alerts and spending limits
+
 ## [1.1.1] - 2025-06-09
 
 ### Fixed

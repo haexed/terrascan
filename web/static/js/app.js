@@ -169,6 +169,9 @@ document.addEventListener('DOMContentLoaded', function () {
     if (window.location.pathname === '/' || window.location.pathname === '/system') {
         enableAutoRefresh(30); // Refresh every 30 seconds
     }
+
+    // Initialize operational page if we're on it
+    initOperationalPage();
 });
 
 // Copy to clipboard functionality
@@ -200,4 +203,62 @@ style.textContent = `
         100% { opacity: 0; transform: translateX(100%); }
     }
 `;
-document.head.appendChild(style); 
+document.head.appendChild(style);
+
+// Operational Costs Page Functions
+function refreshRailwayData() {
+    const refreshBtn = document.getElementById('refreshBtn');
+    if (!refreshBtn) return;
+
+    const originalText = refreshBtn.innerHTML;
+
+    refreshBtn.innerHTML = '<span class="loading"></span> Refreshing...';
+    refreshBtn.disabled = true;
+
+    fetch('/api/railway/refresh', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        }
+    })
+        .then(response => response.json())
+        .then(result => {
+            if (result.success && result.data) {
+                alert('✅ Railway data refreshed successfully!');
+                // Reload page to show updated data
+                window.location.reload();
+            } else {
+                alert('⚠️ Error refreshing Railway data: ' + (result.error || 'Unknown error'));
+            }
+        })
+        .catch(error => {
+            console.error('Railway refresh error:', error);
+            alert('❌ Network error while refreshing Railway data');
+        })
+        .finally(() => {
+            refreshBtn.innerHTML = originalText;
+            refreshBtn.disabled = false;
+        });
+}
+
+function updateDaysRemaining() {
+    const daysRemainingEl = document.getElementById('days-remaining');
+    if (!daysRemainingEl) return;
+
+    // Calculate days remaining in current month
+    const now = new Date();
+    const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+    const daysRemaining = lastDay.getDate() - now.getDate();
+
+    daysRemainingEl.textContent = daysRemaining;
+}
+
+// Initialize operational page
+function initOperationalPage() {
+    if (window.location.pathname === '/operational') {
+        updateDaysRemaining();
+
+        // Update days remaining daily
+        setInterval(updateDaysRemaining, 24 * 60 * 60 * 1000);
+    }
+} 

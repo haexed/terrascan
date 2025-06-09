@@ -7,8 +7,13 @@ Simple Flask app for task management and monitoring
 import sys
 import os
 import json
-from datetime import datetime
+import requests
+from datetime import datetime, timedelta
 from flask import Flask, render_template, request, jsonify, redirect, url_for
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv()
 
 # Add parent directory to path for imports
 sys.path.append(os.path.dirname(os.path.dirname(__file__)))
@@ -442,6 +447,168 @@ def providers_page():
     except Exception as e:
         return f"Providers Error: {e}", 500
 
+@app.route('/operational')
+def operational_page():
+    """Operational costs and Railway hosting monitoring page"""
+    try:
+        # Get Railway configuration from environment
+        railway_token = os.getenv('RAILWAY_API_TOKEN')
+        railway_project_id = os.getenv('RAILWAY_PROJECT_ID')
+        
+        operational_data = {
+            'has_railway_config': bool(railway_token and railway_project_id),
+            'project_id': railway_project_id,
+            'current_usage': 0.0,
+            'budget_limit': 10.0,
+            'resource_breakdown': {
+                'cpu': {'usage': '0 vCPU hours', 'cost': 0.0, 'percentage': 0},
+                'memory': {'usage': '0 GB hours', 'cost': 0.0, 'percentage': 0},
+                'network': {'usage': '0 GB', 'cost': 0.0, 'percentage': 0},
+                'storage': {'usage': '0 GB', 'cost': 0.0, 'percentage': 0}
+            }
+        }
+        
+        # If Railway credentials are configured, fetch real data
+        if railway_token and railway_project_id:
+            try:
+                railway_data = fetch_railway_usage(railway_token, railway_project_id)
+                if railway_data:
+                    operational_data.update(railway_data)
+            except Exception as api_error:
+                print(f"Railway API Error: {api_error}")
+                operational_data['api_error'] = str(api_error)
+        
+        return render_template('operational.html', operational_data=operational_data)
+    except Exception as e:
+        return f"Operational Error: {e}", 500
+
+def fetch_railway_usage(token, project_id):
+    """Fetch real usage data from Railway's GraphQL API"""
+    try:
+        # Railway GraphQL endpoint
+        url = 'https://backboard.railway.com/graphql/v2'
+        
+        # Calculate date range (current billing cycle - last 30 days)
+        end_date = datetime.now()
+        start_date = end_date - timedelta(days=30)
+        
+        # GraphQL query for usage data - simplified version
+        query = """
+        query {
+            me {
+                projects {
+                    edges {
+                        node {
+                            id
+                            name
+                            updatedAt
+                        }
+                    }
+                }
+            }
+        }
+        """
+        
+        headers = {
+            'Authorization': f'Bearer {token}',
+            'Content-Type': 'application/json'
+        }
+        
+        response = requests.post(
+            url,
+            json={'query': query},
+            headers=headers,
+            timeout=10
+        )
+        
+        if response.status_code == 200:
+            data = response.json()
+            
+            if 'errors' in data:
+                raise Exception(f"GraphQL Error: {data['errors']}")
+            
+            # Parse usage data
+            usage_data = data.get('data', {}).get('usage', [])
+            estimated = data.get('data', {}).get('estimatedUsage', {})
+            
+            # Calculate costs based on Railway's 2025 pricing
+            # CPU: $20/vCPU/month, Memory: $10/GB/month, Network: $0.05/GB
+            resource_costs = {
+                'cpu': {'cost': 0.0, 'usage': '0 vCPU hours', 'raw_value': 0},
+                'memory': {'cost': 0.0, 'usage': '0 GB hours', 'raw_value': 0},
+                'network': {'cost': 0.0, 'usage': '0 GB', 'raw_value': 0},
+                'storage': {'cost': 0.0, 'usage': '0 GB', 'raw_value': 0}
+            }
+            
+            for usage in usage_data:
+                measurement = usage['measurement']
+                value = float(usage['value'])
+                
+                if measurement == 'CPU_USAGE':
+                    # Convert CPU minutes to hours and calculate cost
+                    cpu_hours = value / 60.0
+                    cost = cpu_hours * (20.0 / (30 * 24))  # $20/vCPU/month
+                    resource_costs['cpu'] = {
+                        'cost': cost,
+                        'usage': f'{cpu_hours:.1f} vCPU hours',
+                        'raw_value': value
+                    }
+                elif measurement == 'MEMORY_USAGE_GB':
+                    # Memory in GB-hours
+                    cost = value * (10.0 / (30 * 24))  # $10/GB/month
+                    resource_costs['memory'] = {
+                        'cost': cost,
+                        'usage': f'{value:.1f} GB hours',
+                        'raw_value': value
+                    }
+                elif measurement == 'NETWORK_TX_GB':
+                    # Network egress in GB
+                    cost = value * 0.05  # $0.05/GB
+                    resource_costs['network'] = {
+                        'cost': cost,
+                        'usage': f'{value:.2f} GB',
+                        'raw_value': value
+                    }
+            
+            # Calculate total cost and percentages
+            total_cost = sum(r['cost'] for r in resource_costs.values())
+            
+            for resource in resource_costs.values():
+                if total_cost > 0:
+                    resource['percentage'] = int((resource['cost'] / total_cost) * 100)
+                else:
+                    resource['percentage'] = 0
+            
+            return {
+                'current_usage': round(total_cost, 2),
+                'resource_breakdown': resource_costs,
+                'last_updated': datetime.now().isoformat()
+            }
+        
+        else:
+            raise Exception(f"HTTP {response.status_code}: {response.text}")
+            
+    except requests.exceptions.RequestException as e:
+        raise Exception(f"Network error: {e}")
+    except Exception as e:
+        raise Exception(f"Railway API error: {e}")
+
+@app.route('/api/railway/refresh', methods=['POST'])
+def api_refresh_railway_costs():
+    """API endpoint to refresh Railway costs"""
+    try:
+        railway_token = os.getenv('RAILWAY_API_TOKEN')
+        railway_project_id = os.getenv('RAILWAY_PROJECT_ID')
+        
+        if not railway_token or not railway_project_id:
+            return jsonify({'error': 'Railway credentials not configured'}), 400
+        
+        railway_data = fetch_railway_usage(railway_token, railway_project_id)
+        return jsonify({'success': True, 'data': railway_data})
+        
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
 # Error handlers
 @app.errorhandler(404)
 def not_found(error):
@@ -460,6 +627,7 @@ if __name__ == '__main__':
     print("📊 Metrics: http://localhost:5000/metrics")
     print("🌐 Providers: http://localhost:5000/providers")
     print("🗂️ Schema: http://localhost:5000/schema")
+    print("💰 Operational: http://localhost:5000/operational")
     print("🖥️ System: http://localhost:5000/system")
     
     app.run(debug=True, host='0.0.0.0', port=5000) 
