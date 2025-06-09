@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+
+{% block title %}Tasks - Terrascan{% endblock %}
+
+{% block header_subtitle %}Task Management & Execution{% endblock %}
+
+{% block content %}
+<!-- Task Management Grid -->
+<div class="task-grid">
+    {% for task in tasks %}
+    <div class="task-item">
+        <div class="task-header">
+            <h4>{{ task.name }}</h4>
+            <span class="task-status status-{{ 'active' if task.is_active else 'inactive' }}">
+                {{ 'Active' if task.is_active else 'Inactive' }}
+            </span>
+        </div>
+
+        <p><strong>Provider:</strong> {{ task.provider or 'System' }}</p>
+        <p><strong>Description:</strong> {{ task.description or 'No description available' }}</p>
+
+        <div class="task-meta">
+            <div><strong>Schedule:</strong> {{ task.schedule_expression or 'Manual' }}</div>
+            <div><strong>Command:</strong> <code>{{ task.command }}</code></div>
+        </div>
+
+        {% if task.last_run %}
+        <div class="task-meta">
+            <div><strong>Last Run:</strong> {{ task.last_run.started_at }}</div>
+            <div><strong>Status:</strong>
+                <span class="task-status status-{{ 'active' if task.last_run.status == 'completed' else 'inactive' }}">
+                    {{ task.last_run.status.upper() }}
+                </span>
+            </div>
+            <div><strong>Duration:</strong> {{ task.last_run.duration_seconds }}s</div>
+            <div><strong>Records:</strong> {{ task.last_run.records_processed or 0 }}</div>
+        </div>
+        {% else %}
+        <p class="text-muted">Never executed</p>
+        {% endif %}
+
+        <div style="margin-top: 15px;">
+            <button class="run-btn" onclick="runTask('{{ task.name }}')">
+                🚀 Run Now
+            </button>
+            <button class="run-btn btn-info" onclick="viewSource('{{ task.name }}')">
+                📄 View Source
+            </button>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+{% if not tasks %}
+<div class="card">
+    <h3>No Tasks Found</h3>
+    <p>No tasks are currently configured in the system.</p>
+</div>
+{% endif %}
+{% endblock %}

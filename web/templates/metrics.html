@@ -1,0 +1,307 @@
+{% extends "base.html" %}
+
+{% block title %}Metrics Overview - Terrascan{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="header">
+        <h1>📊 Environmental Metrics</h1>
+        <p>Comprehensive overview of all collected environmental data metrics</p>
+    </div>
+
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-value">{{ summary_stats.total_metrics }}</div>
+            <div class="stat-label">Unique Metrics</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value">{{ summary_stats.total_providers }}</div>
+            <div class="stat-label">Data Providers</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value">{{ summary_stats.total_datasets }}</div>
+            <div class="stat-label">Datasets</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value">{{ "{:,}".format(summary_stats.total_records) }}</div>
+            <div class="stat-label">Total Records</div>
+        </div>
+    </div>
+
+    <div class="metrics-by-provider">
+        {% for provider_key, provider_data in metrics_by_provider.items() %}
+        <div class="provider-section">
+            <div class="provider-header">
+                <div class="provider-info">
+                    <h2>{{ provider_data.info.name }}</h2>
+                    <p class="provider-description">{{ provider_data.info.description }}</p>
+                </div>
+                <div class="provider-stats">
+                    <span class="dataset-count">{{ provider_data.datasets.keys()|length }} datasets</span>
+                    <span class="metric-count">
+                        {% set total_metrics = 0 %}
+                        {% for dataset_name, metrics in provider_data.datasets.items() %}
+                        {% set total_metrics = total_metrics + metrics|length %}
+                        {% endfor %}
+                        {{ total_metrics }} metrics
+                    </span>
+                </div>
+            </div>
+
+            {% for dataset_name, metrics in provider_data.datasets.items() %}
+            <div class="dataset-section">
+                <h3>📁 {{ dataset_name|title }} Dataset</h3>
+
+                <div class="metrics-grid">
+                    {% for metric in metrics %}
+                    <div class="metric-card">
+                        <div class="metric-header">
+                            <h4>{{ metric.metric_name|replace('_', ' ')|title }}</h4>
+                            <span class="unit-badge">{{ metric.unit or 'dimensionless' }}</span>
+                        </div>
+
+                        <div class="metric-stats">
+                            <div class="stat-row">
+                                <span class="stat-label">Records</span>
+                                <span class="stat-value">{{ "{:,}".format(metric.record_count) }}</span>
+                            </div>
+                            <div class="stat-row">
+                                <span class="stat-label">Locations</span>
+                                <span class="stat-value">{{ metric.unique_locations }}</span>
+                            </div>
+                            {% if metric.min_value is not none and metric.max_value is not none %}
+                            <div class="stat-row">
+                                <span class="stat-label">Range</span>
+                                <span class="stat-value">
+                                    {{ "%.2f"|format(metric.min_value) }} - {{ "%.2f"|format(metric.max_value) }}
+                                </span>
+                            </div>
+                            {% endif %}
+                            {% if metric.avg_value is not none %}
+                            <div class="stat-row">
+                                <span class="stat-label">Average</span>
+                                <span class="stat-value">{{ "%.2f"|format(metric.avg_value) }}</span>
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="metric-timeline">
+                            <div class="timeline-item">
+                                <span class="timeline-label">First Record</span>
+                                <span class="timeline-date">
+                                    {{ metric.earliest_timestamp[:10] if metric.earliest_timestamp else 'N/A' }}
+                                </span>
+                            </div>
+                            <div class="timeline-item">
+                                <span class="timeline-label">Latest Record</span>
+                                <span class="timeline-date">
+                                    {{ metric.latest_timestamp[:10] if metric.latest_timestamp else 'N/A' }}
+                                </span>
+                            </div>
+                        </div>
+
+                        <div class="metric-description">
+                            {% if metric.metric_name == 'fire_brightness' %}
+                            Fire detection brightness temperature in Kelvin from satellite thermal sensors
+                            {% elif metric.metric_name == 'air_quality_pm25' %}
+                            Particulate matter (PM2.5) concentration - particles smaller than 2.5 micrometers
+                            {% elif metric.metric_name == 'water_level' %}
+                            Water level measurements relative to mean sea level from tidal gauges
+                            {% elif metric.metric_name == 'water_temperature' %}
+                            Surface water temperature readings from oceanographic monitoring stations
+                            {% else %}
+                            Environmental measurement data from {{ provider_data.info.name }}
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<style>
+    .metrics-by-provider {
+        margin-top: 2rem;
+    }
+
+    .provider-section {
+        background: white;
+        border-radius: 12px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        border: 1px solid #e1e5e9;
+    }
+
+    .provider-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 2rem;
+        padding-bottom: 1rem;
+        border-bottom: 2px solid #f0f3f6;
+    }
+
+    .provider-info h2 {
+        margin: 0 0 0.5rem 0;
+        color: #2c3e50;
+        font-size: 1.8rem;
+    }
+
+    .provider-description {
+        margin: 0;
+        color: #6c757d;
+        font-size: 1.1rem;
+    }
+
+    .provider-stats {
+        display: flex;
+        gap: 1rem;
+    }
+
+    .dataset-count,
+    .metric-count {
+        background: #e3f2fd;
+        color: #1565c0;
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        font-weight: 600;
+    }
+
+    .dataset-section {
+        margin-bottom: 2rem;
+    }
+
+    .dataset-section h3 {
+        color: #495057;
+        margin-bottom: 1.5rem;
+        font-size: 1.3rem;
+        border-left: 4px solid #007bff;
+        padding-left: 1rem;
+    }
+
+    .metrics-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+        gap: 1.5rem;
+    }
+
+    .metric-card {
+        background: #f8f9fa;
+        border-radius: 10px;
+        padding: 1.5rem;
+        border: 1px solid #dee2e6;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .metric-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    }
+
+    .metric-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1rem;
+    }
+
+    .metric-header h4 {
+        margin: 0;
+        color: #2c3e50;
+        font-size: 1.1rem;
+    }
+
+    .unit-badge {
+        background: #28a745;
+        color: white;
+        padding: 0.3rem 0.8rem;
+        border-radius: 15px;
+        font-size: 0.8rem;
+        font-weight: 600;
+    }
+
+    .metric-stats {
+        margin-bottom: 1rem;
+    }
+
+    .stat-row {
+        display: flex;
+        justify-content: space-between;
+        padding: 0.3rem 0;
+        border-bottom: 1px solid #e9ecef;
+    }
+
+    .stat-row:last-child {
+        border-bottom: none;
+    }
+
+    .stat-row .stat-label {
+        color: #6c757d;
+        font-weight: 500;
+    }
+
+    .stat-row .stat-value {
+        color: #495057;
+        font-weight: 600;
+        font-family: 'Monaco', 'Consolas', monospace;
+    }
+
+    .metric-timeline {
+        margin-bottom: 1rem;
+        padding: 1rem;
+        background: white;
+        border-radius: 8px;
+        border: 1px solid #e9ecef;
+    }
+
+    .timeline-item {
+        display: flex;
+        justify-content: space-between;
+        padding: 0.3rem 0;
+    }
+
+    .timeline-label {
+        color: #6c757d;
+        font-size: 0.9rem;
+    }
+
+    .timeline-date {
+        color: #495057;
+        font-weight: 600;
+        font-family: 'Monaco', 'Consolas', monospace;
+        font-size: 0.9rem;
+    }
+
+    .metric-description {
+        color: #6c757d;
+        font-size: 0.9rem;
+        line-height: 1.5;
+        font-style: italic;
+        padding-top: 0.5rem;
+        border-top: 1px solid #e9ecef;
+    }
+
+    /* Responsive design */
+    @media (max-width: 768px) {
+        .metrics-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .provider-header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 1rem;
+        }
+
+        .provider-stats {
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+    }
+</style>
+{% endblock %}

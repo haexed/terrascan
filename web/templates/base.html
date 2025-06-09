@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Terrascan - Environmental Data Platform{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    {% block extra_css %}{% endblock %}
+</head>
+
+<body>
+    <!-- Header -->
+    <div class="header">
+        <h1><a href="/" style="color: inherit; text-decoration: none;">{% block header_title %}🌍 Terrascan{% endblock
+                %}</a></h1>
+        <p>{% block header_subtitle %}Environmental Data Platform{% endblock %}</p>
+    </div>
+
+    <!-- Navigation -->
+    <nav class="nav">
+        <a href="/" {% if request.endpoint=='dashboard' %}class="active" {% endif %}>📊 Dashboard</a>
+        <a href="/tasks" {% if request.endpoint=='tasks_page' %}class="active" {% endif %}>🔧 Tasks</a>
+        <a href="/data" {% if request.endpoint=='data_page' %}class="active" {% endif %}>📈 Data</a>
+        <a href="/metrics" {% if request.endpoint=='metrics_page' %}class="active" {% endif %}>📊 Metrics</a>
+        <a href="/providers" {% if request.endpoint=='providers_page' %}class="active" {% endif %}>🌐 Providers</a>
+        <a href="/schema" {% if request.endpoint=='schema_page' %}class="active" {% endif %}>🗂️ Schema</a>
+        <a href="/system" {% if request.endpoint=='system_page' %}class="active" {% endif %}>🖥️ System</a>
+    </nav>
+
+    <!-- Main Content -->
+    <main>
+        {% block content %}
+        <div class="card">
+            <h3>Page Content</h3>
+            <p>Content goes here...</p>
+        </div>
+        {% endblock %}
+    </main>
+
+    <!-- Footer -->
+    <footer class="text-center text-muted mt-3">
+        <p>
+            🌍 <strong>Terrascan {{ version }}</strong> - Environmental time machine for geological insights |
+            <a href="https://github.com/heaxed/terrascan" target="_blank">GitHub</a> |
+            Open Source MIT License
+        </p>
+    </footer>
+
+    <!-- JavaScript -->
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+    {% block extra_js %}{% endblock %}
+</body>
+
+</html>
