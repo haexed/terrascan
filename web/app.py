@@ -492,22 +492,29 @@ def fetch_railway_usage(token, project_id):
         end_date = datetime.now()
         start_date = end_date - timedelta(days=30)
         
-        # GraphQL query for usage data - simplified version
+        # GraphQL query for actual usage data
         query = """
-        query {
-            me {
-                projects {
-                    edges {
-                        node {
-                            id
-                            name
-                            updatedAt
+        query ProjectUsage($projectId: String!) {
+            project(id: $projectId) {
+                name
+                usage {
+                    currentPeriod {
+                        estimatedCost
+                        measurements {
+                            cpuUsage
+                            memoryUsageGb
+                            networkEgressGb
+                            diskUsageGb
                         }
                     }
                 }
             }
         }
         """
+        
+        variables = {
+            'projectId': project_id
+        }
         
         headers = {
             'Authorization': f'Bearer {token}',
@@ -516,7 +523,7 @@ def fetch_railway_usage(token, project_id):
         
         response = requests.post(
             url,
-            json={'query': query},
+            json={'query': query, 'variables': variables},
             headers=headers,
             timeout=10
         )
@@ -527,9 +534,14 @@ def fetch_railway_usage(token, project_id):
             if 'errors' in data:
                 raise Exception(f"GraphQL Error: {data['errors']}")
             
-            # Parse usage data
-            usage_data = data.get('data', {}).get('usage', [])
-            estimated = data.get('data', {}).get('estimatedUsage', {})
+            # Debug: Print the response to understand the structure
+            print(f"Railway API Response: {data}")
+            
+            # Parse usage data from new query structure
+            project_data = data.get('data', {}).get('project', {})
+            usage_data = project_data.get('usage', {}).get('currentPeriod', {})
+            measurements = usage_data.get('measurements', {})
+            estimated_cost = usage_data.get('estimatedCost', 0)
             
             # Calculate costs based on Railway's 2025 pricing
             # CPU: $20/vCPU/month, Memory: $10/GB/month, Network: $0.05/GB
@@ -540,34 +552,47 @@ def fetch_railway_usage(token, project_id):
                 'storage': {'cost': 0.0, 'usage': '0 GB', 'raw_value': 0}
             }
             
-            for usage in usage_data:
-                measurement = usage['measurement']
-                value = float(usage['value'])
-                
-                if measurement == 'CPU_USAGE':
-                    # Convert CPU minutes to hours and calculate cost
-                    cpu_hours = value / 60.0
+            # Parse measurements from new structure
+            if measurements:
+                # CPU Usage
+                if 'cpuUsage' in measurements and measurements['cpuUsage']:
+                    cpu_value = float(measurements['cpuUsage'])
+                    cpu_hours = cpu_value / 60.0  # Convert minutes to hours
                     cost = cpu_hours * (20.0 / (30 * 24))  # $20/vCPU/month
                     resource_costs['cpu'] = {
                         'cost': cost,
                         'usage': f'{cpu_hours:.1f} vCPU hours',
-                        'raw_value': value
+                        'raw_value': cpu_value
                     }
-                elif measurement == 'MEMORY_USAGE_GB':
-                    # Memory in GB-hours
-                    cost = value * (10.0 / (30 * 24))  # $10/GB/month
+                
+                # Memory Usage
+                if 'memoryUsageGb' in measurements and measurements['memoryUsageGb']:
+                    memory_value = float(measurements['memoryUsageGb'])
+                    cost = memory_value * (10.0 / (30 * 24))  # $10/GB/month
                     resource_costs['memory'] = {
                         'cost': cost,
-                        'usage': f'{value:.1f} GB hours',
-                        'raw_value': value
+                        'usage': f'{memory_value:.1f} GB hours',
+                        'raw_value': memory_value
                     }
-                elif measurement == 'NETWORK_TX_GB':
-                    # Network egress in GB
-                    cost = value * 0.05  # $0.05/GB
+                
+                # Network Usage
+                if 'networkEgressGb' in measurements and measurements['networkEgressGb']:
+                    network_value = float(measurements['networkEgressGb'])
+                    cost = network_value * 0.05  # $0.05/GB
                     resource_costs['network'] = {
                         'cost': cost,
-                        'usage': f'{value:.2f} GB',
-                        'raw_value': value
+                        'usage': f'{network_value:.2f} GB',
+                        'raw_value': network_value
+                    }
+                
+                # Storage Usage
+                if 'diskUsageGb' in measurements and measurements['diskUsageGb']:
+                    storage_value = float(measurements['diskUsageGb'])
+                    cost = storage_value * 0.15  # $0.15/GB/month
+                    resource_costs['storage'] = {
+                        'cost': cost,
+                        'usage': f'{storage_value:.2f} GB',
+                        'raw_value': storage_value
                     }
             
             # Calculate total cost and percentages
