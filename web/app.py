@@ -492,39 +492,43 @@ def fetch_railway_usage(token, project_id):
         end_date = datetime.now()
         start_date = end_date - timedelta(days=30)
         
-        # GraphQL query - now get actual usage data for the service
+        # GraphQL query - get both current usage and monthly estimates
         query = """
-        query GetServiceUsage($projectId: String!) {
-            project(id: $projectId) {
-                id
-                name
-                services {
-                    edges {
-                        node {
-                            id
-                            name
-                            source {
-                                image
-                            }
-                            usage {
-                                estimatedCost
-                                cpuUsage
-                                memoryUsage
-                                networkUsage
-                                diskUsage
-                            }
-                            metrics(first: 10) {
-                                edges {
-                                    node {
-                                        name
-                                        value
-                                        timestamp
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
+        query GetCompleteUsage($projectId: String!) {
+            # Current real-time usage
+            currentCpuUsage: usage(projectId: $projectId, measurements: CPU_USAGE) {
+                measurement
+                value
+            }
+            currentMemoryUsage: usage(measurements: MEMORY_USAGE_GB, projectId: $projectId) {
+                measurement
+                value
+            }
+            currentNetworkRx: usage(measurements: NETWORK_RX_GB, projectId: $projectId) {
+                measurement
+                value
+            }
+            currentNetworkTx: usage(measurements: NETWORK_TX_GB, projectId: $projectId) {
+                measurement
+                value
+            }
+            
+            # Monthly estimated usage
+            estimatedCpuUsage: estimatedUsage(measurements: CPU_USAGE, projectId: $projectId) {
+                measurement
+                estimatedValue
+            }
+            estimatedMemoryUsage: estimatedUsage(measurements: MEMORY_USAGE_GB, projectId: $projectId) {
+                measurement
+                estimatedValue
+            }
+            estimatedNetworkRx: estimatedUsage(measurements: NETWORK_RX_GB, projectId: $projectId) {
+                measurement
+                estimatedValue
+            }
+            estimatedNetworkTx: estimatedUsage(measurements: NETWORK_TX_GB, projectId: $projectId) {
+                measurement
+                estimatedValue
             }
         }
         """
@@ -559,96 +563,103 @@ def fetch_railway_usage(token, project_id):
                 print(f"No data in response. Full response: {data}")
                 raise Exception(f"No data returned from Railway API")
             
-            # Parse response from project query
-            project_data = data.get('data', {}).get('project', {})
-            if not project_data:
-                print(f"No 'project' data found. Available keys: {list(data.get('data', {}).keys())}")
-                raise Exception(f"Project not found - cannot access project data")
+            # Parse response from usage query with aliases
+            data_response = data.get('data', {})
+            if not data_response:
+                print(f"No data found. Full response: {data}")
+                raise Exception(f"No usage data returned from Railway API")
+                
+            print(f"✅ Successfully retrieved Railway usage data!")
             
-            print(f"✅ Successfully connected to Railway project!")
-            print(f"Project ID: {project_data.get('id', 'Unknown')}")
-            print(f"Project Name: {project_data.get('name', 'Unknown')}")
+            # Extract current real-time usage values
+            current_cpu_data = data_response.get('currentCpuUsage', [])
+            current_memory_data = data_response.get('currentMemoryUsage', [])
+            current_network_rx_data = data_response.get('currentNetworkRx', [])
+            current_network_tx_data = data_response.get('currentNetworkTx', [])
             
-            # Check services and their usage
-            services = project_data.get('services', {}).get('edges', [])
-            print(f"Services found: {len(services)}")
+            # Extract estimated monthly usage values
+            estimated_cpu_data = data_response.get('estimatedCpuUsage', [])
+            estimated_memory_data = data_response.get('estimatedMemoryUsage', [])
+            estimated_network_rx_data = data_response.get('estimatedNetworkRx', [])
+            estimated_network_tx_data = data_response.get('estimatedNetworkTx', [])
             
-            total_cost = 0.0
+            # Current real-time values
+            current_cpu = current_cpu_data[0].get('value', 0) if current_cpu_data else 0
+            current_memory = current_memory_data[0].get('value', 0) if current_memory_data else 0
+            current_network_rx = current_network_rx_data[0].get('value', 0) if current_network_rx_data else 0
+            current_network_tx = current_network_tx_data[0].get('value', 0) if current_network_tx_data else 0
+            
+            # Estimated monthly values
+            estimated_cpu = estimated_cpu_data[0].get('estimatedValue', 0) if estimated_cpu_data else 0
+            estimated_memory = estimated_memory_data[0].get('estimatedValue', 0) if estimated_memory_data else 0
+            estimated_network_rx = estimated_network_rx_data[0].get('estimatedValue', 0) if estimated_network_rx_data else 0
+            estimated_network_tx = estimated_network_tx_data[0].get('estimatedValue', 0) if estimated_network_tx_data else 0
+            
+            print(f"📊 CURRENT Real-time Usage:")
+            print(f"  🔧 CPU: {current_cpu:.3f} vCPU")
+            print(f"  🧠 Memory: {current_memory:.3f} GB")
+            print(f"  🌐 Network: {current_network_rx + current_network_tx:.6f} GB")
+            
+            print(f"📈 ESTIMATED Monthly Usage:")
+            print(f"  🔧 CPU: {estimated_cpu:.1f} vCPU-hours")
+            print(f"  🧠 Memory: {estimated_memory:.2f} GB-hours")
+            print(f"  🌐 Network: {estimated_network_rx + estimated_network_tx:.6f} GB")
+            
+            # Calculate costs using Railway's actual pricing: $20/vCPU/month, $10/GB/month
+            current_cost_cpu = current_cpu * (20 / 730)  # $20/month = ~$0.027/hour
+            current_cost_memory = current_memory * (10 / 730)  # $10/month = ~$0.014/hour
+            current_cost_network = (current_network_rx + current_network_tx) * 0.05  # $0.05/GB
+            current_total = current_cost_cpu + current_cost_memory + current_cost_network
+            
+            # Estimated monthly costs
+            estimated_cost_cpu = estimated_cpu * (20 / 730)  # Convert vCPU-hours to monthly cost
+            estimated_cost_memory = estimated_memory * (10 / 730)  # Convert GB-hours to monthly cost
+            estimated_cost_network = (estimated_network_rx + estimated_network_tx) * 0.05
+            estimated_total = estimated_cost_cpu + estimated_cost_memory + estimated_cost_network
+            
+            print(f"💰 Current hourly cost: ${current_total:.4f}")
+            print(f"💰 Estimated monthly cost: ${estimated_total:.2f}")
+            
+            # Build resource breakdown with both current and estimated data
             resource_costs = {
-                'cpu': {'cost': 0.0, 'usage': '0 vCPU hours', 'raw_value': 0, 'percentage': 0},
-                'memory': {'cost': 0.0, 'usage': '0 GB hours', 'raw_value': 0, 'percentage': 0},
-                'network': {'cost': 0.0, 'usage': '0 GB', 'raw_value': 0, 'percentage': 0},
-                'storage': {'cost': 0.0, 'usage': '0 GB', 'raw_value': 0, 'percentage': 0}
+                'cpu': {
+                    'cost': round(estimated_cost_cpu, 4),
+                    'usage': f"{current_cpu:.3f} vCPU (Est: {estimated_cpu:.0f} vCPU-hrs/month)",
+                    'raw_value': current_cpu,
+                    'estimated_value': estimated_cpu,
+                    'percentage': round((estimated_cost_cpu / estimated_total * 100) if estimated_total > 0 else 0, 1)
+                },
+                'memory': {
+                    'cost': round(estimated_cost_memory, 4),
+                    'usage': f"{current_memory:.3f} GB (Est: {estimated_memory:.1f} GB-hrs/month)",
+                    'raw_value': current_memory,
+                    'estimated_value': estimated_memory,
+                    'percentage': round((estimated_cost_memory / estimated_total * 100) if estimated_total > 0 else 0, 1)
+                },
+                'network': {
+                    'cost': round(estimated_cost_network, 4),
+                    'usage': f"{current_network_rx + current_network_tx:.6f} GB (Est: {estimated_network_rx + estimated_network_tx:.6f} GB/month)",
+                    'raw_value': current_network_rx + current_network_tx,
+                    'estimated_value': estimated_network_rx + estimated_network_tx,
+                    'percentage': round((estimated_cost_network / estimated_total * 100) if estimated_total > 0 else 0, 1)
+                },
+                'storage': {
+                    'cost': 0.0,
+                    'usage': "0 GB",
+                    'raw_value': 0,
+                    'estimated_value': 0,
+                    'percentage': 0
+                }
             }
             
-            for service in services:
-                node = service.get('node', {})
-                service_name = node.get('name', 'Unknown')
-                service_id = node.get('id', 'Unknown')
-                print(f"  - Service: {service_name} (ID: {service_id})")
-                
-                # Get usage data
-                usage = node.get('usage', {})
-                if usage:
-                    estimated_cost = usage.get('estimatedCost', 0)
-                    cpu_usage = usage.get('cpuUsage', 0)
-                    memory_usage = usage.get('memoryUsage', 0)
-                    network_usage = usage.get('networkUsage', 0)
-                    disk_usage = usage.get('diskUsage', 0)
-                    
-                    print(f"    💰 Estimated Cost: ${estimated_cost}")
-                    print(f"    🔧 CPU Usage: {cpu_usage}")
-                    print(f"    🧠 Memory Usage: {memory_usage}")
-                    print(f"    🌐 Network Usage: {network_usage}")
-                    print(f"    💾 Disk Usage: {disk_usage}")
-                    
-                    total_cost += estimated_cost
-                    
-                    # Update resource costs with real data
-                    if cpu_usage > 0:
-                        resource_costs['cpu']['cost'] = estimated_cost * 0.4  # Assume 40% for CPU
-                        resource_costs['cpu']['usage'] = f"{cpu_usage} vCPU hours"
-                        resource_costs['cpu']['raw_value'] = cpu_usage
-                        resource_costs['cpu']['percentage'] = 40
-                    
-                    if memory_usage > 0:
-                        resource_costs['memory']['cost'] = estimated_cost * 0.3  # Assume 30% for memory
-                        resource_costs['memory']['usage'] = f"{memory_usage} GB hours"
-                        resource_costs['memory']['raw_value'] = memory_usage
-                        resource_costs['memory']['percentage'] = 30
-                    
-                    if network_usage > 0:
-                        resource_costs['network']['cost'] = estimated_cost * 0.2  # Assume 20% for network
-                        resource_costs['network']['usage'] = f"{network_usage} GB"
-                        resource_costs['network']['raw_value'] = network_usage
-                        resource_costs['network']['percentage'] = 20
-                    
-                    if disk_usage > 0:
-                        resource_costs['storage']['cost'] = estimated_cost * 0.1  # Assume 10% for storage
-                        resource_costs['storage']['usage'] = f"{disk_usage} GB"
-                        resource_costs['storage']['raw_value'] = disk_usage
-                        resource_costs['storage']['percentage'] = 10
-                else:
-                    print(f"    ⚠️ No usage data found for service {service_name}")
-                
-                # Get metrics
-                metrics = node.get('metrics', {}).get('edges', [])
-                print(f"    📊 Metrics found: {len(metrics)}")
-                for metric in metrics[:3]:  # Show first 3 metrics
-                    metric_node = metric.get('node', {})
-                    metric_name = metric_node.get('name', 'Unknown')
-                    metric_value = metric_node.get('value', 'Unknown')
-                    metric_timestamp = metric_node.get('timestamp', 'Unknown')
-                    print(f"      - {metric_name}: {metric_value} ({metric_timestamp})")
-            
-            print(f"💰 Total estimated cost: ${total_cost}")
-            
             return {
-                'current_usage': total_cost,
+                'current_usage': round(estimated_total, 4),  # Use estimated monthly cost as main metric
                 'resource_breakdown': resource_costs,
                 'last_updated': datetime.now().isoformat(),
-                'project_name': project_data.get('name', 'Unknown'),
-                'debug_info': f"Connected to {project_data.get('name')} with {len(services)} service(s)"
+                'project_name': 'Terrascan',
+                'current_realtime_cost': round(current_total, 6),
+                'estimated_monthly_cost': round(estimated_total, 2),
+                'debug_info': f"Current: {current_cpu:.3f} vCPU, {current_memory:.3f}GB | Est Monthly: {estimated_cpu:.0f} vCPU-hrs, {estimated_memory:.1f}GB-hrs"
             }
         
         else:
