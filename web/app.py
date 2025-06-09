@@ -492,21 +492,19 @@ def fetch_railway_usage(token, project_id):
         end_date = datetime.now()
         start_date = end_date - timedelta(days=30)
         
-        # GraphQL query - start simple to test authentication
+        # GraphQL query - simplest possible test
         query = """
-        query TestQuery($projectId: String!) {
-            project(id: $projectId) {
+        query {
+            me {
                 id
                 name
-                createdAt
-                updatedAt
+                email
             }
         }
         """
         
-        variables = {
-            'projectId': project_id
-        }
+        # Remove variables for now to test basic auth
+        variables = {}
         
         headers = {
             'Authorization': f'Bearer {token}',
@@ -534,15 +532,16 @@ def fetch_railway_usage(token, project_id):
                 print(f"No data in response. Full response: {data}")
                 raise Exception(f"No data returned from Railway API")
             
-            # Parse usage data from new query structure
-            project_data = data.get('data', {}).get('project', {})
-            if not project_data:
-                print(f"No project data found. Available keys: {list(data.get('data', {}).keys())}")
-                raise Exception(f"Project not found or access denied")
+            # Parse response from 'me' query
+            me_data = data.get('data', {}).get('me', {})
+            if not me_data:
+                print(f"No 'me' data found. Available keys: {list(data.get('data', {}).keys())}")
+                raise Exception(f"Authentication failed - cannot access user data")
             
-            print(f"✅ Successfully connected to Railway project: {project_data.get('name', 'Unknown')}")
-            print(f"Project ID: {project_data.get('id', 'Unknown')}")
-            print(f"Created: {project_data.get('createdAt', 'Unknown')}")
+            print(f"✅ Successfully authenticated with Railway!")
+            print(f"User ID: {me_data.get('id', 'Unknown')}")
+            print(f"User Name: {me_data.get('name', 'Unknown')}")
+            print(f"User Email: {me_data.get('email', 'Unknown')}")
             
             # For now, return basic data structure until we figure out usage API
             resource_costs = {
@@ -556,11 +555,15 @@ def fetch_railway_usage(token, project_id):
                 'current_usage': 0.0,
                 'resource_breakdown': resource_costs,
                 'last_updated': datetime.now().isoformat(),
-                'project_name': project_data.get('name', 'Unknown'),
-                'debug_info': f"Connected to {project_data.get('name')} (ID: {project_data.get('id')})"
+                'user_name': me_data.get('name', 'Unknown'),
+                'debug_info': f"Authenticated as {me_data.get('name')} ({me_data.get('email')})"
             }
         
         else:
+            # Log the full response for debugging
+            print(f"Railway API HTTP Error {response.status_code}")
+            print(f"Response headers: {response.headers}")
+            print(f"Response text: {response.text}")
             raise Exception(f"HTTP {response.status_code}: {response.text}")
             
     except requests.exceptions.RequestException as e:
