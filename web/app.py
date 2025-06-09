@@ -492,19 +492,36 @@ def fetch_railway_usage(token, project_id):
         end_date = datetime.now()
         start_date = end_date - timedelta(days=30)
         
-        # GraphQL query - now that auth works, get project info
+        # GraphQL query - now get actual usage data for the service
         query = """
-        query GetProject($projectId: String!) {
+        query GetServiceUsage($projectId: String!) {
             project(id: $projectId) {
                 id
                 name
-                createdAt
-                updatedAt
                 services {
                     edges {
                         node {
                             id
                             name
+                            source {
+                                image
+                            }
+                            usage {
+                                estimatedCost
+                                cpuUsage
+                                memoryUsage
+                                networkUsage
+                                diskUsage
+                            }
+                            metrics(first: 10) {
+                                edges {
+                                    node {
+                                        name
+                                        value
+                                        timestamp
+                                    }
+                                }
+                            }
                         }
                     }
                 }
@@ -551,17 +568,12 @@ def fetch_railway_usage(token, project_id):
             print(f"✅ Successfully connected to Railway project!")
             print(f"Project ID: {project_data.get('id', 'Unknown')}")
             print(f"Project Name: {project_data.get('name', 'Unknown')}")
-            print(f"Project Created At: {project_data.get('createdAt', 'Unknown')}")
-            print(f"Project Updated At: {project_data.get('updatedAt', 'Unknown')}")
             
-            # Check services
+            # Check services and their usage
             services = project_data.get('services', {}).get('edges', [])
             print(f"Services found: {len(services)}")
-            for service in services:
-                node = service.get('node', {})
-                print(f"  - Service: {node.get('name', 'Unknown')} (ID: {node.get('id', 'Unknown')})")
             
-            # For now, return basic data structure until we figure out usage API
+            total_cost = 0.0
             resource_costs = {
                 'cpu': {'cost': 0.0, 'usage': '0 vCPU hours', 'raw_value': 0, 'percentage': 0},
                 'memory': {'cost': 0.0, 'usage': '0 GB hours', 'raw_value': 0, 'percentage': 0},
@@ -569,12 +581,74 @@ def fetch_railway_usage(token, project_id):
                 'storage': {'cost': 0.0, 'usage': '0 GB', 'raw_value': 0, 'percentage': 0}
             }
             
+            for service in services:
+                node = service.get('node', {})
+                service_name = node.get('name', 'Unknown')
+                service_id = node.get('id', 'Unknown')
+                print(f"  - Service: {service_name} (ID: {service_id})")
+                
+                # Get usage data
+                usage = node.get('usage', {})
+                if usage:
+                    estimated_cost = usage.get('estimatedCost', 0)
+                    cpu_usage = usage.get('cpuUsage', 0)
+                    memory_usage = usage.get('memoryUsage', 0)
+                    network_usage = usage.get('networkUsage', 0)
+                    disk_usage = usage.get('diskUsage', 0)
+                    
+                    print(f"    💰 Estimated Cost: ${estimated_cost}")
+                    print(f"    🔧 CPU Usage: {cpu_usage}")
+                    print(f"    🧠 Memory Usage: {memory_usage}")
+                    print(f"    🌐 Network Usage: {network_usage}")
+                    print(f"    💾 Disk Usage: {disk_usage}")
+                    
+                    total_cost += estimated_cost
+                    
+                    # Update resource costs with real data
+                    if cpu_usage > 0:
+                        resource_costs['cpu']['cost'] = estimated_cost * 0.4  # Assume 40% for CPU
+                        resource_costs['cpu']['usage'] = f"{cpu_usage} vCPU hours"
+                        resource_costs['cpu']['raw_value'] = cpu_usage
+                        resource_costs['cpu']['percentage'] = 40
+                    
+                    if memory_usage > 0:
+                        resource_costs['memory']['cost'] = estimated_cost * 0.3  # Assume 30% for memory
+                        resource_costs['memory']['usage'] = f"{memory_usage} GB hours"
+                        resource_costs['memory']['raw_value'] = memory_usage
+                        resource_costs['memory']['percentage'] = 30
+                    
+                    if network_usage > 0:
+                        resource_costs['network']['cost'] = estimated_cost * 0.2  # Assume 20% for network
+                        resource_costs['network']['usage'] = f"{network_usage} GB"
+                        resource_costs['network']['raw_value'] = network_usage
+                        resource_costs['network']['percentage'] = 20
+                    
+                    if disk_usage > 0:
+                        resource_costs['storage']['cost'] = estimated_cost * 0.1  # Assume 10% for storage
+                        resource_costs['storage']['usage'] = f"{disk_usage} GB"
+                        resource_costs['storage']['raw_value'] = disk_usage
+                        resource_costs['storage']['percentage'] = 10
+                else:
+                    print(f"    ⚠️ No usage data found for service {service_name}")
+                
+                # Get metrics
+                metrics = node.get('metrics', {}).get('edges', [])
+                print(f"    📊 Metrics found: {len(metrics)}")
+                for metric in metrics[:3]:  # Show first 3 metrics
+                    metric_node = metric.get('node', {})
+                    metric_name = metric_node.get('name', 'Unknown')
+                    metric_value = metric_node.get('value', 'Unknown')
+                    metric_timestamp = metric_node.get('timestamp', 'Unknown')
+                    print(f"      - {metric_name}: {metric_value} ({metric_timestamp})")
+            
+            print(f"💰 Total estimated cost: ${total_cost}")
+            
             return {
-                'current_usage': 0.0,
+                'current_usage': total_cost,
                 'resource_breakdown': resource_costs,
                 'last_updated': datetime.now().isoformat(),
                 'project_name': project_data.get('name', 'Unknown'),
-                'debug_info': f"Connected to {project_data.get('name')} (ID: {project_data.get('id')})"
+                'debug_info': f"Connected to {project_data.get('name')} with {len(services)} service(s)"
             }
         
         else:
