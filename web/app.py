@@ -492,22 +492,14 @@ def fetch_railway_usage(token, project_id):
         end_date = datetime.now()
         start_date = end_date - timedelta(days=30)
         
-        # GraphQL query for actual usage data
+        # GraphQL query - start simple to test authentication
         query = """
-        query ProjectUsage($projectId: String!) {
+        query TestQuery($projectId: String!) {
             project(id: $projectId) {
+                id
                 name
-                usage {
-                    currentPeriod {
-                        estimatedCost
-                        measurements {
-                            cpuUsage
-                            memoryUsageGb
-                            networkEgressGb
-                            diskUsageGb
-                        }
-                    }
-                }
+                createdAt
+                updatedAt
             }
         }
         """
@@ -537,77 +529,35 @@ def fetch_railway_usage(token, project_id):
             # Debug: Print the response to understand the structure
             print(f"Railway API Response: {data}")
             
+            # Check if we have data or errors
+            if not data.get('data'):
+                print(f"No data in response. Full response: {data}")
+                raise Exception(f"No data returned from Railway API")
+            
             # Parse usage data from new query structure
             project_data = data.get('data', {}).get('project', {})
-            usage_data = project_data.get('usage', {}).get('currentPeriod', {})
-            measurements = usage_data.get('measurements', {})
-            estimated_cost = usage_data.get('estimatedCost', 0)
+            if not project_data:
+                print(f"No project data found. Available keys: {list(data.get('data', {}).keys())}")
+                raise Exception(f"Project not found or access denied")
             
-            # Calculate costs based on Railway's 2025 pricing
-            # CPU: $20/vCPU/month, Memory: $10/GB/month, Network: $0.05/GB
+            print(f"✅ Successfully connected to Railway project: {project_data.get('name', 'Unknown')}")
+            print(f"Project ID: {project_data.get('id', 'Unknown')}")
+            print(f"Created: {project_data.get('createdAt', 'Unknown')}")
+            
+            # For now, return basic data structure until we figure out usage API
             resource_costs = {
-                'cpu': {'cost': 0.0, 'usage': '0 vCPU hours', 'raw_value': 0},
-                'memory': {'cost': 0.0, 'usage': '0 GB hours', 'raw_value': 0},
-                'network': {'cost': 0.0, 'usage': '0 GB', 'raw_value': 0},
-                'storage': {'cost': 0.0, 'usage': '0 GB', 'raw_value': 0}
+                'cpu': {'cost': 0.0, 'usage': '0 vCPU hours', 'raw_value': 0, 'percentage': 0},
+                'memory': {'cost': 0.0, 'usage': '0 GB hours', 'raw_value': 0, 'percentage': 0},
+                'network': {'cost': 0.0, 'usage': '0 GB', 'raw_value': 0, 'percentage': 0},
+                'storage': {'cost': 0.0, 'usage': '0 GB', 'raw_value': 0, 'percentage': 0}
             }
             
-            # Parse measurements from new structure
-            if measurements:
-                # CPU Usage
-                if 'cpuUsage' in measurements and measurements['cpuUsage']:
-                    cpu_value = float(measurements['cpuUsage'])
-                    cpu_hours = cpu_value / 60.0  # Convert minutes to hours
-                    cost = cpu_hours * (20.0 / (30 * 24))  # $20/vCPU/month
-                    resource_costs['cpu'] = {
-                        'cost': cost,
-                        'usage': f'{cpu_hours:.1f} vCPU hours',
-                        'raw_value': cpu_value
-                    }
-                
-                # Memory Usage
-                if 'memoryUsageGb' in measurements and measurements['memoryUsageGb']:
-                    memory_value = float(measurements['memoryUsageGb'])
-                    cost = memory_value * (10.0 / (30 * 24))  # $10/GB/month
-                    resource_costs['memory'] = {
-                        'cost': cost,
-                        'usage': f'{memory_value:.1f} GB hours',
-                        'raw_value': memory_value
-                    }
-                
-                # Network Usage
-                if 'networkEgressGb' in measurements and measurements['networkEgressGb']:
-                    network_value = float(measurements['networkEgressGb'])
-                    cost = network_value * 0.05  # $0.05/GB
-                    resource_costs['network'] = {
-                        'cost': cost,
-                        'usage': f'{network_value:.2f} GB',
-                        'raw_value': network_value
-                    }
-                
-                # Storage Usage
-                if 'diskUsageGb' in measurements and measurements['diskUsageGb']:
-                    storage_value = float(measurements['diskUsageGb'])
-                    cost = storage_value * 0.15  # $0.15/GB/month
-                    resource_costs['storage'] = {
-                        'cost': cost,
-                        'usage': f'{storage_value:.2f} GB',
-                        'raw_value': storage_value
-                    }
-            
-            # Calculate total cost and percentages
-            total_cost = sum(r['cost'] for r in resource_costs.values())
-            
-            for resource in resource_costs.values():
-                if total_cost > 0:
-                    resource['percentage'] = int((resource['cost'] / total_cost) * 100)
-                else:
-                    resource['percentage'] = 0
-            
             return {
-                'current_usage': round(total_cost, 2),
+                'current_usage': 0.0,
                 'resource_breakdown': resource_costs,
-                'last_updated': datetime.now().isoformat()
+                'last_updated': datetime.now().isoformat(),
+                'project_name': project_data.get('name', 'Unknown'),
+                'debug_info': f"Connected to {project_data.get('name')} (ID: {project_data.get('id')})"
             }
         
         else:
