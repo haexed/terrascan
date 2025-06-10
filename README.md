@@ -19,8 +19,8 @@
 **Technical Philosophy**:
 - Choose simplicity over sophistication
 - SQLite over complex cloud databases
-- Python scientific stack over JavaScript frameworks
-- VPS hosting over serverless complexity
+- Python over JavaScript frameworks
+- Simple hosting over serverless complexity
 - Free data sources over proprietary APIs
 
 ---
@@ -88,7 +88,7 @@ python3 run.py
 ```
 
 ### **🎯 Design Philosophy**
-- **🐍 Python-First** - Leverage scientific ecosystem (pandas, numpy, etc.)
+- **🐍 Python-First** - Leverage scientific ecosystem
 - **💾 SQLite Simplicity** - Perfect for read-heavy environmental data
 - **🕰️ Geological Timescales** - Years/decades over real-time
 - **🔍 Full Transparency** - View source code for every data collection
