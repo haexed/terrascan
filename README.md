@@ -4,7 +4,24 @@
 
 **🎯 Environmental time machine showing current conditions in deep historical context**
 
-**Features:** 7-page web interface • 3 active data providers • 3,400+ environmental records • Full transparency • SQLite + Python architecture
+---
+
+## 🌱 **Environmental Impact & Mission**
+
+**Primary Mission**: Create the world's most compelling environmental time machine.
+
+**Core Values**:
+- 🔓 **Open Data** - All environmental data should be freely accessible
+- 🔬 **Scientific Transparency** - Show your work, open source everything
+- 🌍 **Global Perspective** - Environmental challenges need global solutions
+- 🕰️ **Long-term Thinking** - Geological timescales over quarterly reports
+
+**Technical Philosophy**:
+- Choose simplicity over sophistication
+- SQLite over complex cloud databases
+- Python scientific stack over JavaScript frameworks
+- VPS hosting over serverless complexity
+- Free data sources over proprietary APIs
 
 ---
 
@@ -111,7 +128,7 @@ python3 run.py
 - Geographic distribution of monitoring points
 - Statistical summaries and data quality indicators
 
-### **📊 Metrics Analysis** *(New!)*
+### **📊 Metrics Analysis**
 - Comprehensive overview of all environmental metrics (fire brightness, water levels, air quality)
 - Statistical analysis: min/max/average values per metric
 - Geographic coverage: unique monitoring locations
@@ -124,8 +141,7 @@ python3 run.py
 - Documentation links and API information
 - Task configuration and scheduling per provider
 
-### **🗂️ Schema Visualization** *(New!)*
-- Interactive database schema browser
+### **🗂️ Schema Visualization**
 - Table relationships and foreign keys
 - Column types, constraints, and indexes
 - Live row counts and data freshness
@@ -219,45 +235,6 @@ from .fetch_new_source import fetch_new_data
 
 ---
 
-## 🚀 **Deployment**
-
-### **Local Development**
-```bash
-python3 run.py
-# Runs with simulated data, no API keys needed
-```
-
-### **Production (VPS Recommended)**
-```bash
-# One-command deployment
-curl -fsSL https://raw.githubusercontent.com/haexed/terrascan/main/deploy.sh | bash
-```
-
-**Recommended hosting**: Hetzner VPS (€4.15/month) - perfect for SQLite + Python workloads.
-
-See **[DEPLOYMENT.md](DEPLOYMENT.md)** for complete hosting guide.
-
----
-
-## 🌱 **Environmental Impact & Mission**
-
-**Primary Mission**: Create the world's most compelling environmental time machine.
-
-**Core Values**:
-- 🔓 **Open Data** - All environmental data should be freely accessible
-- 🔬 **Scientific Transparency** - Show your work, open source everything
-- 🌍 **Global Perspective** - Environmental challenges need global solutions
-- 🕰️ **Long-term Thinking** - Geological timescales over quarterly reports
-
-**Technical Philosophy**:
-- Choose simplicity over sophistication
-- SQLite over complex cloud databases
-- Python scientific stack over JavaScript frameworks
-- VPS hosting over serverless complexity
-- Free data sources over proprietary APIs
-
----
-
 ## 📈 **Current Status & Roadmap**
 
 ### **✅ Phase 1: Foundation (COMPLETE)**
@@ -320,7 +297,7 @@ See **[DEPLOYMENT.md](DEPLOYMENT.md)** for complete hosting guide.
 - OpenAQ for air quality measurements
 - All providers offer free API access
 
-**Built With**: Python 3.11+, Flask, SQLite, HTML5, CSS3, JavaScript
+**Built With**: Python, Flask, SQLite, HTML, CSS, JavaScript
 
 ---
 
