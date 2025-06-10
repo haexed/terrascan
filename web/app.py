@@ -467,14 +467,7 @@ def operational():
                 'network': {'usage': '0 GB', 'cost': 0.0, 'percentage': 0},
                 'storage': {'usage': '0 GB', 'cost': 0.0, 'percentage': 0}
             },
-            'deployment_logs': [],
-            'traffic_stats': {
-                'total_requests': None,
-                'avg_response_time': None,
-                'error_rate': None,
-                'active_users': None
-            },
-            'http_logs': []
+            'deployment_logs': []
         }
         
         if api_token and project_id:
@@ -486,11 +479,6 @@ def operational():
                 # Fetch deployment logs
                 deployment_logs = fetch_railway_deployment_logs(api_token, project_id)
                 operational_data['deployment_logs'] = deployment_logs
-                
-                # Fetch traffic analytics
-                traffic_data = fetch_railway_traffic_analytics(api_token, project_id)
-                operational_data['traffic_stats'] = traffic_data.get('stats', operational_data['traffic_stats'])
-                operational_data['http_logs'] = traffic_data.get('http_logs', [])
                 
             except Exception as e:
                 operational_data['api_error'] = f"Railway API error: {str(e)}"
@@ -692,28 +680,11 @@ def api_deployment_logs():
         if not api_token or not project_id:
             return jsonify({'error': 'Railway API credentials not configured'}), 400
             
-        logs = fetch_railway_deployment_logs(api_token, project_id)
-        return jsonify({'logs': logs})
+        deployment_logs = fetch_railway_deployment_logs(api_token, project_id)
+        return jsonify({'deployment_logs': deployment_logs})
         
     except Exception as e:
         print(f"Deployment logs API error: {e}")
-        return jsonify({'error': str(e)}), 500
-
-@app.route('/api/traffic-analytics')
-def api_traffic_analytics():
-    """API endpoint for Railway traffic analytics."""
-    try:
-        api_token = os.getenv('RAILWAY_API_TOKEN')
-        project_id = os.getenv('RAILWAY_PROJECT_ID')
-        
-        if not api_token or not project_id:
-            return jsonify({'error': 'Railway API credentials not configured'}), 400
-            
-        traffic_data = fetch_railway_traffic_analytics(api_token, project_id)
-        return jsonify(traffic_data)
-        
-    except Exception as e:
-        print(f"Traffic analytics API error: {e}")
         return jsonify({'error': str(e)}), 500
 
 def fetch_railway_deployment_logs(api_token, project_id):
@@ -761,7 +732,6 @@ def fetch_railway_deployment_logs(api_token, project_id):
         
         if response.status_code == 200:
             data = response.json()
-            print(f"Deployments response: {data}")
             
             deployments = data.get('data', {}).get('deployments', {}).get('edges', [])
             
@@ -812,112 +782,6 @@ def fetch_railway_deployment_logs(api_token, project_id):
     except Exception as e:
         print(f"Railway deployments fetch error: {e}")
         return []
-
-def fetch_railway_traffic_analytics(api_token, project_id):
-    """Fetch HTTP traffic analytics from Railway API."""
-    try:
-        url = "https://backboard.railway.com/graphql/v2"
-        headers = {
-            "Authorization": f"Bearer {api_token}",
-            "Content-Type": "application/json"
-        }
-        
-        # GraphQL query for environment logs (which may include HTTP activity)
-        query = """
-        query GetEnvironmentLogs($projectId: String!) {
-            environments(projectId: $projectId) {
-                edges {
-                    node {
-                        id
-                        name
-                        deployments(first: 5) {
-                            edges {
-                                node {
-                                    id
-                                    status
-                                    createdAt
-                                    url
-                                    staticUrl
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        """
-        
-        variables = {
-            'projectId': project_id
-        }
-        
-        response = requests.post(url, json={'query': query, 'variables': variables}, headers=headers)
-        
-        if response.status_code == 200:
-            data = response.json()
-            print(f"Environment analytics response: {data}")
-            
-            environments = data.get('data', {}).get('environments', {}).get('edges', [])
-            
-            # For now, return mock traffic data since HTTP logs require specific deployment IDs
-            # We'll calculate basic stats from deployment frequency as a proxy
-            total_deployments = 0
-            active_environments = len(environments)
-            
-            recent_deployments = []
-            for env_edge in environments:
-                env = env_edge.get('node', {})
-                deployments = env.get('deployments', {}).get('edges', [])
-                total_deployments += len(deployments)
-                
-                for dep_edge in deployments:
-                    deployment = dep_edge.get('node', {})
-                    if deployment.get('url'):
-                        recent_deployments.append({
-                            'timestamp': deployment.get('createdAt', 'Unknown'),
-                            'method': 'GET',
-                            'path': '/',
-                            'status': 200 if deployment.get('status') == 'SUCCESS' else 202,
-                            'response_time': 150,  # Estimated
-                            'user_agent': 'Railway Health Check'
-                        })
-            
-            # Generate estimated traffic stats based on deployment activity
-            estimated_daily_requests = max(total_deployments * 10, 20)  # Rough estimate
-            
-            return {
-                'stats': {
-                    'total_requests': estimated_daily_requests,
-                    'avg_response_time': 150,  # Estimated average
-                    'error_rate': 0,  # Assume low error rate for successful deployments
-                    'active_users': active_environments
-                },
-                'http_logs': recent_deployments[:15]
-            }
-            
-        else:
-            print(f"Environment analytics API error {response.status_code}: {response.text}")
-            return {
-                'stats': {
-                    'total_requests': None,
-                    'avg_response_time': None,
-                    'error_rate': None,
-                    'active_users': None
-                },
-                'http_logs': []
-            }
-            
-    except Exception as e:
-        print(f"Railway environment analytics fetch error: {e}")
-        return {
-            'stats': {
-                'total_requests': None,
-                'avg_response_time': None,
-                'error_rate': None,
-                'active_users': None
-            },
-            'http_logs': []
-        }
 
 # Error handlers
 @app.errorhandler(404)

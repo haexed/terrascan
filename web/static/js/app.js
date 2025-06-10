@@ -304,7 +304,7 @@ async function refreshDeploymentLogs() {
         const response = await fetch('/api/deployment-logs');
         if (response.ok) {
             const data = await response.json();
-            updateDeploymentLogsUI(data.logs);
+            updateDeploymentLogsUI(data.deployment_logs);
         } else {
             console.error('Failed to fetch deployment logs');
             showLogError(container, 'Failed to fetch deployment logs from Railway API');
@@ -312,33 +312,6 @@ async function refreshDeploymentLogs() {
     } catch (error) {
         console.error('Error fetching deployment logs:', error);
         showLogError(container, 'Network error while fetching deployment logs');
-    } finally {
-        btn.innerHTML = originalText;
-        btn.disabled = false;
-    }
-}
-
-// Refresh traffic analytics data
-async function refreshTrafficData() {
-    const btn = document.getElementById('trafficBtn');
-    const container = document.getElementById('http-logs-container');
-    const originalText = btn.innerHTML;
-
-    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Fetching Traffic...';
-    btn.disabled = true;
-
-    try {
-        const response = await fetch('/api/traffic-analytics');
-        if (response.ok) {
-            const data = await response.json();
-            updateTrafficAnalyticsUI(data);
-        } else {
-            console.error('Failed to fetch traffic analytics');
-            showLogError(container, 'Failed to fetch traffic data from Railway API');
-        }
-    } catch (error) {
-        console.error('Error fetching traffic analytics:', error);
-        showLogError(container, 'Network error while fetching traffic analytics');
     } finally {
         btn.innerHTML = originalText;
         btn.disabled = false;
@@ -381,63 +354,6 @@ function updateDeploymentLogsUI(logs) {
     });
 
     container.innerHTML = html;
-}
-
-// Update traffic analytics UI
-function updateTrafficAnalyticsUI(data) {
-    // Update stat boxes
-    document.getElementById('total-requests').textContent = data.stats.total_requests || '--';
-    document.getElementById('avg-response-time').textContent = data.stats.avg_response_time ? `${data.stats.avg_response_time}ms` : '--';
-    document.getElementById('error-rate').textContent = data.stats.error_rate ? `${data.stats.error_rate}%` : '0%';
-    document.getElementById('active-users').textContent = data.stats.active_users || '--';
-
-    // Update HTTP logs table
-    const container = document.getElementById('http-logs-container');
-    const tableContainer = container.querySelector('table') ? container : container.querySelector('h4').parentElement;
-
-    if (!data.http_logs || data.http_logs.length === 0) {
-        const errorDiv = `
-            <div class="stat-box" style="background: #f8f9fa; color: #6c757d;">
-                <strong>📡 No recent traffic data</strong><br>
-                <small>No HTTP requests found in the monitoring period</small>
-            </div>
-        `;
-        tableContainer.innerHTML = '<h4>🌐 Recent HTTP Requests</h4>' + errorDiv;
-        return;
-    }
-
-    let tableHtml = `
-        <h4>🌐 Recent HTTP Requests</h4>
-        <table class="data-table">
-            <thead>
-                <tr>
-                    <th>Time</th>
-                    <th>Method</th>
-                    <th>Path</th>
-                    <th>Status</th>
-                    <th>Response Time</th>
-                    <th>User Agent</th>
-                </tr>
-            </thead>
-            <tbody>
-    `;
-
-    data.http_logs.forEach(request => {
-        const statusClass = request.status < 400 ? 'active' : 'inactive';
-        tableHtml += `
-            <tr>
-                <td>${request.timestamp}</td>
-                <td><span class="status-badge">${request.method}</span></td>
-                <td><code>${request.path}</code></td>
-                <td><span class="task-status status-${statusClass}">${request.status}</span></td>
-                <td>${request.response_time}ms</td>
-                <td><small>${request.user_agent.substring(0, 50)}...</small></td>
-            </tr>
-        `;
-    });
-
-    tableHtml += '</tbody></table>';
-    tableContainer.innerHTML = tableHtml;
 }
 
 // Show error message in log containers

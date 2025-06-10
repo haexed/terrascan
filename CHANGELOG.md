@@ -22,6 +22,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Improved separation of concerns between HTML templates and CSS styling
 - Better caching performance with external CSS file vs inline styles
 
+## [1.1.5] - 2025-06-10
+
+### Removed
+- **🗑️ Traffic Analytics Section**: Removed mock traffic monitoring from operational page
+  - **Removed frontend components**: Eliminated Traffic Analytics card with HTTP request monitoring
+  - **Removed backend mock data**: Cleaned up `fetch_railway_traffic_analytics()` function and related code
+  - **Removed API endpoints**: Deleted `/api/traffic-analytics` route and handler
+  - **Removed JavaScript functions**: Eliminated `refreshTrafficData()` and `updateTrafficAnalyticsUI()` functions
+  - **Simplified operational data**: Removed `traffic_stats` and `http_logs` fields from backend data structure
+  - **Cleaner interface**: Operational page now focuses on core cost monitoring and deployment activity
+
+### Technical Details
+- Removed 100+ lines of mock traffic analytics code from `web/app.py`
+- Deleted traffic analytics HTML section from `web/templates/operational.html`
+- Cleaned up JavaScript functions from `web/static/js/app.js`
+- Eliminated unnecessary Railway API calls for mock traffic data
+- Improved page load performance with simplified data structure
+- Maintained Railway cost monitoring and deployment logs functionality
+
 ## [1.1.3] - 2025-06-10
 
 ### Fixed
