@@ -5,22 +5,15 @@ All notable changes to Terrascan will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.1.4] - 2025-06-10
+## [1.1.6] - 2025-06-10
+### Removed
+- Deployment activity section from operational page
+- `fetch_railway_deployment_logs()` function and related API endpoint
+- Deployment-related JavaScript functions
 
-### Improved
-- **🎨 CSS Architecture Cleanup**: Consolidated inline styles to centralized CSS file
-  - **Moved metrics page styles**: All styles from `metrics.html` moved to `web/static/css/style.css`
-  - **Moved schema page styles**: All styles from `schema.html` moved to centralized CSS file
-  - **Improved maintainability**: Eliminated inline `<style>` tags in favor of external stylesheet
-  - **Better organization**: Added clear section comments for page-specific styles in CSS file
-  - **Enhanced readability**: Templates are now cleaner without embedded CSS blocks
-
-### Technical Details
-- Consolidated 160+ lines of inline CSS from metrics and schema templates
-- Added "METRICS PAGE STYLES" and "SCHEMA PAGE STYLES" sections to main CSS file
-- Maintained all existing styling and responsive design behavior
-- Improved separation of concerns between HTML templates and CSS styling
-- Better caching performance with external CSS file vs inline styles
+### Fixed
+- Reduced data fetching overhead
+- Simplified operational page interface
 
 ## [1.1.5] - 2025-06-10
 
@@ -40,6 +33,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Eliminated unnecessary Railway API calls for mock traffic data
 - Improved page load performance with simplified data structure
 - Maintained Railway cost monitoring and deployment logs functionality
+
+## [1.1.4] - 2025-06-10
+
+### Improved
+- **🎨 CSS Architecture Cleanup**: Consolidated inline styles to centralized CSS file
+  - **Moved metrics page styles**: All styles from `metrics.html` moved to `web/static/css/style.css`
+  - **Moved schema page styles**: All styles from `schema.html` moved to centralized CSS file
+  - **Improved maintainability**: Eliminated inline `<style>` tags in favor of external stylesheet
+  - **Better organization**: Added clear section comments for page-specific styles in CSS file
+  - **Enhanced readability**: Templates are now cleaner without embedded CSS blocks
+
+### Technical Details
+- Consolidated 160+ lines of inline CSS from metrics and schema templates
+- Added "METRICS PAGE STYLES" and "SCHEMA PAGE STYLES" sections to main CSS file
+- Maintained all existing styling and responsive design behavior
+- Improved separation of concerns between HTML templates and CSS styling
+- Better caching performance with external CSS file vs inline styles
 
 ## [1.1.3] - 2025-06-10
 
@@ -148,4 +158,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **SQLite Database**: Lightweight, file-based storage with full ACID compliance
 - **Flask Web Framework**: Professional web interface with RESTful API endpoints
 - **Modular Architecture**: Clean separation of concerns with reusable components
+
+
  

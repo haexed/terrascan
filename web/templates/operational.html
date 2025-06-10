@@ -129,43 +129,7 @@
     </div>
 </div>
 
-<!-- Railway Deployment Logs -->
-<div class="card">
-    <h3>🚀 Deployment Activity</h3>
-    <p class="text-muted">Recent Railway deployment logs and build status</p>
 
-    <div id="deployment-logs-container">
-        {% if operational_data.deployment_logs %}
-        {% for log in operational_data.deployment_logs %}
-        <div class="log-item log-{{ log.status }}">
-            <div class="log-header">
-                <div>
-                    <strong>{{ log.timestamp }}</strong> |
-                    <span class="task-status status-{{ 'active' if log.status == 'success' else 'inactive' }}">
-                        {{ log.status.upper() }}
-                    </span>
-                    {% if log.deployment_id %}
-                    | <code>{{ log.deployment_id[:8] }}...</code>
-                    {% endif %}
-                </div>
-            </div>
-            <div class="log-content" style="display: block;">
-                <pre>{{ log.message }}</pre>
-            </div>
-        </div>
-        {% endfor %}
-        {% else %}
-        <div class="stat-box" style="background: #f8f9fa; color: #6c757d;">
-            <strong>📋 No deployment logs available</strong><br>
-            <small>Deployment logs will appear here when available from Railway API</small>
-        </div>
-        {% endif %}
-    </div>
-
-    <button class="run-btn" onclick="refreshDeploymentLogs()" id="deploymentLogsBtn">
-        <i class="fas fa-sync"></i> Refresh Deployment Logs
-    </button>
-</div>
 
 
 

@@ -467,7 +467,7 @@ def operational():
                 'network': {'usage': '0 GB', 'cost': 0.0, 'percentage': 0},
                 'storage': {'usage': '0 GB', 'cost': 0.0, 'percentage': 0}
             },
-            'deployment_logs': []
+    
         }
         
         if api_token and project_id:
@@ -476,9 +476,7 @@ def operational():
                 railway_data = fetch_railway_usage(api_token, project_id)
                 operational_data.update(railway_data)
                 
-                # Fetch deployment logs
-                deployment_logs = fetch_railway_deployment_logs(api_token, project_id)
-                operational_data['deployment_logs'] = deployment_logs
+                
                 
             except Exception as e:
                 operational_data['api_error'] = f"Railway API error: {str(e)}"
@@ -670,118 +668,9 @@ def api_refresh_railway_costs():
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
 
-@app.route('/api/deployment-logs')
-def api_deployment_logs():
-    """API endpoint for Railway deployment logs."""
-    try:
-        api_token = os.getenv('RAILWAY_API_TOKEN')
-        project_id = os.getenv('RAILWAY_PROJECT_ID')
-        
-        if not api_token or not project_id:
-            return jsonify({'error': 'Railway API credentials not configured'}), 400
-            
-        deployment_logs = fetch_railway_deployment_logs(api_token, project_id)
-        return jsonify({'deployment_logs': deployment_logs})
-        
-    except Exception as e:
-        print(f"Deployment logs API error: {e}")
-        return jsonify({'error': str(e)}), 500
 
-def fetch_railway_deployment_logs(api_token, project_id):
-    """Fetch recent deployment logs from Railway API."""
-    try:
-        url = "https://backboard.railway.com/graphql/v2"
-        headers = {
-            "Authorization": f"Bearer {api_token}",
-            "Content-Type": "application/json"
-        }
-        
-        # GraphQL query for recent deployments (not specific deployment logs)
-        query = """
-        query GetRecentDeployments($projectId: String!) {
-            deployments(
-                first: 10,
-                input: { projectId: $projectId }
-            ) {
-                edges {
-                    node {
-                        id
-                        status
-                        createdAt
-                        updatedAt
-                        meta
-                        staticUrl
-                        url
-                        environment {
-                            name
-                        }
-                        service {
-                            name
-                        }
-                    }
-                }
-            }
-        }
-        """
-        
-        variables = {
-            'projectId': project_id
-        }
-        
-        response = requests.post(url, json={'query': query, 'variables': variables}, headers=headers)
-        
-        if response.status_code == 200:
-            data = response.json()
-            
-            deployments = data.get('data', {}).get('deployments', {}).get('edges', [])
-            
-            # Format deployments for display
-            formatted_logs = []
-            for edge in deployments[:10]:  # Limit to 10 most recent
-                deployment = edge.get('node', {})
-                
-                # Format timestamp
-                created_at = deployment.get('createdAt', '')
-                if created_at:
-                    # Convert ISO timestamp to readable format
-                    from datetime import datetime
-                    try:
-                        dt = datetime.fromisoformat(created_at.replace('Z', '+00:00'))
-                        timestamp = dt.strftime('%Y-%m-%d %H:%M:%S UTC')
-                    except:
-                        timestamp = created_at
-                else:
-                    timestamp = 'Unknown'
-                
-                # Create deployment message
-                service_name = deployment.get('service', {}).get('name', 'Unknown')
-                env_name = deployment.get('environment', {}).get('name', 'production')
-                status = deployment.get('status', 'unknown').lower()
-                
-                message = f"Deployment to {env_name} environment"
-                if service_name != 'Unknown':
-                    message += f" for service '{service_name}'"
-                if deployment.get('staticUrl'):
-                    message += f"\nStatic URL: {deployment.get('staticUrl')}"
-                if deployment.get('url'):
-                    message += f"\nLive URL: {deployment.get('url')}"
-                
-                formatted_logs.append({
-                    'timestamp': timestamp,
-                    'message': message,
-                    'deployment_id': deployment.get('id'),
-                    'status': 'success' if status in ['success', 'completed'] else 'pending' if status == 'building' else 'error'
-                })
-            
-            return formatted_logs
-            
-        else:
-            print(f"Deployments API error {response.status_code}: {response.text}")
-            return []
-            
-    except Exception as e:
-        print(f"Railway deployments fetch error: {e}")
-        return []
+
+
 
 # Error handlers
 @app.errorhandler(404)
