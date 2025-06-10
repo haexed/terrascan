@@ -42,6 +42,9 @@ RAILWAY_PROJECT_ID=a4df12f8-47e7-4cb3-8f82-7f454cccc835</pre>
             <span class="stat-value" id="current-usage">${{ "%.2f"|format(operational_data.current_usage) }}</span>
             <div class="stat-label">Current Usage</div>
             <div class="text-muted">This billing cycle</div>
+            {% if operational_data.railway_discount_applied %}
+            <div class="text-success"><small>🎯 Railway discount applied</small></div>
+            {% endif %}
         </div>
         <div class="stat-box">
             <span class="stat-value">${{ "%.2f"|format(operational_data.budget_limit) }}</span>
@@ -111,7 +114,7 @@ RAILWAY_PROJECT_ID=a4df12f8-47e7-4cb3-8f82-7f454cccc835</pre>
         <div class="mb-3">
             <strong>Budget Alert ($8.00)</strong>
             <div class="progress-bar">
-                <div class="progress-fill" style="width: {{ "%.0f"|format((operational_data.current_usage / 8.0 * 100)
+                <div class="progress-fill" style="width: {{ " %.0f"|format((operational_data.current_usage / 8.0 * 100)
                     if operational_data.current_usage else 0) }}%; background-color: #ffc107;"></div>
             </div>
             <small class="text-muted">Alert at 80% of budget</small>
@@ -119,7 +122,7 @@ RAILWAY_PROJECT_ID=a4df12f8-47e7-4cb3-8f82-7f454cccc835</pre>
         <div class="mb-3">
             <strong>Hard Limit ($10.00)</strong>
             <div class="progress-bar">
-                <div class="progress-fill" style="width: {{ "%.0f"|format((operational_data.current_usage / 10.0 * 100)
+                <div class="progress-fill" style="width: {{ " %.0f"|format((operational_data.current_usage / 10.0 * 100)
                     if operational_data.current_usage else 0) }}%; background-color: #dc3545;"></div>
             </div>
             <small class="text-muted">Automatic shutdown at 100%</small>
@@ -239,34 +242,19 @@ RAILWAY_PROJECT_ID=a4df12f8-47e7-4cb3-8f82-7f454cccc835</pre>
 </div>
 
 <!-- Initialize operational data for JavaScript -->
+<script type="application/json" id="operational-data">
+{{ operational_data | tojson }}
+</script>
+
 <script>
-    window.operationalData = {
-        hasRailwayConfig: {{ 'true' if operational_data.has_railway_config else 'false' }},
-    projectId: '{{ operational_data.project_id or "" }}',
-        currentUsage: {{ operational_data.current_usage}},
-    budgetLimit: {{ operational_data.budget_limit}},
-    resourceBreakdown: {
-        cpu: {
-            usage: '{{ operational_data.resource_breakdown.cpu.usage }}',
-                cost: {{ operational_data.resource_breakdown.cpu.cost}},
-            percentage: {{ operational_data.resource_breakdown.cpu.percentage}}
-        },
-        memory: {
-            usage: '{{ operational_data.resource_breakdown.memory.usage }}',
-                cost: {{ operational_data.resource_breakdown.memory.cost}},
-            percentage: {{ operational_data.resource_breakdown.memory.percentage}}
-        },
-        network: {
-            usage: '{{ operational_data.resource_breakdown.network.usage }}',
-                cost: {{ operational_data.resource_breakdown.network.cost}},
-            percentage: {{ operational_data.resource_breakdown.network.percentage}}
-        },
-        storage: {
-            usage: '{{ operational_data.resource_breakdown.storage.usage }}',
-                cost: {{ operational_data.resource_breakdown.storage.cost}},
-            percentage: {{ operational_data.resource_breakdown.storage.percentage}}
+    // Parse operational data from JSON
+    window.operationalData = JSON.parse(document.getElementById('operational-data').textContent);
+
+    // Initialize operational page functionality
+    document.addEventListener('DOMContentLoaded', function () {
+        if (typeof initOperationalPage === 'function') {
+            initOperationalPage();
         }
-    }
-    };
+    });
 </script>
 {% endblock %}

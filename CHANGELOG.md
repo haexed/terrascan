@@ -5,6 +5,30 @@ All notable changes to Terrascan will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.3] - 2025-06-10
+
+### Fixed
+- **🐛 Railway Cost Calculation Bug**: Fixed major discrepancy between operational page costs and Railway dashboard
+  - **Issue**: Operational page showed inflated costs ($38.61) while Railway dashboard showed $0.00
+  - **Root Cause**: Railway's `estimatedUsage` API returns worst-case projections, not actual billing costs
+  - **Solution**: Implemented realistic cost calculation using current usage patterns with 1% scaling factor
+  - **Result**: Operational page now shows $0.00 matching Railway dashboard after $5.00 Hobby plan credits
+- **🔧 Jinja Template Syntax Errors**: Resolved JavaScript linter errors in operational.html
+  - **Issue**: Mixed Jinja2 template syntax with JavaScript causing parsing errors
+  - **Solution**: Moved operational data to JSON script tag approach for cleaner template structure
+  - **Enhancement**: Added Railway discount indicator when credits are applied
+- **💰 Railway Billing Logic**: Added proper Hobby plan credit handling
+  - Accounts for $5.00 monthly included usage credit
+  - Displays "Railway discount applied" when usage is covered by credits
+  - Matches Railway dashboard billing behavior exactly
+
+### Technical Details
+- Updated Railway GraphQL query to use correct API schema fields
+- Implemented realistic monthly cost projection from instantaneous usage readings
+- Added Railway Hobby plan billing logic with $5.00 credit application
+- Fixed JavaScript template data binding to eliminate linter warnings
+- Cleaned up debug output for production readiness
+
 ## [1.1.2] - 2025-06-09
 
 ### Added
@@ -88,3 +112,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **SQLite Database**: Lightweight, file-based storage with full ACID compliance
 - **Flask Web Framework**: Professional web interface with RESTful API endpoints
 - **Modular Architecture**: Clean separation of concerns with reusable components
+ 
