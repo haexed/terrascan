@@ -2,13 +2,12 @@
 
 {% block title %}Database Schema - Terrascan{% endblock %}
 
-{% block content %}
-<div class="container">
-    <div class="header">
-        <h1>🗂️ Database Schema</h1>
-        <p>Visual overview of Terrascan's data structure and relationships</p>
-    </div>
+{% block header_subtitle %}Overview of Terrascan's data structure and relationships{% endblock %}
 
+{% block content %}
+
+<div class="card">
+    <h3>📊 Database Schema</h3>
     <div class="stats-grid">
         <div class="stat-card">
             <div class="stat-value">{{ schema_info.keys()|length }}</div>
@@ -126,153 +125,5 @@
     </div>
 </div>
 
-<style>
-    .schema-tables {
-        display: grid;
-        gap: 2rem;
-        margin-top: 2rem;
-    }
 
-    .table-card {
-        background: white;
-        border-radius: 12px;
-        padding: 1.5rem;
-        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-        border: 1px solid #e1e5e9;
-    }
-
-    .table-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 1.5rem;
-        padding-bottom: 1rem;
-        border-bottom: 2px solid #f0f3f6;
-    }
-
-    .table-header h2 {
-        margin: 0;
-        color: #2c3e50;
-        font-size: 1.4rem;
-    }
-
-    .table-stats {
-        display: flex;
-        gap: 1rem;
-    }
-
-    .row-count,
-    .column-count {
-        background: #ecf0f1;
-        padding: 0.3rem 0.8rem;
-        border-radius: 20px;
-        font-size: 0.9rem;
-        color: #555;
-    }
-
-    .columns-table {
-        width: 100%;
-        border-collapse: collapse;
-        margin-bottom: 1rem;
-    }
-
-    .columns-table th {
-        background: #34495e;
-        color: white;
-        padding: 0.8rem;
-        text-align: left;
-        font-weight: 600;
-    }
-
-    .columns-table td {
-        padding: 0.8rem;
-        border-bottom: 1px solid #ecf0f1;
-    }
-
-    .columns-table tr:hover {
-        background: #f8f9fa;
-    }
-
-    .primary-key {
-        background: #fff3cd !important;
-    }
-
-    .pk-badge {
-        background: #ffc107;
-        color: #212529;
-        padding: 0.2rem 0.5rem;
-        border-radius: 10px;
-        font-size: 0.7rem;
-        font-weight: bold;
-        margin-left: 0.5rem;
-    }
-
-    .constraint {
-        background: #d4edda;
-        color: #155724;
-        padding: 0.2rem 0.5rem;
-        border-radius: 10px;
-        font-size: 0.8rem;
-        margin-right: 0.3rem;
-    }
-
-    .null-value {
-        color: #6c757d;
-        font-style: italic;
-    }
-
-    .foreign-keys,
-    .indexes {
-        margin-top: 1.5rem;
-        padding-top: 1rem;
-        border-top: 1px solid #e9ecef;
-    }
-
-    .foreign-keys h4,
-    .indexes h4 {
-        margin: 0 0 0.8rem 0;
-        color: #495057;
-        font-size: 1rem;
-    }
-
-    .fk-list,
-    .index-list {
-        list-style: none;
-        padding: 0;
-        margin: 0;
-    }
-
-    .fk-list li,
-    .index-list li {
-        padding: 0.5rem 0;
-        font-family: 'Monaco', 'Consolas', monospace;
-        font-size: 0.9rem;
-    }
-
-    .fk-action {
-        background: #d1ecf1;
-        color: #0c5460;
-        padding: 0.2rem 0.4rem;
-        border-radius: 8px;
-        font-size: 0.8rem;
-        margin-left: 0.5rem;
-    }
-
-    .index-type {
-        background: #f8d7da;
-        color: #721c24;
-        padding: 0.2rem 0.4rem;
-        border-radius: 8px;
-        font-size: 0.8rem;
-        margin-left: 0.5rem;
-    }
-
-    code {
-        background: #f8f9fa;
-        padding: 0.2rem 0.4rem;
-        border-radius: 4px;
-        font-family: 'Monaco', 'Consolas', monospace;
-        font-size: 0.9rem;
-    }
-</style>
 {% endblock %}
