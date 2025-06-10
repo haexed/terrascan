@@ -448,7 +448,7 @@ def providers_page():
         return f"Providers Error: {e}", 500
 
 @app.route('/operational')
-def operational():
+def operational_page():
     """Operational costs and Railway hosting monitoring page."""
     try:
         # Get Railway configuration
