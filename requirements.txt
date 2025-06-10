@@ -8,4 +8,4 @@ itsdangerous==2.1.2
 click==8.1.7
 pytz==2023.3
 pandas==2.2.3
-python-crontab==3.2.0 
+python-crontab==3.2.0
