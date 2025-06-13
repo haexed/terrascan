@@ -149,7 +149,7 @@ def system():
         # NASA FIRMS stats
         nasa_stats = execute_query("""
             SELECT COUNT(*) as total_records, MAX(timestamp) as last_run
-            FROM metric_data 
+            FROM metric_data
             WHERE provider_key = 'nasa_firms'
         """)[0]
         providers['nasa_firms'] = {
@@ -173,7 +173,7 @@ def system():
         # NOAA Ocean stats
         noaa_stats = execute_query("""
             SELECT COUNT(*) as total_records, MAX(timestamp) as last_run
-            FROM metric_data 
+            FROM metric_data
             WHERE provider_key = 'noaa_ocean'
         """)[0]
         providers['noaa_ocean'] = {
@@ -331,6 +331,7 @@ def get_ocean_status():
     """Get current ocean conditions"""
     try:
         # Get latest ocean data from NOAA
+        # Fix: Use date() instead of datetime() to handle ISO timestamp format
         ocean_data = execute_query("""
             SELECT AVG(CASE WHEN metric_name = 'water_temperature' THEN value END) as avg_temp,
                    AVG(CASE WHEN metric_name = 'water_level' THEN value END) as avg_level,
@@ -338,7 +339,7 @@ def get_ocean_status():
                    MAX(timestamp) as last_update
             FROM metric_data 
             WHERE provider_key = 'noaa_ocean' 
-            AND timestamp > datetime('now', '-7 days')
+            AND date(timestamp) > date('now', '-7 days')
         """)
         
         # Get station data
@@ -349,7 +350,7 @@ def get_ocean_status():
                    metadata
             FROM metric_data 
             WHERE provider_key = 'noaa_ocean' 
-            AND timestamp > datetime('now', '-7 days')
+            AND date(timestamp) > date('now', '-7 days')
             AND location_lat IS NOT NULL
             GROUP BY location_lat, location_lng
             LIMIT 12
@@ -491,9 +492,9 @@ def api_map_data():
                    AVG(CASE WHEN metric_name = 'water_level' THEN value END) as water_level,
                    metadata,
                    MAX(timestamp) as last_updated
-            FROM metric_data 
+                FROM metric_data 
             WHERE provider_key = 'noaa_ocean' 
-            AND timestamp > datetime('now', '-7 days')
+            AND date(timestamp) > date('now', '-7 days')
             AND location_lat IS NOT NULL 
             AND location_lng IS NOT NULL
             GROUP BY location_lat, location_lng
@@ -634,6 +635,7 @@ def api_debug_ocean():
             FROM metric_data 
             WHERE provider_key = 'noaa_ocean' 
             AND metric_name = 'water_temperature'
+            AND date(timestamp) > date('now', '-7 days')
             ORDER BY timestamp DESC 
             LIMIT 10
         """)

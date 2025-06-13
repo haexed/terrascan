@@ -25,7 +25,7 @@
 git clone https://github.com/haexed/terrascan.git
 cd terrascan
 
-# Install dependencies  
+# Install dependencies
 pip install -r requirements.txt
 
 # Start the dashboard
