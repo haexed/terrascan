@@ -223,6 +223,99 @@
         </div>
     </div>
 
+    <!-- Weather & Climate Row -->
+    <div class="row mb-4">
+        <!-- Global Weather -->
+        <div class="col-lg-6">
+            <div class="eco-card p-4">
+                <div class="d-flex align-items-center mb-3">
+                    <span class="fs-1 me-3">🌡️</span>
+                    <div>
+                        <h4 class="mb-0">Global Weather</h4>
+                        <div class="data-source">OpenWeatherMap Network</div>
+                    </div>
+                </div>
+
+                <div class="row text-center">
+                    <div class="col-6">
+                        <div class="metric-value text-primary">{{ weather_data.avg_temp }}°C</div>
+                        <div class="small">Average Temperature</div>
+                    </div>
+                    <div class="col-6">
+                        <div class="metric-value text-info">{{ weather_data.avg_humidity }}%</div>
+                        <div class="small">Average Humidity</div>
+                    </div>
+                </div>
+
+                <div class="row text-center mt-3">
+                    <div class="col-6">
+                        <div class="metric-value text-secondary">{{ weather_data.avg_wind_speed }} m/s</div>
+                        <div class="small">Average Wind Speed</div>
+                    </div>
+                    <div class="col-6">
+                        <div class="metric-value text-dark">{{ weather_data.avg_pressure }} hPa</div>
+                        <div class="small">Average Pressure</div>
+                    </div>
+                </div>
+
+                {% if weather_data.city_count > 0 %}
+                <div class="text-center mt-3">
+                    <div class="small">
+                        {{ weather_data.city_count }} cities monitored
+                    </div>
+                </div>
+                {% endif %}
+
+                <div class="last-update mt-3 text-center">
+                    Last update: {{ weather_data.last_update }}
+                </div>
+            </div>
+        </div>
+
+        <!-- Weather Alerts -->
+        <div class="col-lg-6">
+            <div class="eco-card p-4">
+                <div class="d-flex align-items-center mb-3">
+                    <span class="fs-1 me-3">🚨</span>
+                    <div>
+                        <h4 class="mb-0">Weather Alerts</h4>
+                        <div class="data-source">Government Weather Services</div>
+                    </div>
+                </div>
+
+                <div class="text-center">
+                    <div
+                        class="metric-value {% if weather_data.alert_count > 5 %}text-danger{% elif weather_data.alert_count > 2 %}text-warning{% elif weather_data.alert_count > 0 %}text-info{% else %}text-success{% endif %}">
+                        {{ weather_data.alert_count }}
+                    </div>
+                    <div class="mb-2">Active Weather Alerts</div>
+
+                    <div class="mt-3">
+                        <span
+                            class="badge {% if weather_data.alert_count > 5 %}bg-danger{% elif weather_data.alert_count > 2 %}bg-warning{% elif weather_data.alert_count > 0 %}bg-info{% else %}bg-success{% endif %}">
+                            {% if weather_data.alert_count == 0 %}
+                            ALL CLEAR
+                            {% elif weather_data.alert_count <= 2 %} LOW RISK {% elif weather_data.alert_count <=5 %}
+                                MODERATE RISK {% else %} HIGH RISK {% endif %} </span>
+                    </div>
+                </div>
+
+                {% if weather_data.alert_count > 0 %}
+                <div class="text-center mt-3">
+                    <div class="small text-muted">
+                        Includes severe weather warnings, heat advisories, storm alerts, and other government-issued
+                        weather notices
+                    </div>
+                </div>
+                {% endif %}
+
+                <div class="last-update mt-3 text-center">
+                    Last update: {{ weather_data.last_update }}
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Hero Map Section -->
     <div class="row mb-4">
         <div class="col-12">

@@ -5,6 +5,41 @@ All notable changes to ECO WATCH TERRA SCAN will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.3.0] - 2024-12-19
+
+### 🌡️ **MAJOR FEATURE: Weather & Climate Integration**
+
+**New Weather Data Collection:**
+- **🌍 Global Weather Monitoring**: Added OpenWeatherMap One Call API 3.0 integration
+- **📊 Real-time Weather Data**: Temperature, humidity, wind speed, atmospheric pressure
+- **🚨 Weather Alerts**: Government weather warnings and severe weather notifications
+- **🌐 24 Major Cities**: Worldwide coverage across all continents
+- **⏰ Automated Collection**: Every 2 hours for current weather, hourly for alerts
+
+**Enhanced Dashboard:**
+- **🌡️ Global Weather Panel**: Average temperature, humidity, wind speed, pressure
+- **🚨 Weather Alerts Panel**: Active weather warnings with risk levels
+- **📈 Improved Health Score**: Weather factors now included in environmental health calculation
+- **🎨 Beautiful UI**: Weather data integrated seamlessly with existing design
+
+**Technical Implementation:**
+- **📁 New Task System**: `tasks/fetch_weather.py` with comprehensive error handling
+- **⚙️ Configuration Management**: OpenWeatherMap provider settings
+- **🗄️ Database Integration**: Weather metrics stored in existing `metric_data` table
+- **🔄 Graceful Degradation**: Works without API key, shows clear setup instructions
+
+**API Integration:**
+- **🆓 Free Tier**: 1,000 API calls/day (sufficient for monitoring)
+- **📡 One Call API 3.0**: Current weather, forecasts, historical data, alerts
+- **🌍 Global Coverage**: Weather data for major cities worldwide
+- **⚡ Rate Limiting**: Built-in delays to respect API limits
+
+**Health Score Updates:**
+- **🌡️ Temperature Extremes**: Penalties for extreme hot/cold conditions
+- **🌪️ Severe Weather**: Weather alerts impact environmental health score
+- **💨 High Winds**: Wind speed factors into overall environmental conditions
+- **🌀 Storm Systems**: Low pressure systems (storms) affect health calculations
+
 ## [2.2.3] - 2024-12-19
 
 ### 🧹 **Production Cleanup - Debug Removal**

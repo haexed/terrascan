@@ -61,9 +61,44 @@ def index():
         # Calculate environmental health score
         health_score = calculate_environmental_health_score(health_data)
         
+        # Prepare template data with individual data sections
+        fire_data = {
+            'count': health_data['fires']['count'],
+            'avg_brightness': health_data['fires']['avg_brightness'],
+            'last_update': health_data['last_updated']
+        }
+        
+        air_data = {
+            'avg_pm25': health_data['air_quality']['avg_pm25'],
+            'measurements': health_data['air_quality']['station_count'],
+            'status': get_air_quality_status(health_data['air_quality']['avg_pm25']),
+            'last_update': health_data['last_updated']
+        }
+        
+        ocean_data = {
+            'avg_temp': health_data['ocean_temperature']['avg_temp'],
+            'measurements': health_data['ocean_temperature']['station_count'],
+            'status': get_ocean_status(health_data['ocean_temperature']['avg_temp']),
+            'last_update': health_data['last_updated']
+        }
+        
+        weather_data = {
+            'avg_temp': health_data['weather']['avg_temp'],
+            'avg_humidity': health_data['weather']['avg_humidity'],
+            'avg_wind_speed': health_data['weather']['avg_wind_speed'],
+            'avg_pressure': health_data['weather']['avg_pressure'],
+            'alert_count': health_data['weather']['alert_count'],
+            'city_count': health_data['weather']['city_count'],
+            'last_update': health_data['last_updated']
+        }
+        
         response = make_response(render_template('index.html',
                                                health_data=health_data,
-                                               health_score=health_score))
+                                               health_score=health_score,
+                                               fire_data=fire_data,
+                                               air_data=air_data,
+                                               ocean_data=ocean_data,
+                                               weather_data=weather_data))
         
         # Extra aggressive cache busting for this specific issue
         response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate, max-age=0'
@@ -246,6 +281,20 @@ def get_environmental_health_data():
             AND timestamp >= datetime('now', '-7 days')
         """)
         
+        # Get recent weather data (last 24 hours)
+        weather_data = execute_query("""
+            SELECT 
+                AVG(CASE WHEN metric_name = 'temperature' THEN value END) as avg_temp,
+                AVG(CASE WHEN metric_name = 'humidity' THEN value END) as avg_humidity,
+                AVG(CASE WHEN metric_name = 'wind_speed' THEN value END) as avg_wind_speed,
+                AVG(CASE WHEN metric_name = 'atmospheric_pressure' THEN value END) as avg_pressure,
+                COUNT(CASE WHEN metric_name = 'weather_alert' THEN 1 END) as alert_count,
+                COUNT(DISTINCT CASE WHEN metric_name = 'temperature' THEN location_lat || ',' || location_lng END) as city_count
+            FROM metric_data
+            WHERE provider_key = 'openweather'
+            AND timestamp >= datetime('now', '-24 hours')
+        """)
+        
         return {
             'fires': {
                 'count': fire_data[0]['fire_count'] if fire_data else 0,
@@ -259,6 +308,14 @@ def get_environmental_health_data():
                 'avg_temp': round(ocean_data[0]['avg_temp'] or 0, 1) if ocean_data else 0,
                 'station_count': ocean_data[0]['station_count'] if ocean_data else 0
             },
+            'weather': {
+                'avg_temp': round(weather_data[0]['avg_temp'] or 0, 1) if weather_data else 0,
+                'avg_humidity': round(weather_data[0]['avg_humidity'] or 0, 1) if weather_data else 0,
+                'avg_wind_speed': round(weather_data[0]['avg_wind_speed'] or 0, 1) if weather_data else 0,
+                'avg_pressure': round(weather_data[0]['avg_pressure'] or 0, 1) if weather_data else 0,
+                'alert_count': weather_data[0]['alert_count'] if weather_data else 0,
+                'city_count': weather_data[0]['city_count'] if weather_data else 0
+            },
             'last_updated': datetime.utcnow().isoformat()
         }
     except Exception as e:
@@ -267,6 +324,7 @@ def get_environmental_health_data():
             'fires': {'count': 0, 'avg_brightness': 0},
             'air_quality': {'avg_pm25': 0, 'station_count': 0},
             'ocean_temperature': {'avg_temp': 0, 'station_count': 0},
+            'weather': {'avg_temp': 0, 'avg_humidity': 0, 'avg_wind_speed': 0, 'avg_pressure': 0, 'alert_count': 0, 'city_count': 0},
             'last_updated': datetime.utcnow().isoformat(),
             'error': str(e)
         }
@@ -275,55 +333,88 @@ def calculate_environmental_health_score(health_data):
     """Calculate environmental health score (0-100)"""
     score = 100  # Start with perfect score
     
-    # Fire impact (up to -30 points)
+    # Fire impact (up to -25 points)
     fire_count = health_data['fires']['count']
     if fire_count > 1000:
-        score -= 30
+        score -= 25
     elif fire_count > 500:
-        score -= 20
+        score -= 18
     elif fire_count > 100:
         score -= 10
     
-    # Air quality impact (up to -40 points)  
+    # Air quality impact (up to -30 points)  
     pm25 = health_data['air_quality']['avg_pm25']
     if pm25 > 75:  # Hazardous
-        score -= 40
-    elif pm25 > 55:  # Very unhealthy
         score -= 30
+    elif pm25 > 55:  # Very unhealthy
+        score -= 22
     elif pm25 > 35:  # Unhealthy
-        score -= 20
+        score -= 15
     elif pm25 > 15:  # Moderate
-        score -= 10
+        score -= 8
     
-    # Ocean temperature impact (up to -20 points)
+    # Ocean temperature impact (up to -15 points)
     ocean_temp = health_data['ocean_temperature']['avg_temp']
     if ocean_temp > 25:  # Very warm
-        score -= 20
-    elif ocean_temp > 23:  # Warm
-        score -= 10
-    elif ocean_temp < 15:  # Very cold
         score -= 15
+    elif ocean_temp > 23:  # Warm
+        score -= 8
+    elif ocean_temp < 15:  # Very cold
+        score -= 12
     elif ocean_temp < 18:  # Cold
         score -= 5
+    
+    # Weather impact (up to -20 points)
+    weather = health_data.get('weather', {})
+    
+    # Weather alerts impact (up to -10 points)
+    alert_count = weather.get('alert_count', 0)
+    if alert_count > 5:
+        score -= 10
+    elif alert_count > 2:
+        score -= 6
+    elif alert_count > 0:
+        score -= 3
+    
+    # Extreme temperature impact (up to -5 points)
+    avg_temp = weather.get('avg_temp', 20)
+    if avg_temp > 40 or avg_temp < -10:  # Extreme temperatures
+        score -= 5
+    elif avg_temp > 35 or avg_temp < -5:  # Very hot/cold
+        score -= 3
+    
+    # High wind speed impact (up to -3 points)
+    wind_speed = weather.get('avg_wind_speed', 0)
+    if wind_speed > 15:  # Very high winds (>54 km/h)
+        score -= 3
+    elif wind_speed > 10:  # High winds (>36 km/h)
+        score -= 2
+    
+    # Low pressure systems (storms) impact (up to -2 points)
+    pressure = weather.get('avg_pressure', 1013)
+    if pressure < 980:  # Very low pressure (strong storms)
+        score -= 2
+    elif pressure < 1000:  # Low pressure (storms)
+        score -= 1
     
     # Ensure score stays within bounds
     score = max(0, min(100, score))
     
     # Determine status based on score
     if score >= 80:
-        status = 'EXCELLENT'
+        status = 'STATUS EXCELLENT'
         color = '#28a745'  # Green
     elif score >= 60:
-        status = 'GOOD'
+        status = 'STATUS GOOD'
         color = '#33a474'  # Deep green
     elif score >= 40:
-        status = 'MODERATE'
+        status = 'STATUS MODERATE'
         color = '#ffc107'  # Yellow
     elif score >= 20:
-        status = 'POOR'
+        status = 'STATUS POOR'
         color = '#fd7e14'  # Orange
     else:
-        status = 'CRITICAL'
+        status = 'STATUS CRITICAL'
         color = '#dc3545'  # Red
     
     return {
