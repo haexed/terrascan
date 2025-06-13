@@ -606,6 +606,100 @@ def api_refresh():
             'error': str(e)
         }), 500
 
+@app.route('/api/debug/production')
+@no_cache
+def api_debug_production():
+    """Comprehensive production debug endpoint"""
+    try:
+        from database.config_manager import get_system_config
+        
+        debug_info = {}
+        
+        # Environment info
+        debug_info['environment'] = {
+            'RAILWAY_ENVIRONMENT': os.getenv('RAILWAY_ENVIRONMENT_NAME', 'Not set'),
+            'DATABASE_URL': 'SET' if os.getenv('DATABASE_URL') else 'NOT_SET'
+        }
+        
+        # Database info
+        try:
+            db_info = execute_query("SELECT sqlite_version() as version")[0]
+            total_records = execute_query("SELECT COUNT(*) as count FROM metric_data")[0]['count']
+            ocean_records = execute_query("SELECT COUNT(*) as count FROM metric_data WHERE provider_key = 'noaa_ocean'")[0]['count']
+            temp_records = execute_query("SELECT COUNT(*) as count FROM metric_data WHERE provider_key = 'noaa_ocean' AND metric_name = 'water_temperature'")[0]['count']
+            
+            debug_info['database'] = {
+                'sqlite_version': db_info['version'],
+                'total_records': total_records,
+                'ocean_records': ocean_records,
+                'temperature_records': temp_records
+            }
+        except Exception as e:
+            debug_info['database'] = {'error': str(e)}
+        
+        # Time functions
+        try:
+            time_info = execute_query("""
+                SELECT 
+                    datetime('now') as sqlite_now,
+                    date('now') as sqlite_date,
+                    datetime('now', '-7 days') as seven_days_ago_dt,
+                    date('now', '-7 days') as seven_days_ago_d
+            """)[0]
+            debug_info['time_functions'] = time_info
+        except Exception as e:
+            debug_info['time_functions'] = {'error': str(e)}
+        
+        # Query tests
+        queries = [
+            ("datetime_filter", "timestamp > datetime('now', '-7 days')"),
+            ("date_filter", "date(timestamp) > date('now', '-7 days')"),
+            ("simple_date", "timestamp > '2025-06-06'"),
+            ("no_filter", "1=1")
+        ]
+        
+        debug_info['query_tests'] = {}
+        for name, condition in queries:
+            try:
+                result = execute_query(f"""
+                    SELECT 
+                        COUNT(*) as count,
+                        AVG(CASE WHEN metric_name = 'water_temperature' THEN value END) as avg_temp
+                    FROM metric_data 
+                    WHERE provider_key = 'noaa_ocean' 
+                    AND {condition}
+                """)[0]
+                debug_info['query_tests'][name] = result
+            except Exception as e:
+                debug_info['query_tests'][name] = {'error': str(e)}
+        
+        # Actual function test
+        try:
+            ocean_status = get_ocean_status()
+            debug_info['ocean_status_function'] = ocean_status
+        except Exception as e:
+            debug_info['ocean_status_function'] = {'error': str(e)}
+        
+        # Configuration
+        try:
+            simulation_mode = get_system_config('simulation_mode', None)
+            debug_info['configuration'] = {'simulation_mode': simulation_mode}
+        except Exception as e:
+            debug_info['configuration'] = {'error': str(e)}
+        
+        return jsonify({
+            'success': True,
+            'timestamp': datetime.now().isoformat(),
+            'debug_info': debug_info
+        })
+        
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e),
+            'timestamp': datetime.now().isoformat()
+        }), 500
+
 @app.route('/api/debug/ocean')
 @no_cache
 def api_debug_ocean():
