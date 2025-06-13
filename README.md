@@ -289,3 +289,5 @@ Help make environmental data more accessible:
 ---
 
 **🌍 Keep watch on our planet. Every day. 🌍**
+
+<!-- Railway deployment trigger: v2.2.2 - 2024-12-19 -->
