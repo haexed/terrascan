@@ -39,18 +39,14 @@
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav ms-auto">
                     <li class="nav-item">
-                        <a class="nav-link {% if request.endpoint == 'index' %}active{% endif %}" href="/">
+                        <a class="nav-link {% if request.endpoint == 'index' or request.endpoint == 'dashboard' %}active{% endif %}"
+                            href="/">
                             <i class="fas fa-home"></i> Home
                         </a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link {% if request.endpoint == 'map_view' %}active{% endif %}" href="/map">
                             <i class="fas fa-globe"></i> Full Map
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link {% if request.endpoint == 'dashboard' %}active{% endif %}" href="/dashboard">
-                            <i class="fas fa-chart-line"></i> Dashboard
                         </a>
                     </li>
                     <li class="nav-item">
