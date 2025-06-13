@@ -133,9 +133,9 @@ def system():
     """TERRASCAN - System status and data provider information"""
     try:
         # Get system statistics
-        total_records = execute_query("SELECT COUNT(*) as count FROM metric_data")[0]['count']
-        active_tasks = execute_query("SELECT COUNT(*) as count FROM task WHERE active = 1")[0]['count']
-        recent_runs_count = execute_query("SELECT COUNT(*) as count FROM task_log WHERE started_at > datetime('now', '-24 hours')")[0]['count']
+        total_records = execute_query("SELECT COUNT(*) as count FROM metric_data")[0]['count'] or 0
+        active_tasks = execute_query("SELECT COUNT(*) as count FROM task WHERE active = 1")[0]['count'] or 0
+        recent_runs_count = execute_query("SELECT COUNT(*) as count FROM task_log WHERE started_at > datetime('now', '-24 hours')")[0]['count'] or 0
         
         system_status = {
             'total_records': total_records,
@@ -153,9 +153,9 @@ def system():
             WHERE provider_key = 'nasa_firms'
         """)[0]
         providers['nasa_firms'] = {
-            'total_records': nasa_stats['total_records'],
-            'last_run': nasa_stats['last_run'],
-            'status': 'operational' if nasa_stats['total_records'] > 0 else 'no_data'
+            'total_records': nasa_stats['total_records'] or 0,
+            'last_run': nasa_stats['last_run'] or 'Never',
+            'status': 'operational' if (nasa_stats['total_records'] or 0) > 0 else 'no_data'
         }
         
         # OpenAQ stats
@@ -165,9 +165,9 @@ def system():
             WHERE provider_key = 'openaq'
         """)[0]
         providers['openaq'] = {
-            'total_records': openaq_stats['total_records'],
-            'last_run': openaq_stats['last_run'],
-            'status': 'operational' if openaq_stats['total_records'] > 0 else 'no_data'
+            'total_records': openaq_stats['total_records'] or 0,
+            'last_run': openaq_stats['last_run'] or 'Never',
+            'status': 'operational' if (openaq_stats['total_records'] or 0) > 0 else 'no_data'
         }
         
         # NOAA Ocean stats
@@ -177,9 +177,9 @@ def system():
             WHERE provider_key = 'noaa_ocean'
         """)[0]
         providers['noaa_ocean'] = {
-            'total_records': noaa_stats['total_records'],
-            'last_run': noaa_stats['last_run'],
-            'status': 'operational' if noaa_stats['total_records'] > 0 else 'no_data'
+            'total_records': noaa_stats['total_records'] or 0,
+            'last_run': noaa_stats['last_run'] or 'Never',
+            'status': 'operational' if (noaa_stats['total_records'] or 0) > 0 else 'no_data'
         }
         
         # Get recent task runs
@@ -201,8 +201,15 @@ def system():
         
         # Get database size
         import os
-        db_path = os.path.join(os.path.dirname(__file__), '..', 'database', 'terrascan.db')
-        database_size = f"{os.path.getsize(db_path) / (1024*1024):.1f} MB" if os.path.exists(db_path) else "Unknown"
+        try:
+            db_path = os.path.join(os.path.dirname(__file__), '..', 'database', 'terrascan.db')
+            if os.path.exists(db_path):
+                size_bytes = os.path.getsize(db_path)
+                database_size = f"{size_bytes / (1024*1024):.1f} MB" if size_bytes else "0.0 MB"
+            else:
+                database_size = "Unknown"
+        except Exception as e:
+            database_size = f"Error: {e}"
         
         # Check if simulation mode is enabled
         from database.config_manager import get_system_config
