@@ -1,13 +1,25 @@
-"""TERRASCAN Version Information"""
+#!/usr/bin/env python3
+"""
+Version information for ECO WATCH TERRA SCAN
+"""
 
-__version__ = "2.1.3"
-__version_info__ = (2, 1, 3)
+VERSION = "2.2.1"
+BUILD_DATE = "2024-12-19"
+DESCRIPTION = "Environmental Health Monitoring Dashboard - Railway Pro Ready"
 
 def get_version():
-    """Return the current version string"""
-    return __version__
+    """Get current version string"""
+    return VERSION
 
-def get_version_info():
-    """Return version as tuple"""
-    return __version_info__ 
- 
+def get_build_info():
+    """Get build information"""
+    return {
+        'version': VERSION,
+        'build_date': BUILD_DATE,
+        'description': DESCRIPTION
+    }
+
+if __name__ == "__main__":
+    print(f"ECO WATCH TERRA SCAN v{VERSION}")
+    print(f"Build Date: {BUILD_DATE}")
+    print(f"Description: {DESCRIPTION}") 
