@@ -815,6 +815,68 @@ def api_force_ocean_temp():
             'timestamp': datetime.now().isoformat()
         }), 500
 
+@app.route('/api/fix-missing-task')
+@no_cache
+def api_fix_missing_task():
+    """Add the missing noaa_ocean_temperature task to production database"""
+    try:
+        # Check if task already exists
+        existing = execute_query("SELECT COUNT(*) as count FROM task WHERE name = 'noaa_ocean_temperature'")[0]['count']
+        
+        if existing > 0:
+            return jsonify({
+                'success': True,
+                'message': 'Task already exists',
+                'timestamp': datetime.now().isoformat()
+            })
+        
+        # Insert the missing task
+        execute_query("""
+            INSERT INTO task (name, description, task_type, command, cron_schedule, provider, dataset, parameters, active)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """, [
+            'noaa_ocean_temperature',
+            'Fetch water temperature from NOAA Ocean Service', 
+            'fetch_data',
+            'tasks.fetch_noaa_ocean',
+            '0 */3 * * *',
+            'noaa_ocean',
+            'oceanographic',
+            '{"product": "water_temperature"}',
+            1
+        ])
+        
+        # Verify it was created
+        new_task = execute_query("SELECT * FROM task WHERE name = 'noaa_ocean_temperature'")
+        
+        # Now try to run it
+        from tasks.runner import TaskRunner
+        runner = TaskRunner()
+        
+        result = runner.run_task('noaa_ocean_temperature', 
+                               triggered_by='task_creation',
+                               trigger_parameters={'product': 'water_temperature'})
+        
+        # Check results
+        temp_count = execute_query("SELECT COUNT(*) as count FROM metric_data WHERE provider_key = 'noaa_ocean' AND metric_name = 'water_temperature'")[0]['count']
+        ocean_status = get_ocean_status()
+        
+        return jsonify({
+            'success': True,
+            'timestamp': datetime.now().isoformat(),
+            'task_created': len(new_task) > 0,
+            'task_run_result': result,
+            'temperature_records_created': temp_count,
+            'updated_ocean_status': ocean_status
+        })
+        
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e),
+            'timestamp': datetime.now().isoformat()
+        }), 500
+
 @app.errorhandler(404)
 def not_found(error):
     return "ECO WATCH TERRA SCAN - Page not found", 404
