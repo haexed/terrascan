@@ -79,6 +79,83 @@ def create_app():
             'timestamp': datetime.utcnow().isoformat()
         })
     
+    @app.route('/about')
+    def about():
+        """About page with project information"""
+        return render_template('about.html')
+    
+    @app.route('/map')
+    def map_view():
+        """Interactive world map with environmental data layers"""
+        try:
+            # Get current environmental data for health score widget
+            health_data = get_environmental_health_data()
+            health_score = calculate_environmental_health_score(health_data)
+            
+            return render_template('map.html',
+                                 health_data=health_data,
+                                 health_score=health_score)
+        except Exception as e:
+            return f"Map error: {str(e)}", 500
+    
+    @app.route('/system')
+    def system():
+        """System status and data provider information"""
+        try:
+            # Get system statistics
+            total_records = execute_query("SELECT COUNT(*) as count FROM metric_data")[0]['count'] or 0
+            
+            # Get provider statistics
+            providers = {}
+            
+            # NASA FIRMS stats
+            nasa_stats = execute_query("""
+                SELECT COUNT(*) as total_records, MAX(timestamp) as last_run
+                FROM metric_data
+                WHERE provider_key = 'nasa_firms'
+            """)[0]
+            providers['nasa_firms'] = {
+                'total_records': nasa_stats['total_records'] or 0,
+                'last_run': nasa_stats['last_run'] or 'Never',
+                'status': 'operational' if (nasa_stats['total_records'] or 0) > 0 else 'no_data'
+            }
+            
+            # OpenAQ stats
+            openaq_stats = execute_query("""
+                SELECT COUNT(*) as total_records, MAX(timestamp) as last_run
+                FROM metric_data 
+                WHERE provider_key = 'openaq'
+            """)[0]
+            providers['openaq'] = {
+                'total_records': openaq_stats['total_records'] or 0,
+                'last_run': openaq_stats['last_run'] or 'Never',
+                'status': 'operational' if (openaq_stats['total_records'] or 0) > 0 else 'no_data'
+            }
+            
+            # NOAA Ocean stats
+            noaa_stats = execute_query("""
+                SELECT COUNT(*) as total_records, MAX(timestamp) as last_run
+                FROM metric_data
+                WHERE provider_key = 'noaa_ocean'
+            """)[0]
+            providers['noaa_ocean'] = {
+                'total_records': noaa_stats['total_records'] or 0,
+                'last_run': noaa_stats['last_run'] or 'Never',
+                'status': 'operational' if (noaa_stats['total_records'] or 0) > 0 else 'no_data'
+            }
+            
+            system_status = {
+                'total_records': total_records,
+                'version': '2.2.1',
+                'database_size': f"{total_records:,} records"
+            }
+            
+            return render_template('system.html',
+                                 system_status=system_status,
+                                 providers=providers)
+        except Exception as e:
+            return f"System error: {str(e)}", 500
+    
     return app
 
 def get_environmental_health_data():
