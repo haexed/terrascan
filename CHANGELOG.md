@@ -5,6 +5,32 @@ All notable changes to ECO WATCH TERRA SCAN will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.2.2] - 2024-12-19
+
+### 🔧 **Map & UI Fixes - Launch Hell Resolution**
+
+**Map Coordinate Fixes:**
+- **🗺️ Fixed Invalid LatLng Errors**: Corrected coordinate field names in `map.js` (`latitude/longitude` → `lat/lng`)
+- **🌬️ Fixed Air Quality Data**: Updated field names to match API response (`value` → `pm25`)
+- **✅ Added Coordinate Validation**: Prevents undefined coordinates from causing map errors
+- **🔥 Fire Markers**: Now properly display with correct coordinates and brightness data
+- **🌬️ Air Quality Markers**: Now show PM2.5 levels with proper color coding
+
+**UI Performance Improvements:**
+- **⏰ Fixed Header Janking**: Optimized time update function to prevent visual glitches
+- **🚀 Smooth Time Updates**: Only updates DOM when time actually changes (prevents re-renders)
+- **📱 Better UX**: Eliminated header text jumping during time updates
+
+**Navigation Cleanup:**
+- **🧹 Removed Dashboard Link**: Home IS the dashboard - cleaner navigation
+- **🎯 Simplified UX**: No more confusion between Home and Dashboard routes
+- **✅ Active State Fix**: Home link properly highlights for both `/` and `/dashboard` routes
+
+**Production Stability:**
+- **🚨 Resolved Console Errors**: Fixed "Invalid LatLng object: (undefined, undefined)" errors
+- **🗺️ Map Data Loading**: Interactive map now properly displays environmental data points
+- **📊 API Endpoint Fixes**: All missing routes (`/dashboard`, `/api/map-data`, `/api/refresh`) now functional
+
 ## [2.2.1] - 2024-12-19
 
 ### 🚀 **Railway Pro Deployment**
