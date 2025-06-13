@@ -235,40 +235,11 @@
                     <i class="fas fa-sync-alt"></i> Refresh All Data
                 </button>
                 <button class="btn btn-info me-2" onclick="viewLogs()">
-                    <i class="fas fa-list"></i> View Detailed Logs
+                    <i class="fas fa-list"></i> View System Logs
                 </button>
-                <button class="btn btn-warning me-2" onclick="clearOldData()">
+                <button class="btn btn-warning" onclick="clearOldData()">
                     <i class="fas fa-trash"></i> Clear Old Data (30+ days)
                 </button>
-                <button class="btn btn-secondary" onclick="debugOceanData()">
-                    <i class="fas fa-bug"></i> Debug Ocean Data
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Cache Busting & Debug Info -->
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="eco-card p-4">
-                <h5 class="mb-3">🔧 Cache & Debug Information</h5>
-                <div class="row">
-                    <div class="col-md-6">
-                        <div class="small">
-                            <strong>Page Load Time:</strong> <span id="page-load-time">Loading...</span><br>
-                            <strong>Browser Cache:</strong> <span id="cache-status">Unknown</span><br>
-                            <strong>Last Data Refresh:</strong> <span id="last-refresh">Check system logs</span><br>
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <button class="btn btn-sm btn-outline-primary me-2" onclick="forceClearCache()">
-                            <i class="fas fa-broom"></i> Force Clear Cache
-                        </button>
-                        <button class="btn btn-sm btn-outline-info" onclick="testOceanAPI()">
-                            <i class="fas fa-thermometer-half"></i> Test Ocean API
-                        </button>
-                    </div>
-                </div>
             </div>
         </div>
     </div>
@@ -277,21 +248,6 @@
 
 {% block extra_js %}
 <script>
-    // Update page load time
-    document.addEventListener('DOMContentLoaded', function () {
-        const pageLoadTime = document.getElementById('page-load-time');
-        if (pageLoadTime) {
-            pageLoadTime.textContent = new Date().toISOString().replace('T', ' ').substr(0, 19) + ' UTC';
-        }
-
-        // Check cache status
-        const cacheStatus = document.getElementById('cache-status');
-        if (cacheStatus) {
-            const hasCache = window.location.search.includes('cache_bust');
-            cacheStatus.textContent = hasCache ? 'Cache Busted' : 'Normal';
-            cacheStatus.className = hasCache ? 'text-success' : '';
-        }
-    });
     async function refreshAllData() {
         const button = event.target;
         const originalText = button.innerHTML;
@@ -318,78 +274,12 @@
     }
 
     function viewLogs() {
-        // Could expand this to show a modal with detailed logs
-        alert('📊 Detailed logs feature coming soon! Check the Recent Task Executions table above for now.');
+        alert('📊 System logs are available in the Recent Task Executions table above. For detailed server logs, check your deployment platform.');
     }
 
     function clearOldData() {
         if (confirm('⚠️ This will permanently delete environmental data older than 30 days. Continue?')) {
-            alert('🧹 Data cleanup feature coming soon!');
-        }
-    }
-
-    async function debugOceanData() {
-        try {
-            const response = await fetch('/api/debug/ocean');
-            const data = await response.json();
-
-            if (data.success) {
-                const info = `🌊 OCEAN DEBUG INFO:
-            
-📊 Database Records:
-• Total Ocean Records: ${data.database_info.ocean_records}
-• Total System Records: ${data.database_info.total_records}
-
-🌡️ Current Ocean Status:
-• Average Temperature: ${data.ocean_status.avg_temp}°C
-• Average Water Level: ${data.ocean_status.avg_level}m
-• Total Measurements: ${data.ocean_status.measurements}
-• Last Update: ${data.ocean_status.last_update}
-
-📈 Raw Data Summary:
-${data.raw_data.map(d => `• ${d.metric_name}: ${d.count} records, avg=${d.avg.toFixed(2)}`).join('\n')}
-
-🕐 Debug Timestamp: ${data.timestamp}`;
-
-                alert(info);
-            } else {
-                alert('❌ Debug failed: ' + data.error);
-            }
-        } catch (error) {
-            alert('❌ Debug error: ' + error.message);
-        }
-    }
-
-    function forceClearCache() {
-        // Clear browser cache and reload
-        if (confirm('🧹 This will clear browser cache and reload the page. Continue?')) {
-            // Add timestamp to force cache bust
-            const timestamp = new Date().getTime();
-            window.location.href = window.location.href.split('?')[0] + '?cache_bust=' + timestamp;
-        }
-    }
-
-    async function testOceanAPI() {
-        try {
-            // Test the main homepage to see current ocean temperature
-            const response = await fetch('/?test=' + new Date().getTime());
-            const html = await response.text();
-
-            // Extract temperature from HTML
-            const tempMatch = html.match(/(\d+\.?\d*)°C/);
-            const temp = tempMatch ? tempMatch[1] : 'Not found';
-
-            alert(`🌊 OCEAN API TEST:
-        
-Current Temperature Display: ${temp}°C
-Response Status: ${response.status}
-Cache Headers: ${response.headers.get('cache-control') || 'None'}
-Timestamp: ${new Date().toISOString()}
-
-${temp === '0' ? '⚠️ ISSUE DETECTED: Temperature showing 0°C' : '✅ Temperature data looks good'}`);
-
-        } catch (error) {
-            alert('❌ API test error: ' + error.message);
+            alert('🧹 Data cleanup feature will be implemented in a future update.');
         }
     }
 </script>
