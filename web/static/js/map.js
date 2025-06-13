@@ -173,7 +173,7 @@ function updateAirLayer() {
             <strong>🌬️ Air Quality Station</strong><br>
             <strong>Location:</strong> ${station.location}<br>
             <strong>PM2.5:</strong> ${station.value} μg/m³<br>
-            <strong>Status:</strong> ${getAirQualityStatus(station.value)}<br>
+            <strong>Status:</strong> ${getAirQualityStatus(station.value)}
             <strong>Updated:</strong> ${station.last_updated}<br>
             <em>Source: OpenAQ</em>
         `);
@@ -182,7 +182,7 @@ function updateAirLayer() {
             showInfoPopup('🌬️ Air Quality', `
                 <strong>Location:</strong> ${station.location}<br>
                 <strong>PM2.5:</strong> ${station.value} μg/m³<br>
-                <strong>Status:</strong> ${getAirQualityStatus(station.value)}<br>
+                <strong>Status:</strong> ${getAirQualityStatus(station.value)}
                 <strong>Updated:</strong> ${station.last_updated}
             `);
         });

@@ -1,0 +1,396 @@
+{% extends "base.html" %}
+
+{% block title %}🔧 TERRASCAN - System Status{% endblock %}
+
+{% block content %}
+<!-- Main Content -->
+<div class="container-fluid mt-5 pt-4">
+    <!-- System Status Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="eco-card text-center p-4">
+                <h2 class="mb-3">🔧 SYSTEM STATUS & DATA PROVIDERS</h2>
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="metric-value text-success">{{ system_status.total_records }}</div>
+                        <div class="small">Total Environmental Records</div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="metric-value text-info">{{ system_status.active_tasks }}</div>
+                        <div class="small">Active Data Collection Tasks</div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="metric-value text-warning">{{ system_status.recent_runs }}</div>
+                        <div class="small">Recent Task Runs (24h)</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Data Providers Status -->
+    <div class="row g-4 mb-4">
+        <!-- NASA FIRMS -->
+        <div class="col-lg-4">
+            <div class="eco-card p-4">
+                <div class="d-flex align-items-center mb-3">
+                    <span class="fs-1 me-3">🔥</span>
+                    <div>
+                        <h4 class="mb-0">NASA FIRMS</h4>
+                        <div class="data-source">Fire Information for Resource Management</div>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <strong>Latest Data Collection</strong><br>
+                    <span class="small">{{ providers.nasa_firms.last_run if providers.nasa_firms.last_run else 'Never'
+                        }}</span>
+                </div>
+
+                <div class="mb-3">
+                    <strong>Records Collected</strong><br>
+                    <span class="metric-value text-danger">{{ providers.nasa_firms.total_records }}</span>
+                    <span class="small"> fire detections</span>
+                </div>
+
+                <div class="mb-3">
+                    <strong>Status</strong><br>
+                    <span
+                        class="badge {% if providers.nasa_firms.status == 'operational' %}bg-success{% else %}bg-warning{% endif %}">
+                        {{ providers.nasa_firms.status.upper() }}
+                    </span>
+                </div>
+
+                <div class="small">
+                    <strong>Coverage:</strong> Global satellite monitoring<br>
+                    <strong>Update Frequency:</strong> Every 2 hours<br>
+                    <strong>Data Source:</strong> MODIS/VIIRS satellites
+                </div>
+            </div>
+        </div>
+
+        <!-- OpenAQ -->
+        <div class="col-lg-4">
+            <div class="eco-card p-4">
+                <div class="d-flex align-items-center mb-3">
+                    <span class="fs-1 me-3">🌬️</span>
+                    <div>
+                        <h4 class="mb-0">OpenAQ</h4>
+                        <div class="data-source">Open Air Quality Data Platform</div>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <strong>Latest Data Collection</strong><br>
+                    <span class="small">{{ providers.openaq.last_run if providers.openaq.last_run else 'Never' }}</span>
+                </div>
+
+                <div class="mb-3">
+                    <strong>Records Collected</strong><br>
+                    <span class="metric-value text-warning">{{ providers.openaq.total_records }}</span>
+                    <span class="small"> air quality measurements</span>
+                </div>
+
+                <div class="mb-3">
+                    <strong>Status</strong><br>
+                    <span
+                        class="badge {% if providers.openaq.status == 'operational' %}bg-success{% else %}bg-warning{% endif %}">
+                        {{ providers.openaq.status.upper() }}
+                    </span>
+                </div>
+
+                <div class="small">
+                    <strong>Coverage:</strong> 65+ major cities worldwide<br>
+                    <strong>Update Frequency:</strong> Every hour<br>
+                    <strong>Metrics:</strong> PM2.5, PM10, NO2, O3
+                </div>
+            </div>
+        </div>
+
+        <!-- NOAA Ocean -->
+        <div class="col-lg-4">
+            <div class="eco-card p-4">
+                <div class="d-flex align-items-center mb-3">
+                    <span class="fs-1 me-3">🌊</span>
+                    <div>
+                        <h4 class="mb-0">NOAA Ocean Service</h4>
+                        <div class="data-source">Ocean and Coastal Data</div>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <strong>Latest Data Collection</strong><br>
+                    <span class="small">{{ providers.noaa_ocean.last_run if providers.noaa_ocean.last_run else 'Never'
+                        }}</span>
+                </div>
+
+                <div class="mb-3">
+                    <strong>Records Collected</strong><br>
+                    <span class="metric-value text-info">{{ providers.noaa_ocean.total_records }}</span>
+                    <span class="small"> oceanographic measurements</span>
+                </div>
+
+                <div class="mb-3">
+                    <strong>Status</strong><br>
+                    <span
+                        class="badge {% if providers.noaa_ocean.status == 'operational' %}bg-success{% else %}bg-warning{% endif %}">
+                        {{ providers.noaa_ocean.status.upper() }}
+                    </span>
+                </div>
+
+                <div class="small">
+                    <strong>Coverage:</strong> 12 major coastal stations<br>
+                    <strong>Update Frequency:</strong> Every 3 hours<br>
+                    <strong>Metrics:</strong> Water temperature, water level
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Task Runs -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="eco-card p-4">
+                <h4 class="mb-3">📊 Recent Task Executions</h4>
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Task Name</th>
+                                <th>Status</th>
+                                <th>Started</th>
+                                <th>Duration</th>
+                                <th>Records</th>
+                                <th>Triggered By</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for run in recent_runs %}
+                            <tr>
+                                <td>
+                                    <strong>{{ run.task_name }}</strong><br>
+                                    <small>{{ run.task_description }}</small>
+                                </td>
+                                <td>
+                                    <span
+                                        class="badge {% if run.status == 'completed' %}bg-success{% elif run.status == 'failed' %}bg-danger{% else %}bg-warning{% endif %}">
+                                        {{ run.status.upper() }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <small>{{ run.started_at }}</small>
+                                </td>
+                                <td>
+                                    <small>{{ "%.1f"|format(run.duration_seconds) }}s</small>
+                                </td>
+                                <td>
+                                    <span class="text-success">{{ run.records_processed }}</span>
+                                </td>
+                                <td>
+                                    <small>{{ run.triggered_by }}</small>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Database Statistics -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="eco-card p-4">
+                <h5 class="mb-3">📈 Data Breakdown by Provider</h5>
+                {% for provider in data_breakdown %}
+                <div class="d-flex justify-content-between mb-2">
+                    <span>{{ provider.provider_key }}</span>
+                    <span class="badge bg-secondary">{{ provider.record_count }} records</span>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="eco-card p-4">
+                <h5 class="mb-3">🔧 System Configuration</h5>
+                <div class="small">
+                    <strong>Version:</strong> {{ version }}<br>
+                    <strong>Database:</strong> SQLite ({{ database_size }})<br>
+                    <strong>Simulation Mode:</strong> {{ 'Enabled' if simulation_mode else 'Disabled' }}<br>
+                    <strong>Auto-refresh:</strong> Every 15 minutes<br>
+                    <strong>Data Retention:</strong> 30 days<br>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="eco-card p-4 text-center">
+                <h5 class="mb-3">🚀 Quick Actions</h5>
+                <button class="btn btn-success me-2" onclick="refreshAllData()">
+                    <i class="fas fa-sync-alt"></i> Refresh All Data
+                </button>
+                <button class="btn btn-info me-2" onclick="viewLogs()">
+                    <i class="fas fa-list"></i> View Detailed Logs
+                </button>
+                <button class="btn btn-warning me-2" onclick="clearOldData()">
+                    <i class="fas fa-trash"></i> Clear Old Data (30+ days)
+                </button>
+                <button class="btn btn-secondary" onclick="debugOceanData()">
+                    <i class="fas fa-bug"></i> Debug Ocean Data
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Cache Busting & Debug Info -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="eco-card p-4">
+                <h5 class="mb-3">🔧 Cache & Debug Information</h5>
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="small">
+                            <strong>Page Load Time:</strong> <span id="page-load-time">Loading...</span><br>
+                            <strong>Browser Cache:</strong> <span id="cache-status">Unknown</span><br>
+                            <strong>Last Data Refresh:</strong> <span id="last-refresh">Check system logs</span><br>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <button class="btn btn-sm btn-outline-primary me-2" onclick="forceClearCache()">
+                            <i class="fas fa-broom"></i> Force Clear Cache
+                        </button>
+                        <button class="btn btn-sm btn-outline-info" onclick="testOceanAPI()">
+                            <i class="fas fa-thermometer-half"></i> Test Ocean API
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Update page load time
+    document.addEventListener('DOMContentLoaded', function () {
+        const pageLoadTime = document.getElementById('page-load-time');
+        if (pageLoadTime) {
+            pageLoadTime.textContent = new Date().toISOString().replace('T', ' ').substr(0, 19) + ' UTC';
+        }
+
+        // Check cache status
+        const cacheStatus = document.getElementById('cache-status');
+        if (cacheStatus) {
+            const hasCache = window.location.search.includes('cache_bust');
+            cacheStatus.textContent = hasCache ? 'Cache Busted' : 'Normal';
+            cacheStatus.className = hasCache ? 'text-success' : '';
+        }
+    });
+    async function refreshAllData() {
+        const button = event.target;
+        const originalText = button.innerHTML;
+
+        button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Refreshing...';
+        button.disabled = true;
+
+        try {
+            const response = await fetch('/api/refresh');
+            const result = await response.json();
+
+            if (result.success) {
+                alert('✅ All environmental data refreshed successfully!');
+                location.reload();
+            } else {
+                alert('❌ Refresh failed: ' + (result.error || 'Unknown error'));
+            }
+        } catch (error) {
+            alert('❌ Error: ' + error.message);
+        } finally {
+            button.innerHTML = originalText;
+            button.disabled = false;
+        }
+    }
+
+    function viewLogs() {
+        // Could expand this to show a modal with detailed logs
+        alert('📊 Detailed logs feature coming soon! Check the Recent Task Executions table above for now.');
+    }
+
+    function clearOldData() {
+        if (confirm('⚠️ This will permanently delete environmental data older than 30 days. Continue?')) {
+            alert('🧹 Data cleanup feature coming soon!');
+        }
+    }
+
+    async function debugOceanData() {
+        try {
+            const response = await fetch('/api/debug/ocean');
+            const data = await response.json();
+
+            if (data.success) {
+                const info = `🌊 OCEAN DEBUG INFO:
+            
+📊 Database Records:
+• Total Ocean Records: ${data.database_info.ocean_records}
+• Total System Records: ${data.database_info.total_records}
+
+🌡️ Current Ocean Status:
+• Average Temperature: ${data.ocean_status.avg_temp}°C
+• Average Water Level: ${data.ocean_status.avg_level}m
+• Total Measurements: ${data.ocean_status.measurements}
+• Last Update: ${data.ocean_status.last_update}
+
+📈 Raw Data Summary:
+${data.raw_data.map(d => `• ${d.metric_name}: ${d.count} records, avg=${d.avg.toFixed(2)}`).join('\n')}
+
+🕐 Debug Timestamp: ${data.timestamp}`;
+
+                alert(info);
+            } else {
+                alert('❌ Debug failed: ' + data.error);
+            }
+        } catch (error) {
+            alert('❌ Debug error: ' + error.message);
+        }
+    }
+
+    function forceClearCache() {
+        // Clear browser cache and reload
+        if (confirm('🧹 This will clear browser cache and reload the page. Continue?')) {
+            // Add timestamp to force cache bust
+            const timestamp = new Date().getTime();
+            window.location.href = window.location.href.split('?')[0] + '?cache_bust=' + timestamp;
+        }
+    }
+
+    async function testOceanAPI() {
+        try {
+            // Test the main homepage to see current ocean temperature
+            const response = await fetch('/?test=' + new Date().getTime());
+            const html = await response.text();
+
+            // Extract temperature from HTML
+            const tempMatch = html.match(/(\d+\.?\d*)°C/);
+            const temp = tempMatch ? tempMatch[1] : 'Not found';
+
+            alert(`🌊 OCEAN API TEST:
+        
+Current Temperature Display: ${temp}°C
+Response Status: ${response.status}
+Cache Headers: ${response.headers.get('cache-control') || 'None'}
+Timestamp: ${new Date().toISOString()}
+
+${temp === '0' ? '⚠️ ISSUE DETECTED: Temperature showing 0°C' : '✅ Temperature data looks good'}`);
+
+        } catch (error) {
+            alert('❌ API test error: ' + error.message);
+        }
+    }
+</script>
+{% endblock %}

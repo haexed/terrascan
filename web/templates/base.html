@@ -55,6 +55,11 @@
                             <i class="fas fa-info-circle"></i> About
                         </a>
                     </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.endpoint == 'system' %}active{% endif %}" href="/system">
+                            <i class="fas fa-cogs"></i> System
+                        </a>
+                    </li>
                 </ul>
 
                 {% block nav_extra %}
@@ -110,11 +115,37 @@
             if (timeElement) {
                 timeElement.textContent = now.toISOString().replace('T', ' ').substr(0, 19) + ' UTC';
             }
+
+            // Also update map widget time if it exists
+            const mapTimeElement = document.getElementById('map-current-time');
+            if (mapTimeElement) {
+                mapTimeElement.textContent = now.toISOString().replace('T', ' ').substr(0, 19) + ' UTC';
+            }
         }
 
         // Update time every second
         setInterval(updateTime, 1000);
         updateTime();
+
+        // Add cache-busting for critical data
+        function addCacheBuster(url) {
+            const separator = url.includes('?') ? '&' : '?';
+            return url + separator + 'v=' + new Date().getTime();
+        }
+
+        // Check for data issues on page load
+        document.addEventListener('DOMContentLoaded', function () {
+            // Check if ocean temperature shows 0°C (indicates cache issue)
+            const tempElements = document.querySelectorAll('.metric-value.text-info');
+            tempElements.forEach(element => {
+                if (element.textContent.includes('0°C')) {
+                    console.warn('⚠️ Ocean temperature showing 0°C - possible cache issue');
+                    // Add a subtle indicator
+                    element.style.border = '1px dashed orange';
+                    element.title = 'Data may be cached - try refreshing the page';
+                }
+            });
+        });
     </script>
 
     {% block extra_js %}{% endblock %}

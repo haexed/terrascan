@@ -100,6 +100,97 @@ def about():
     """TERRASCAN - About page with project information"""
     return render_template('about.html')
 
+@app.route('/system')
+def system():
+    """TERRASCAN - System status and data provider information"""
+    try:
+        # Get system statistics
+        total_records = execute_query("SELECT COUNT(*) as count FROM metric_data")[0]['count']
+        active_tasks = execute_query("SELECT COUNT(*) as count FROM task WHERE active = 1")[0]['count']
+        recent_runs_count = execute_query("SELECT COUNT(*) as count FROM task_log WHERE started_at > datetime('now', '-24 hours')")[0]['count']
+        
+        system_status = {
+            'total_records': total_records,
+            'active_tasks': active_tasks,
+            'recent_runs': recent_runs_count
+        }
+        
+        # Get provider statistics
+        providers = {}
+        
+        # NASA FIRMS stats
+        nasa_stats = execute_query("""
+            SELECT COUNT(*) as total_records, MAX(timestamp) as last_run
+            FROM metric_data 
+            WHERE provider_key = 'nasa_firms'
+        """)[0]
+        providers['nasa_firms'] = {
+            'total_records': nasa_stats['total_records'],
+            'last_run': nasa_stats['last_run'],
+            'status': 'operational' if nasa_stats['total_records'] > 0 else 'no_data'
+        }
+        
+        # OpenAQ stats
+        openaq_stats = execute_query("""
+            SELECT COUNT(*) as total_records, MAX(timestamp) as last_run
+            FROM metric_data 
+            WHERE provider_key = 'openaq'
+        """)[0]
+        providers['openaq'] = {
+            'total_records': openaq_stats['total_records'],
+            'last_run': openaq_stats['last_run'],
+            'status': 'operational' if openaq_stats['total_records'] > 0 else 'no_data'
+        }
+        
+        # NOAA Ocean stats
+        noaa_stats = execute_query("""
+            SELECT COUNT(*) as total_records, MAX(timestamp) as last_run
+            FROM metric_data 
+            WHERE provider_key = 'noaa_ocean'
+        """)[0]
+        providers['noaa_ocean'] = {
+            'total_records': noaa_stats['total_records'],
+            'last_run': noaa_stats['last_run'],
+            'status': 'operational' if noaa_stats['total_records'] > 0 else 'no_data'
+        }
+        
+        # Get recent task runs
+        recent_runs = execute_query("""
+            SELECT tl.*, t.name as task_name, t.description as task_description
+            FROM task_log tl 
+            JOIN task t ON tl.task_id = t.id 
+            ORDER BY tl.started_at DESC 
+            LIMIT 20
+        """)
+        
+        # Get data breakdown by provider
+        data_breakdown = execute_query("""
+            SELECT provider_key, COUNT(*) as record_count
+            FROM metric_data 
+            GROUP BY provider_key
+            ORDER BY record_count DESC
+        """)
+        
+        # Get database size
+        import os
+        db_path = os.path.join(os.path.dirname(__file__), '..', 'database', 'terrascan.db')
+        database_size = f"{os.path.getsize(db_path) / (1024*1024):.1f} MB" if os.path.exists(db_path) else "Unknown"
+        
+        # Check if simulation mode is enabled
+        from database.config_manager import get_system_config
+        simulation_mode = get_system_config('simulation_mode', True)
+        
+        return render_template('system.html',
+                             system_status=system_status,
+                             providers=providers,
+                             recent_runs=recent_runs,
+                             data_breakdown=data_breakdown,
+                             database_size=database_size,
+                             simulation_mode=simulation_mode)
+                             
+    except Exception as e:
+        return f"TERRASCAN System Error: {e}", 500
+
 def get_fire_status():
     """Get current fire situation"""
     try:
@@ -483,6 +574,51 @@ def api_refresh():
         return jsonify({
             'success': False,
             'error': str(e)
+        }), 500
+
+@app.route('/api/debug/ocean')
+def api_debug_ocean():
+    """Debug endpoint for ocean temperature issues"""
+    try:
+        # Get raw ocean data
+        raw_data = execute_query("""
+            SELECT metric_name, COUNT(*) as count, AVG(value) as avg, 
+                   MIN(value) as min, MAX(value) as max, MAX(timestamp) as latest
+            FROM metric_data 
+            WHERE provider_key = 'noaa_ocean' 
+            GROUP BY metric_name
+        """)
+        
+        # Get ocean status
+        ocean_status = get_ocean_status()
+        
+        # Get recent temperature records
+        recent_temps = execute_query("""
+            SELECT value, timestamp, location_lat, location_lng, metadata
+            FROM metric_data 
+            WHERE provider_key = 'noaa_ocean' 
+            AND metric_name = 'water_temperature'
+            ORDER BY timestamp DESC 
+            LIMIT 10
+        """)
+        
+        return jsonify({
+            'success': True,
+            'timestamp': datetime.now().isoformat(),
+            'raw_data': raw_data,
+            'ocean_status': ocean_status,
+            'recent_temperatures': recent_temps,
+            'database_info': {
+                'total_records': execute_query("SELECT COUNT(*) as count FROM metric_data")[0]['count'],
+                'ocean_records': execute_query("SELECT COUNT(*) as count FROM metric_data WHERE provider_key = 'noaa_ocean'")[0]['count']
+            }
+        })
+        
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e),
+            'timestamp': datetime.now().isoformat()
         }), 500
 
 @app.errorhandler(404)
