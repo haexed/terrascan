@@ -302,8 +302,17 @@ async function refreshMapData() {
 // Update current time display
 function updateTime() {
     const now = new Date();
-    const timeElement = document.getElementById('current-time');
-    if (timeElement) {
-        timeElement.textContent = now.toISOString().replace('T', ' ').substr(0, 19) + ' UTC';
+    const timeString = now.toISOString().replace('T', ' ').substr(0, 19) + ' UTC';
+
+    // Update navbar time
+    const navTimeElement = document.getElementById('current-time');
+    if (navTimeElement) {
+        navTimeElement.textContent = timeString;
+    }
+
+    // Update map widget time
+    const mapTimeElement = document.getElementById('map-current-time');
+    if (mapTimeElement) {
+        mapTimeElement.textContent = timeString;
     }
 } 

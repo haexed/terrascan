@@ -464,9 +464,14 @@ def api_refresh():
         air_result = runner.run_task('openaq_latest', triggered_by='dashboard_refresh')
         results.append({'task': 'air_quality', 'success': air_result['success']})
         
-        # Ocean Data
-        ocean_result = runner.run_task('noaa_ocean_water_level', triggered_by='dashboard_refresh')
-        results.append({'task': 'ocean', 'success': ocean_result['success']})
+        # Ocean Data (both water level and temperature)
+        ocean_level_result = runner.run_task('noaa_ocean_water_level', triggered_by='dashboard_refresh')
+        results.append({'task': 'ocean_level', 'success': ocean_level_result['success']})
+        
+        ocean_temp_result = runner.run_task('noaa_ocean_temperature', 
+                                           triggered_by='dashboard_refresh',
+                                           trigger_parameters={'product': 'water_temperature'})
+        results.append({'task': 'ocean_temp', 'success': ocean_temp_result['success']})
         
         return jsonify({
             'success': True,

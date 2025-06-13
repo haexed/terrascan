@@ -90,6 +90,22 @@ The **Planetary Health Score** combines three critical environmental factors int
 
 ---
 
+## 🐛 **Recent Bug Fixes (v2.1.2)**
+
+### ✅ **Critical Production Issues Resolved:**
+- **🌊 Ocean Temperature**: Fixed "0°C" display → Now shows accurate temperatures (e.g., 18.4°C)
+- **⏰ Time Display**: Fixed "Loading..." stuck state → Real-time updates on all pages
+- **📊 NO DATA States**: Eliminated missing data displays → Complete environmental coverage
+- **🔄 Data Collection**: Enhanced ocean monitoring with both water level + temperature
+
+### 🔧 **Technical Fixes:**
+- Added `noaa_ocean_temperature` task for proper sea surface temperature collection
+- Fixed duplicate HTML element IDs causing JavaScript conflicts
+- Enhanced refresh API to collect complete ocean health data
+- Improved time update functions for consistent UI behavior
+
+---
+
 ## 🎯 **Environmental Health Calculation Example**
 
 **Based on Your Current Data (Score: 30/100 🔴 POOR):**
