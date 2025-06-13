@@ -687,6 +687,18 @@ def api_debug_production():
         except Exception as e:
             debug_info['configuration'] = {'error': str(e)}
         
+        # Task information
+        try:
+            tasks = execute_query("""
+                SELECT name, description, active, parameters, provider, dataset
+                FROM task 
+                WHERE provider = 'noaa_ocean'
+                ORDER BY name
+            """)
+            debug_info['tasks'] = tasks
+        except Exception as e:
+            debug_info['tasks'] = {'error': str(e)}
+        
         return jsonify({
             'success': True,
             'timestamp': datetime.now().isoformat(),
@@ -760,6 +772,40 @@ def api_debug_ocean():
                 'total_records': execute_query("SELECT COUNT(*) as count FROM metric_data")[0]['count'],
                 'ocean_records': execute_query("SELECT COUNT(*) as count FROM metric_data WHERE provider_key = 'noaa_ocean'")[0]['count']
             }
+        })
+        
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e),
+            'timestamp': datetime.now().isoformat()
+        }), 500
+
+@app.route('/api/force-ocean-temp')
+@no_cache
+def api_force_ocean_temp():
+    """Force run the ocean temperature task"""
+    try:
+        from tasks.runner import TaskRunner
+        runner = TaskRunner()
+        
+        # Force run the ocean temperature task
+        result = runner.run_task('noaa_ocean_temperature', 
+                               triggered_by='manual_debug',
+                               trigger_parameters={'product': 'water_temperature'})
+        
+        # Get updated ocean status
+        ocean_status = get_ocean_status()
+        
+        # Check temperature records after running
+        temp_count = execute_query("SELECT COUNT(*) as count FROM metric_data WHERE provider_key = 'noaa_ocean' AND metric_name = 'water_temperature'")[0]['count']
+        
+        return jsonify({
+            'success': True,
+            'timestamp': datetime.now().isoformat(),
+            'task_result': result,
+            'updated_ocean_status': ocean_status,
+            'temperature_records_after': temp_count
         })
         
     except Exception as e:
