@@ -157,6 +157,69 @@ def create_app():
         except Exception as e:
             return f"System error: {str(e)}", 500
     
+    @app.route('/dashboard')
+    def dashboard_route():
+        """Dashboard route (same as home page)"""
+        return dashboard()
+    
+    @app.route('/api/map-data')
+    def api_map_data():
+        """API endpoint for map data"""
+        try:
+            # Get fire data for map
+            fire_data = execute_query("""
+                SELECT location_lat as lat, location_lng as lng, value as brightness
+                FROM metric_data 
+                WHERE provider_key = 'nasa_firms' 
+                AND location_lat IS NOT NULL 
+                AND location_lng IS NOT NULL
+                AND timestamp >= datetime('now', '-7 days')
+                LIMIT 50
+            """)
+            
+            # Get air quality data for map
+            air_data = execute_query("""
+                SELECT location_lat as lat, location_lng as lng, value as pm25
+                FROM metric_data 
+                WHERE provider_key = 'openaq' 
+                AND metric_name = 'air_quality_pm25'
+                AND location_lat IS NOT NULL 
+                AND location_lng IS NOT NULL
+                AND timestamp >= datetime('now', '-7 days')
+                LIMIT 30
+            """)
+            
+            return jsonify({
+                'success': True,
+                'fires': fire_data,
+                'air_quality': air_data,
+                'timestamp': datetime.utcnow().isoformat()
+            })
+        except Exception as e:
+            return jsonify({
+                'success': False,
+                'error': str(e)
+            })
+    
+    @app.route('/api/refresh')
+    def api_refresh():
+        """API endpoint to refresh data"""
+        try:
+            # Get current data counts
+            total_records = execute_query("SELECT COUNT(*) as count FROM metric_data")[0]['count'] or 0
+            
+            return jsonify({
+                'success': True,
+                'message': 'Data refreshed successfully',
+                'total_records': total_records,
+                'timestamp': datetime.utcnow().isoformat()
+            })
+        except Exception as e:
+            return jsonify({
+                'success': False,
+                'error': str(e)
+            })
+    
     return app
 
 def get_environmental_health_data():
