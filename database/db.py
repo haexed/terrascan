@@ -33,6 +33,30 @@ def init_database():
         print("✅ Database initialized with schema")
     else:
         print(f"📁 Using existing database: {DB_PATH}")
+        # Check if metric_data table exists, if not, apply schema
+        try:
+            conn = get_db_connection()
+            cursor = conn.cursor()
+            cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='metric_data'")
+            if not cursor.fetchone():
+                print("🔧 metric_data table missing, applying schema...")
+                with open(SCHEMA_PATH, 'r') as f:
+                    schema = f.read()
+                conn.executescript(schema)
+                print("✅ Schema applied to existing database")
+            conn.close()
+        except Exception as e:
+            print(f"⚠️ Database check failed: {e}")
+            # If there's any issue, recreate the database
+            print("🔄 Recreating database with fresh schema...")
+            if os.path.exists(DB_PATH):
+                os.remove(DB_PATH)
+            with open(SCHEMA_PATH, 'r') as f:
+                schema = f.read()
+            conn = get_db_connection()
+            conn.executescript(schema)
+            conn.close()
+            print("✅ Database recreated with schema")
 
 def execute_query(query: str, params: tuple = None) -> List[Dict]:
     """Execute a query and return results as list of dicts"""
@@ -180,7 +204,71 @@ def get_daily_costs() -> List[Dict]:
            LIMIT 30"""
     )
 
+def populate_sample_data():
+    """Populate database with sample environmental data for demonstration"""
+    try:
+        # Check if we already have data
+        existing_data = execute_query("SELECT COUNT(*) as count FROM metric_data")
+        if existing_data and existing_data[0]['count'] > 0:
+            print(f"📊 Database already has {existing_data[0]['count']} records")
+            return
+        
+        print("📊 Populating sample environmental data...")
+        from datetime import datetime, timedelta
+        
+        # Sample fire data (NASA FIRMS)
+        base_time = datetime.now()
+        for i in range(100):
+            timestamp = (base_time - timedelta(hours=i)).isoformat()
+            store_metric_data(
+                timestamp=timestamp,
+                provider_key='nasa_firms',
+                dataset='active_fires',
+                metric_name='fire_brightness',
+                value=300 + (i * 2),  # Brightness in Kelvin
+                unit='K',
+                location_lat=40.0 + (i * 0.1),
+                location_lng=-120.0 + (i * 0.1),
+                metadata={'confidence': 85, 'satellite': 'MODIS'}
+            )
+        
+        # Sample air quality data (OpenAQ)
+        for i in range(50):
+            timestamp = (base_time - timedelta(hours=i)).isoformat()
+            store_metric_data(
+                timestamp=timestamp,
+                provider_key='openaq',
+                dataset='measurements',
+                metric_name='air_quality_pm25',
+                value=75.5 - (i * 0.5),  # PM2.5 in μg/m³
+                unit='μg/m³',
+                location_lat=37.7749 + (i * 0.01),
+                location_lng=-122.4194 + (i * 0.01),
+                metadata={'city': 'San Francisco', 'station': f'Station_{i}'}
+            )
+        
+        # Sample ocean temperature data (NOAA)
+        for i in range(30):
+            timestamp = (base_time - timedelta(hours=i * 3)).isoformat()
+            store_metric_data(
+                timestamp=timestamp,
+                provider_key='noaa_ocean',
+                dataset='oceanographic',
+                metric_name='water_temperature',
+                value=18.2 + (i * 0.1),  # Temperature in Celsius
+                unit='°C',
+                location_lat=37.8 + (i * 0.01),
+                location_lng=-122.5 + (i * 0.01),
+                metadata={'station': f'NOAA_{i}', 'depth': '0m'}
+            )
+        
+        print("✅ Sample environmental data populated")
+        
+    except Exception as e:
+        print(f"❌ Error populating sample data: {e}")
+
 if __name__ == "__main__":
     # Initialize database when run directly
     init_database()
+    populate_sample_data()
     print("🚀 Database ready!") 

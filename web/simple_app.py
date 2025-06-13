@@ -2,15 +2,16 @@ import os
 import sqlite3
 from datetime import datetime, timedelta
 from flask import Flask, render_template, jsonify
-from database.db import execute_query, init_database
+from database.db import execute_query, init_database, populate_sample_data
 
 def create_app():
     """Create and configure the Flask application"""
     app = Flask(__name__)
     app.secret_key = os.environ.get('SECRET_KEY', 'eco-watch-terra-scan-2024')
     
-    # Initialize database
+    # Initialize database and populate sample data if needed
     init_database()
+    populate_sample_data()
     
     @app.route('/')
     def dashboard():
