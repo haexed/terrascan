@@ -92,13 +92,22 @@ def index():
             'last_update': health_data['last_updated']
         }
         
+        biodiversity_data = {
+            'avg_observations': health_data['biodiversity']['avg_observations'],
+            'avg_diversity': health_data['biodiversity']['avg_diversity'],
+            'region_count': health_data['biodiversity']['region_count'],
+            'total_observations': health_data['biodiversity']['total_observations'],
+            'last_update': health_data['last_updated']
+        }
+        
         response = make_response(render_template('index.html',
                                                health_data=health_data,
                                                health_score=health_score,
                                                fire_data=fire_data,
                                                air_data=air_data,
                                                ocean_data=ocean_data,
-                                               weather_data=weather_data))
+                                               weather_data=weather_data,
+                                               biodiversity_data=biodiversity_data))
         
         # Extra aggressive cache busting for this specific issue
         response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate, max-age=0'
@@ -295,6 +304,18 @@ def get_environmental_health_data():
             AND timestamp >= datetime('now', '-24 hours')
         """)
         
+        # Get recent biodiversity data (last 7 days)
+        biodiversity_data = execute_query("""
+            SELECT 
+                AVG(CASE WHEN metric_name = 'species_observations' THEN value END) as avg_observations,
+                AVG(CASE WHEN metric_name = 'species_diversity' THEN value END) as avg_diversity,
+                COUNT(DISTINCT CASE WHEN metric_name = 'species_observations' THEN location_lat || ',' || location_lng END) as region_count,
+                SUM(CASE WHEN metric_name = 'species_observations' THEN value ELSE 0 END) as total_observations
+            FROM metric_data
+            WHERE provider_key = 'gbif'
+            AND timestamp >= datetime('now', '-7 days')
+        """)
+        
         return {
             'fires': {
                 'count': fire_data[0]['fire_count'] if fire_data else 0,
@@ -316,6 +337,12 @@ def get_environmental_health_data():
                 'alert_count': weather_data[0]['alert_count'] if weather_data else 0,
                 'city_count': weather_data[0]['city_count'] if weather_data else 0
             },
+            'biodiversity': {
+                'avg_observations': round(biodiversity_data[0]['avg_observations'] or 0, 1) if biodiversity_data else 0,
+                'avg_diversity': round(biodiversity_data[0]['avg_diversity'] or 0, 1) if biodiversity_data else 0,
+                'region_count': biodiversity_data[0]['region_count'] if biodiversity_data else 0,
+                'total_observations': biodiversity_data[0]['total_observations'] if biodiversity_data else 0
+            },
             'last_updated': datetime.utcnow().isoformat()
         }
     except Exception as e:
@@ -325,6 +352,7 @@ def get_environmental_health_data():
             'air_quality': {'avg_pm25': 0, 'station_count': 0},
             'ocean_temperature': {'avg_temp': 0, 'station_count': 0},
             'weather': {'avg_temp': 0, 'avg_humidity': 0, 'avg_wind_speed': 0, 'avg_pressure': 0, 'alert_count': 0, 'city_count': 0},
+            'biodiversity': {'avg_observations': 0, 'avg_diversity': 0, 'region_count': 0, 'total_observations': 0},
             'last_updated': datetime.utcnow().isoformat(),
             'error': str(e)
         }
@@ -395,6 +423,34 @@ def calculate_environmental_health_score(health_data):
     if pressure < 980:  # Very low pressure (strong storms)
         score -= 2
     elif pressure < 1000:  # Low pressure (storms)
+        score -= 1
+    
+    # Biodiversity impact (up to -10 points for poor biodiversity health)
+    biodiversity = health_data.get('biodiversity', {})
+    
+    # Low species diversity impact (up to -5 points)
+    avg_diversity = biodiversity.get('avg_diversity', 0)
+    if avg_diversity < 5:  # Very low diversity
+        score -= 5
+    elif avg_diversity < 10:  # Low diversity
+        score -= 3
+    elif avg_diversity < 15:  # Moderate diversity
+        score -= 1
+    
+    # Low observation counts (indicating ecosystem stress) (up to -3 points)
+    avg_observations = biodiversity.get('avg_observations', 0)
+    if avg_observations < 100:  # Very few observations
+        score -= 3
+    elif avg_observations < 500:  # Few observations
+        score -= 2
+    elif avg_observations < 1000:  # Moderate observations
+        score -= 1
+    
+    # Lack of monitoring coverage (up to -2 points)
+    region_count = biodiversity.get('region_count', 0)
+    if region_count < 5:  # Very limited coverage
+        score -= 2
+    elif region_count < 10:  # Limited coverage
         score -= 1
     
     # Ensure score stays within bounds

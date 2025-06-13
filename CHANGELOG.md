@@ -5,6 +5,50 @@ All notable changes to ECO WATCH TERRA SCAN will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.4.0] - 2024-12-19
+
+### 🌿 **MAJOR FEATURE: Biodiversity & Ecosystems Integration**
+
+**New Biodiversity Data Collection:**
+- **🦋 GBIF Integration**: Added Global Biodiversity Information Facility API integration
+- **🌍 18 Biodiversity Hotspots**: Amazon, Serengeti, Great Barrier Reef, Yellowstone, and more
+- **📊 Species Observations**: Real-time species observation counts from global research
+- **🔬 Species Diversity**: Unique species counts per ecosystem region
+- **🌿 Ecosystem Health**: Calculated health indices based on biodiversity metrics
+
+**Enhanced Dashboard:**
+- **🦋 Species Diversity Panel**: Total observations, average species per region, hotspot coverage
+- **🌿 Ecosystem Health Panel**: Activity levels, ecosystem status, biodiversity monitoring
+- **📈 Improved Health Score**: Biodiversity factors now included in environmental health calculation
+- **🎨 Beautiful UI**: Biodiversity data integrated seamlessly with existing design
+
+**Technical Implementation:**
+- **📁 New Task System**: `tasks/fetch_biodiversity.py` with comprehensive GBIF API integration
+- **⚙️ Configuration Management**: GBIF provider settings (completely free API!)
+- **🗄️ Database Integration**: Biodiversity metrics stored in existing `metric_data` table
+- **🔄 Automated Collection**: Every 6 hours for species observations, 12 hours comprehensive
+
+**API Integration:**
+- **🆓 Completely FREE**: GBIF API requires no API key, unlimited access
+- **📡 2+ Billion Records**: Access to global biodiversity database
+- **🌍 Global Coverage**: Species data from research institutions worldwide
+- **⚡ Rate Limiting**: Built-in delays to respect GBIF servers
+
+**Health Score Updates:**
+- **🦋 Species Diversity**: Low diversity impacts environmental health score
+- **📊 Observation Counts**: Few observations indicate ecosystem stress
+- **🌍 Monitoring Coverage**: Limited coverage affects health calculations
+- **🌿 Ecosystem Activity**: Biodiversity activity levels factor into overall health
+
+**Biodiversity Hotspots Monitored:**
+- **🌳 Amazon Rainforest**: Brazil & Peru regions
+- **🦁 African Ecosystems**: Serengeti, Congo Basin, Madagascar
+- **🐅 Asian Biodiversity**: Borneo, Western Ghats, Mekong Delta
+- **🏔️ North American Parks**: Yellowstone, Great Smoky Mountains, Pacific Northwest
+- **🌲 European Forests**: Carpathian Mountains, Scandinavian Forests
+- **🐨 Australian Ecosystems**: Great Barrier Reef, Daintree Rainforest
+- **❄️ Arctic & Marine**: Arctic Tundra, Galapagos, Hawaiian Islands
+
 ## [2.3.0] - 2024-12-19
 
 ### 🌡️ **MAJOR FEATURE: Weather & Climate Integration**

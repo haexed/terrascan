@@ -316,6 +316,106 @@
         </div>
     </div>
 
+    <!-- Biodiversity & Ecosystems Row -->
+    <div class="row mb-4">
+        <!-- Species Diversity -->
+        <div class="col-lg-6">
+            <div class="eco-card p-4">
+                <div class="d-flex align-items-center mb-3">
+                    <span class="fs-1 me-3">🦋</span>
+                    <div>
+                        <h4 class="mb-0">Species Diversity</h4>
+                        <div class="data-source">GBIF Global Network</div>
+                    </div>
+                </div>
+
+                <div class="row text-center">
+                    <div class="col-6">
+                        <div class="metric-value text-success">{{ biodiversity_data.total_observations }}</div>
+                        <div class="small">Total Species Observations</div>
+                    </div>
+                    <div class="col-6">
+                        <div class="metric-value text-info">{{ biodiversity_data.avg_diversity }}</div>
+                        <div class="small">Average Species per Region</div>
+                    </div>
+                </div>
+
+                <div class="row text-center mt-3">
+                    <div class="col-12">
+                        <div class="metric-value text-primary">{{ biodiversity_data.region_count }}</div>
+                        <div class="small">Biodiversity Hotspots Monitored</div>
+                    </div>
+                </div>
+
+                <div class="text-center mt-3">
+                    <span
+                        class="badge {% if biodiversity_data.avg_diversity > 15 %}bg-success{% elif biodiversity_data.avg_diversity > 10 %}bg-info{% elif biodiversity_data.avg_diversity > 5 %}bg-warning{% else %}bg-danger{% endif %}">
+                        {% if biodiversity_data.avg_diversity > 15 %}
+                        HIGH DIVERSITY
+                        {% elif biodiversity_data.avg_diversity > 10 %}
+                        GOOD DIVERSITY
+                        {% elif biodiversity_data.avg_diversity > 5 %}
+                        MODERATE DIVERSITY
+                        {% else %}
+                        LOW DIVERSITY
+                        {% endif %}
+                    </span>
+                </div>
+
+                <div class="last-update mt-3 text-center">
+                    Last update: {{ biodiversity_data.last_update }}
+                </div>
+            </div>
+        </div>
+
+        <!-- Ecosystem Health -->
+        <div class="col-lg-6">
+            <div class="eco-card p-4">
+                <div class="d-flex align-items-center mb-3">
+                    <span class="fs-1 me-3">🌿</span>
+                    <div>
+                        <h4 class="mb-0">Ecosystem Health</h4>
+                        <div class="data-source">Global Biodiversity Monitoring</div>
+                    </div>
+                </div>
+
+                <div class="text-center">
+                    <div
+                        class="metric-value {% if biodiversity_data.avg_observations > 1000 %}text-success{% elif biodiversity_data.avg_observations > 500 %}text-info{% elif biodiversity_data.avg_observations > 100 %}text-warning{% else %}text-danger{% endif %}">
+                        {{ biodiversity_data.avg_observations }}
+                    </div>
+                    <div class="mb-2">Average Observations per Region</div>
+
+                    <div class="mt-3">
+                        <span
+                            class="badge {% if biodiversity_data.avg_observations > 1000 %}bg-success{% elif biodiversity_data.avg_observations > 500 %}bg-info{% elif biodiversity_data.avg_observations > 100 %}bg-warning{% else %}bg-danger{% endif %}">
+                            {% if biodiversity_data.avg_observations > 1000 %}
+                            THRIVING ECOSYSTEMS
+                            {% elif biodiversity_data.avg_observations > 500 %}
+                            HEALTHY ECOSYSTEMS
+                            {% elif biodiversity_data.avg_observations > 100 %}
+                            MODERATE ACTIVITY
+                            {% else %}
+                            LOW ACTIVITY
+                            {% endif %}
+                        </span>
+                    </div>
+                </div>
+
+                <div class="text-center mt-3">
+                    <div class="small text-muted">
+                        Monitoring {{ biodiversity_data.region_count }} major biodiversity hotspots including Amazon,
+                        Serengeti, Great Barrier Reef, and more
+                    </div>
+                </div>
+
+                <div class="last-update mt-3 text-center">
+                    Last update: {{ biodiversity_data.last_update }}
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Hero Map Section -->
     <div class="row mb-4">
         <div class="col-12">
