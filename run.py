@@ -22,6 +22,20 @@ def main():
     from database.db import init_database
     init_database()
     
+    # Ensure system configuration is set up
+    print("⚙️ Ensuring system configuration...")
+    from database.config_manager import get_system_config, set_system_config
+    
+    # Check if simulation mode is configured, if not set it up
+    simulation_mode = get_system_config('simulation_mode', None)
+    if simulation_mode is None:
+        print("🔧 Setting up missing system configurations...")
+        from setup_configs import setup_system_config
+        setup_system_config()
+        print("✅ System configuration initialized")
+    else:
+        print(f"✅ System configuration found (simulation_mode: {simulation_mode})")
+    
     # Test database connection
     print("🔍 Testing database connection...")
     from database.db import execute_query

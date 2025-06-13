@@ -610,6 +610,12 @@ def api_refresh():
 def api_debug_ocean():
     """Debug endpoint for ocean temperature issues"""
     try:
+        from database.config_manager import get_system_config, get_provider_config
+        
+        # Get configuration status
+        simulation_mode = get_system_config('simulation_mode', None)
+        noaa_timeout = get_provider_config('noaa_ocean', 'timeout_seconds', None)
+        
         # Get raw ocean data
         raw_data = execute_query("""
             SELECT metric_name, COUNT(*) as count, AVG(value) as avg, 
@@ -632,9 +638,25 @@ def api_debug_ocean():
             LIMIT 10
         """)
         
+        # Check environment variables
+        import os
+        env_info = {
+            'RAILWAY_ENVIRONMENT_NAME': os.getenv('RAILWAY_ENVIRONMENT_NAME'),
+            'RAILWAY_ENVIRONMENT': os.getenv('RAILWAY_ENVIRONMENT'),
+            'PORT': os.getenv('PORT'),
+            'DATABASE_URL': 'SET' if os.getenv('DATABASE_URL') else 'NOT_SET'
+        }
+        
         return jsonify({
             'success': True,
             'timestamp': datetime.now().isoformat(),
+            'configuration': {
+                'simulation_mode': simulation_mode,
+                'simulation_mode_status': 'CONFIGURED' if simulation_mode is not None else 'NOT_CONFIGURED',
+                'noaa_timeout': noaa_timeout,
+                'noaa_timeout_status': 'CONFIGURED' if noaa_timeout is not None else 'NOT_CONFIGURED'
+            },
+            'environment': env_info,
             'raw_data': raw_data,
             'ocean_status': ocean_status,
             'recent_temperatures': recent_temps,
