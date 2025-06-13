@@ -8,7 +8,7 @@ import requests
 import json
 import time
 from datetime import datetime, timedelta
-from database.db import execute_query
+from database.db import execute_query, execute_insert
 from database.config_manager import get_provider_config
 
 def fetch_biodiversity_data(product='species_observations', **kwargs):
@@ -94,11 +94,11 @@ def fetch_biodiversity_data(product='species_observations', **kwargs):
                         unique_species = len(set(result.get('speciesKey') for result in data['results'] if result.get('speciesKey')))
                         
                         # Store total species observations
-                        execute_query("""
+                        execute_insert("""
                             INSERT INTO metric_data 
                             (provider_key, dataset, metric_name, value, unit, timestamp, location_lat, location_lng, metadata)
                             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-                        """, [
+                        """, (
                             'gbif',
                             'biodiversity',
                             'species_observations',
@@ -115,14 +115,14 @@ def fetch_biodiversity_data(product='species_observations', **kwargs):
                                 'sample_size': len(data['results']),
                                 'data_quality': 'verified_coordinates'
                             })
-                        ])
+                        ))
                         
                         # Store unique species count
-                        execute_query("""
+                        execute_insert("""
                             INSERT INTO metric_data 
                             (provider_key, dataset, metric_name, value, unit, timestamp, location_lat, location_lng, metadata)
                             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-                        """, [
+                        """, (
                             'gbif',
                             'biodiversity',
                             'species_diversity',
@@ -138,7 +138,7 @@ def fetch_biodiversity_data(product='species_observations', **kwargs):
                                 'total_observations': total_observations,
                                 'diversity_index': unique_species / max(len(data['results']), 1)
                             })
-                        ])
+                        ))
                         
                         records_processed += 2
                 
