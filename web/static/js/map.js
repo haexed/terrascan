@@ -120,10 +120,16 @@ function updateFireLayer() {
     fireLayer.clearLayers();
 
     fireData.forEach(fire => {
+        // Check if coordinates are valid
+        if (!fire.lat || !fire.lng || isNaN(fire.lat) || isNaN(fire.lng)) {
+            console.warn('Invalid fire coordinates:', fire);
+            return;
+        }
+
         const color = getFireColor(fire.brightness);
         const radius = Math.max(5, Math.min(20, fire.brightness / 50));
 
-        const marker = L.circleMarker([fire.latitude, fire.longitude], {
+        const marker = L.circleMarker([fire.lat, fire.lng], {
             color: color,
             fillColor: color,
             fillOpacity: 0.7,
@@ -133,7 +139,7 @@ function updateFireLayer() {
 
         marker.bindPopup(`
             <strong>🔥 Active Fire</strong><br>
-            <strong>Location:</strong> ${fire.latitude.toFixed(3)}, ${fire.longitude.toFixed(3)}<br>
+            <strong>Location:</strong> ${fire.lat.toFixed(3)}, ${fire.lng.toFixed(3)}<br>
             <strong>Brightness:</strong> ${fire.brightness}K<br>
             <strong>Confidence:</strong> ${fire.confidence}%<br>
             <strong>Detected:</strong> ${fire.acq_date}<br>
@@ -144,7 +150,7 @@ function updateFireLayer() {
             showInfoPopup('🔥 Fire Alert', `
                 <strong>Brightness:</strong> ${fire.brightness}K<br>
                 <strong>Confidence:</strong> ${fire.confidence}%<br>
-                <strong>Location:</strong> ${fire.latitude.toFixed(3)}, ${fire.longitude.toFixed(3)}<br>
+                <strong>Location:</strong> ${fire.lat.toFixed(3)}, ${fire.lng.toFixed(3)}<br>
                 <strong>Detected:</strong> ${fire.acq_date}
             `);
         });
@@ -158,10 +164,16 @@ function updateAirLayer() {
     airLayer.clearLayers();
 
     airData.forEach(station => {
-        const color = getAirQualityColor(station.value);
-        const radius = Math.max(8, Math.min(25, station.value / 2));
+        // Check if coordinates are valid
+        if (!station.lat || !station.lng || isNaN(station.lat) || isNaN(station.lng)) {
+            console.warn('Invalid air quality coordinates:', station);
+            return;
+        }
 
-        const marker = L.circleMarker([station.latitude, station.longitude], {
+        const color = getAirQualityColor(station.pm25);
+        const radius = Math.max(8, Math.min(25, station.pm25 / 2));
+
+        const marker = L.circleMarker([station.lat, station.lng], {
             color: color,
             fillColor: color,
             fillOpacity: 0.6,
@@ -171,19 +183,17 @@ function updateAirLayer() {
 
         marker.bindPopup(`
             <strong>🌬️ Air Quality Station</strong><br>
-            <strong>Location:</strong> ${station.location}<br>
-            <strong>PM2.5:</strong> ${station.value} μg/m³<br>
-            <strong>Status:</strong> ${getAirQualityStatus(station.value)}
-            <strong>Updated:</strong> ${station.last_updated}<br>
+            <strong>Location:</strong> ${station.lat.toFixed(3)}, ${station.lng.toFixed(3)}<br>
+            <strong>PM2.5:</strong> ${station.pm25} μg/m³<br>
+            <strong>Status:</strong> ${getAirQualityStatus(station.pm25)}<br>
             <em>Source: OpenAQ</em>
         `);
 
         marker.on('click', function () {
             showInfoPopup('🌬️ Air Quality', `
-                <strong>Location:</strong> ${station.location}<br>
-                <strong>PM2.5:</strong> ${station.value} μg/m³<br>
-                <strong>Status:</strong> ${getAirQualityStatus(station.value)}
-                <strong>Updated:</strong> ${station.last_updated}
+                <strong>Location:</strong> ${station.lat.toFixed(3)}, ${station.lng.toFixed(3)}<br>
+                <strong>PM2.5:</strong> ${station.pm25} μg/m³<br>
+                <strong>Status:</strong> ${getAirQualityStatus(station.pm25)}
             `);
         });
 

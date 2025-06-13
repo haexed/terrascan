@@ -28,9 +28,6 @@
             <a class="navbar-brand logo" href="/">
                 🌍 <strong>TERRASCAN</strong>
             </a>
-            <span class="navbar-text d-none d-md-inline">
-                <small class="text-muted">v{{ version }}</small>
-            </span>
 
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                 <span class="navbar-toggler-icon"></span>
@@ -107,35 +104,32 @@
 
     <!-- Base JavaScript -->
     <script>
-        // Update current time with timezone info
+        let lastTimeString = '';
+
+        // Update current time with timezone info (optimized to prevent janking)
         function updateTime() {
             const now = new Date();
+            const timeString = now.toISOString().replace('T', ' ').substr(0, 19) + ' UTC';
+
+            // Only update DOM if time actually changed (prevents janking)
+            if (timeString === lastTimeString) {
+                return;
+            }
+            lastTimeString = timeString;
+
             const timeElement = document.getElementById('current-time');
             if (timeElement) {
-                // Get timezone offset in hours and minutes
-                const offsetMinutes = now.getTimezoneOffset();
-                const offsetHours = Math.floor(Math.abs(offsetMinutes) / 60);
-                const offsetMins = Math.abs(offsetMinutes) % 60;
-                const offsetSign = offsetMinutes <= 0 ? '+' : '-';
-                const offsetString = `${offsetSign}${offsetHours.toString().padStart(2, '0')}:${offsetMins.toString().padStart(2, '0')}`;
-
-                timeElement.textContent = now.toISOString().replace('T', ' ').substr(0, 19) + ` UTC (${offsetString})`;
+                timeElement.textContent = timeString;
             }
 
             // Also update map widget time if it exists
             const mapTimeElement = document.getElementById('map-current-time');
             if (mapTimeElement) {
-                const offsetMinutes = now.getTimezoneOffset();
-                const offsetHours = Math.floor(Math.abs(offsetMinutes) / 60);
-                const offsetMins = Math.abs(offsetMinutes) % 60;
-                const offsetSign = offsetMinutes <= 0 ? '+' : '-';
-                const offsetString = `${offsetSign}${offsetHours.toString().padStart(2, '0')}:${offsetMins.toString().padStart(2, '0')}`;
-
-                mapTimeElement.textContent = now.toISOString().replace('T', ' ').substr(0, 19) + ` UTC (${offsetString})`;
+                mapTimeElement.textContent = timeString;
             }
         }
 
-        // Update time every second
+        // Update time every second (but only change DOM when needed)
         setInterval(updateTime, 1000);
         updateTime();
 
