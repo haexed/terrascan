@@ -8,7 +8,7 @@ import sys
 import os
 import json
 from datetime import datetime, timedelta
-from flask import Flask, render_template, jsonify
+from flask import Flask, render_template, jsonify, make_response
 from dotenv import load_dotenv
 
 # Load environment variables
@@ -35,7 +35,20 @@ init_database()
 def inject_version():
     return {'version': get_version()}
 
+# Cache-busting decorator for main pages
+def no_cache(f):
+    """Decorator to prevent browser caching of dynamic content"""
+    def decorated_function(*args, **kwargs):
+        response = make_response(f(*args, **kwargs))
+        response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate, max-age=0'
+        response.headers['Pragma'] = 'no-cache'
+        response.headers['Expires'] = '0'
+        return response
+    decorated_function.__name__ = f.__name__
+    return decorated_function
+
 @app.route('/')
+@no_cache
 def index():
     """TERRASCAN - Homepage with environmental overview and hero map"""
     try:
@@ -57,6 +70,7 @@ def index():
         return f"TERRASCAN Error: {e}", 500
 
 @app.route('/dashboard')
+@no_cache
 def dashboard():
     """TERRASCAN - Single dashboard showing environmental health"""
     try:
@@ -78,6 +92,7 @@ def dashboard():
         return f"TERRASCAN Error: {e}", 500
 
 @app.route('/map')
+@no_cache
 def map_view():
     """TERRASCAN - Interactive world map with environmental data layers"""
     try:
@@ -101,6 +116,7 @@ def about():
     return render_template('about.html')
 
 @app.route('/system')
+@no_cache
 def system():
     """TERRASCAN - System status and data provider information"""
     try:
@@ -327,7 +343,7 @@ def get_ocean_status():
             LIMIT 12
         """)
         
-        if ocean_data and ocean_data[0] and ocean_data[0]['avg_temp']:
+        if ocean_data and ocean_data[0] and ocean_data[0]['avg_temp'] is not None:
             avg_temp = ocean_data[0]['avg_temp']
             # Ocean temperature status (rough guidelines)
             if 15 <= avg_temp <= 25:
@@ -419,6 +435,7 @@ def calculate_environmental_health(fire_data, air_data, ocean_data):
         }
 
 @app.route('/api/map-data')
+@no_cache
 def api_map_data():
     """API endpoint to get environmental data for map visualization"""
     try:
@@ -577,6 +594,7 @@ def api_refresh():
         }), 500
 
 @app.route('/api/debug/ocean')
+@no_cache
 def api_debug_ocean():
     """Debug endpoint for ocean temperature issues"""
     try:
