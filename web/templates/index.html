@@ -123,8 +123,9 @@
                 </div>
 
                 <div class="text-center">
-                    <div
-                        class="metric-value {% if ocean_data.avg_temp > 26 %}text-warning{% elif ocean_data.avg_temp > 28 %}text-danger{% else %}text-info{% endif %}">
+                    <div class="metric-value {% if ocean_data.avg_temp > 26 %}text-warning{% elif ocean_data.avg_temp > 28 %}text-danger{% else %}text-info{% endif %}"
+                        data-temp="{{ ocean_data.avg_temp }}" data-status="{{ ocean_data.status }}"
+                        data-timestamp="{{ range(1000000) | random }}">
                         {{ ocean_data.avg_temp }}°C
                     </div>
                     <div class="mb-2">Average Water Temperature</div>
@@ -246,5 +247,22 @@
             window.location.href = window.location.href.split('?')[0] + '?cache_bust=' + timestamp;
         }
     }
+
+    // Debug ocean data on page load
+    document.addEventListener('DOMContentLoaded', function () {
+        const oceanTemp = document.querySelector('[data-temp]');
+        if (oceanTemp) {
+            console.log('Ocean temp element found:', oceanTemp.getAttribute('data-temp'));
+            console.log('Ocean status:', oceanTemp.getAttribute('data-status'));
+            console.log('Ocean display text:', oceanTemp.textContent);
+
+            // If showing 0°C, highlight the element
+            if (oceanTemp.textContent.includes('0°C')) {
+                oceanTemp.style.border = '3px solid orange';
+                oceanTemp.title = 'CACHE ISSUE DETECTED - This should show ' + oceanTemp.getAttribute('data-temp') + '°C';
+                console.warn('CACHE ISSUE: Showing 0°C but data-temp is', oceanTemp.getAttribute('data-temp'));
+            }
+        }
+    });
 </script>
 {% endblock %}

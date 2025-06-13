@@ -57,14 +57,26 @@ def index():
         air_data = get_air_quality_status()
         ocean_data = get_ocean_status()
         
+        # Debug: Print ocean data to console
+        print(f"DEBUG: Ocean data - temp: {ocean_data['avg_temp']}°C, status: {ocean_data['status']}")
+        
         # Calculate overall environmental health score
         health_score = calculate_environmental_health(fire_data, air_data, ocean_data)
         
-        return render_template('index.html',
-                             fire_data=fire_data,
-                             air_data=air_data,
-                             ocean_data=ocean_data,
-                             health_score=health_score)
+        response = make_response(render_template('index.html',
+                                               fire_data=fire_data,
+                                               air_data=air_data,
+                                               ocean_data=ocean_data,
+                                               health_score=health_score))
+        
+        # Extra aggressive cache busting for this specific issue
+        response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate, max-age=0'
+        response.headers['Pragma'] = 'no-cache'
+        response.headers['Expires'] = '0'
+        response.headers['Last-Modified'] = datetime.now().strftime('%a, %d %b %Y %H:%M:%S GMT')
+        response.headers['ETag'] = f'"{datetime.now().timestamp()}"'
+        
+        return response
                              
     except Exception as e:
         return f"TERRASCAN Error: {e}", 500
