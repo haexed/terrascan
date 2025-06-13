@@ -1,0 +1,203 @@
+/* === TERRASCAN MAP VIEW STYLES === */
+
+/* Main map container */
+#map {
+    height: 100vh;
+    width: 100%;
+    position: relative;
+}
+
+/* Control panel */
+.control-panel {
+    position: fixed;
+    top: 80px;
+    /* Navbar height (~56px) + 24px spacing */
+    left: 20px;
+    background: rgba(255, 255, 255, 0.95);
+    border: 2px solid var(--infp-green);
+    border-radius: 15px;
+    padding: 20px;
+    box-shadow: 0 8px 32px rgba(51, 164, 116, 0.2);
+    backdrop-filter: blur(10px);
+    z-index: 1000;
+    max-width: 280px;
+}
+
+/* Health score widget */
+.health-score-widget {
+    position: fixed;
+    top: 80px;
+    /* Navbar height (~56px) + 24px spacing */
+    right: 20px;
+    background: rgba(255, 255, 255, 0.95);
+    border: 2px solid var(--infp-green);
+    border-radius: 15px;
+    padding: 20px;
+    box-shadow: 0 8px 32px rgba(51, 164, 116, 0.2);
+    backdrop-filter: blur(10px);
+    z-index: 1000;
+    text-align: center;
+    min-width: 200px;
+}
+
+/* Layer toggle controls */
+.layer-toggle {
+    display: flex;
+    align-items: center;
+    margin: 10px 0;
+    padding: 8px;
+    border-radius: 8px;
+    transition: background 0.3s ease;
+}
+
+.layer-toggle:hover {
+    background: rgba(51, 164, 116, 0.1);
+}
+
+.layer-toggle input[type="checkbox"] {
+    margin-right: 10px;
+    transform: scale(1.2);
+}
+
+.layer-icon {
+    font-size: 1.2rem;
+    margin-right: 8px;
+    width: 25px;
+}
+
+/* Legend */
+.legend {
+    position: fixed;
+    bottom: 20px;
+    left: 20px;
+    background: rgba(255, 255, 255, 0.95);
+    border: 2px solid var(--infp-green);
+    border-radius: 15px;
+    padding: 15px;
+    box-shadow: 0 8px 32px rgba(51, 164, 116, 0.2);
+    backdrop-filter: blur(10px);
+    z-index: 1000;
+    max-width: 250px;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    margin: 5px 0;
+}
+
+.legend-color {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    margin-right: 10px;
+    border: 1px solid #ccc;
+}
+
+/* Legend color classes */
+.fire-high {
+    background: #ff4444 !important;
+}
+
+.fire-moderate {
+    background: #ff8844 !important;
+}
+
+.fire-low {
+    background: #ffaa44 !important;
+}
+
+.air-good {
+    background: #22cc22 !important;
+}
+
+.air-moderate {
+    background: #ffcc22 !important;
+}
+
+.air-unhealthy {
+    background: #ff4444 !important;
+}
+
+.ocean-cool {
+    background: #2288ff !important;
+}
+
+.ocean-normal {
+    background: #22ccff !important;
+}
+
+.ocean-warm {
+    background: #ffaa22 !important;
+}
+
+/* Info popup */
+.info-popup {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background: rgba(255, 255, 255, 0.95);
+    border: 2px solid var(--infp-green);
+    border-radius: 15px;
+    padding: 20px;
+    box-shadow: 0 8px 32px rgba(51, 164, 116, 0.2);
+    backdrop-filter: blur(10px);
+    z-index: 1000;
+    max-width: 300px;
+    display: none;
+}
+
+/* Map refresh button */
+.refresh-btn {
+    position: fixed;
+    bottom: 20px;
+    right: 50%;
+    transform: translateX(50%);
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: var(--infp-green);
+    border: none;
+    box-shadow: 0 4px 20px rgba(51, 164, 116, 0.3);
+    transition: all 0.3s ease;
+    z-index: 1000;
+}
+
+.refresh-btn:hover {
+    transform: translateX(50%) scale(1.1);
+    box-shadow: 0 6px 30px rgba(51, 164, 116, 0.4);
+}
+
+/* Mobile responsiveness */
+@media (max-width: 768px) {
+    .control-panel {
+        top: 70px;
+        /* Navbar height + 14px spacing on mobile */
+        left: 10px;
+        right: 10px;
+        max-width: none;
+        padding: 15px;
+    }
+
+    .health-score-widget {
+        top: 200px;
+        /* Control panel height + spacing */
+        right: 10px;
+        left: 10px;
+        max-width: none;
+    }
+
+    .legend {
+        bottom: 10px;
+        left: 10px;
+        right: 10px;
+        max-width: none;
+    }
+
+    .info-popup {
+        bottom: 10px;
+        right: 10px;
+        left: 10px;
+        max-width: none;
+    }
+}

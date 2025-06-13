@@ -1,7 +1,7 @@
 """TERRASCAN Version Information"""
 
-__version__ = "2.0.0"
-__version_info__ = (2, 0, 0)
+__version__ = "2.1.0"
+__version_info__ = (2, 1, 0)
 
 def get_version():
     """Return the current version string"""

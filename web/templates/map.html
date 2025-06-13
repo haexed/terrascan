@@ -1,0 +1,159 @@
+{% extends "base.html" %}
+
+{% block title %}🌍 TERRASCAN - Live Planetary Monitoring{% endblock %}
+
+{% block leaflet_css %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/map.css') }}">
+{% endblock %}
+
+
+
+{% block content %}
+<!-- Main Map Container -->
+<div id="map"></div>
+
+<!-- Control Panel -->
+<div class="control-panel">
+    <h5 class="mb-3"><strong>🌍 TERRASCAN</strong></h5>
+    <p class="small mb-3">Live Environmental Layers</p>
+
+    <!-- Fire Layer Toggle -->
+    <div class="layer-toggle">
+        <input type="checkbox" id="fire-layer" checked>
+        <span class="layer-icon">🔥</span>
+        <div>
+            <strong>Active Fires</strong>
+            <div class="small">NASA FIRMS</div>
+        </div>
+    </div>
+
+    <!-- Air Quality Layer Toggle -->
+    <div class="layer-toggle">
+        <input type="checkbox" id="air-layer" checked>
+        <span class="layer-icon">🌬️</span>
+        <div>
+            <strong>Air Quality</strong>
+            <div class="small">OpenAQ PM2.5</div>
+        </div>
+    </div>
+
+    <!-- Ocean Layer Toggle -->
+    <div class="layer-toggle">
+        <input type="checkbox" id="ocean-layer" checked>
+        <span class="layer-icon">🌊</span>
+        <div>
+            <strong>Ocean Temp</strong>
+            <div class="small">NOAA Stations</div>
+        </div>
+    </div>
+
+    <hr class="my-3">
+
+    <!-- Map Style Toggle -->
+    <div class="layer-toggle">
+        <input type="checkbox" id="satellite-view">
+        <span class="layer-icon">🛰️</span>
+        <div>
+            <strong>Satellite View</strong>
+            <div class="small">High Resolution</div>
+        </div>
+    </div>
+</div>
+
+<!-- Health Score Widget -->
+<div class="health-score-widget">
+    <h6 class="mb-2">🌍 PLANETARY HEALTH</h6>
+    <div class="health-score status-{{ health_score.status.split()[1].lower() if health_score else 'poor' }}">
+        {{ health_score.score if health_score else '30' }}/100
+    </div>
+    <div class="mt-1 small status-{{ health_score.status.split()[1].lower() if health_score else 'poor' }}">
+        {{ health_score.status if health_score else '🔴 POOR' }}
+    </div>
+    <div class="small mt-2">
+        <i class="fas fa-clock"></i> <span id="current-time">Loading...</span>
+    </div>
+</div>
+
+<!-- Legend -->
+<div class="legend">
+    <h6 class="mb-2">📊 Legend</h6>
+
+    <!-- Fire Legend -->
+    <div id="fire-legend">
+        <div class="legend-item">
+            <div class="legend-color fire-high"></div>
+            <span class="small">High Fire Activity</span>
+        </div>
+        <div class="legend-item">
+            <div class="legend-color fire-moderate"></div>
+            <span class="small">Moderate Fires</span>
+        </div>
+        <div class="legend-item">
+            <div class="legend-color fire-low"></div>
+            <span class="small">Low Fire Activity</span>
+        </div>
+    </div>
+
+    <!-- Air Quality Legend -->
+    <div id="air-legend">
+        <div class="legend-item">
+            <div class="legend-color air-good"></div>
+            <span class="small">Good Air (0-12 μg/m³)</span>
+        </div>
+        <div class="legend-item">
+            <div class="legend-color air-moderate"></div>
+            <span class="small">Moderate (13-35 μg/m³)</span>
+        </div>
+        <div class="legend-item">
+            <div class="legend-color air-unhealthy"></div>
+            <span class="small">Unhealthy (35+ μg/m³)</span>
+        </div>
+    </div>
+
+    <!-- Ocean Legend -->
+    <div id="ocean-legend">
+        <div class="legend-item">
+            <div class="legend-color ocean-cool"></div>
+            <span class="small">Cool (15-20°C)</span>
+        </div>
+        <div class="legend-item">
+            <div class="legend-color ocean-normal"></div>
+            <span class="small">Normal (20-25°C)</span>
+        </div>
+        <div class="legend-item">
+            <div class="legend-color ocean-warm"></div>
+            <span class="small">Warm (25°C+)</span>
+        </div>
+    </div>
+</div>
+
+<!-- Info Popup -->
+<div class="info-popup" id="info-popup">
+    <h6 id="popup-title">Location Details</h6>
+    <div id="popup-content">
+        Click on any data point for details...
+    </div>
+    <button class="btn btn-sm btn-outline-secondary mt-2" onclick="closeInfoPopup()">
+        <i class="fas fa-times"></i> Close
+    </button>
+</div>
+
+<!-- Refresh Button -->
+<button class="refresh-btn" onclick="refreshMapData()" title="Refresh Environmental Data">
+    <i class="fas fa-sync-alt text-white fs-4" id="refresh-icon"></i>
+</button>
+{% endblock %}
+
+{% block footer_container %}{% endblock %}
+
+{% block leaflet_js %}
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/map.js') }}"></script>
+{% endblock %}

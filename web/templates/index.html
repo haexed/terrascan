@@ -1,10 +1,20 @@
 {% extends "base.html" %}
 
-{% block title %}🌍 TERRASCAN - Dashboard{% endblock %}
+{% block title %}🌍 TERRASCAN - Keep watch on our planet. Every day.{% endblock %}
+
+{% block leaflet_css %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+{% endblock %}
+
+{% block extra_css %}
+<!-- Hero map styles are now in main style.css -->
+{% endblock %}
 
 {% block content %}
-<!-- Main Dashboard -->
+<!-- Main Content -->
 <div class="container-fluid mt-5 pt-4">
+
+
     <!-- Environmental Health Score -->
     <div class="row mb-4">
         <div class="col-12">
@@ -140,47 +150,53 @@
         </div>
     </div>
 
-    <!-- Real-time Data Sources -->
+    <!-- Hero Map Section -->
     <div class="row mb-4">
         <div class="col-12">
-            <div class="eco-card p-4">
-                <h4 class="mb-3">📡 Live Data Sources</h4>
-                <div class="row text-center">
-                    <div class="col-md-4">
-                        <div class="border-end border-secondary pe-3">
-                            <h5>🛰️ <a href="https://firms.modaps.eosdis.nasa.gov/" target="_blank"
-                                    class="text-decoration-none text-success">NASA FIRMS</a></h5>
-                            <div class="small">
-                                Fire Information for Resource Management<br>
-                                MODIS/VIIRS satellite data<br>
-                                Global coverage • 2hr updates<br>
-                                <a href="https://firms.modaps.eosdis.nasa.gov/api/" target="_blank"
-                                    class="text-info small">API Documentation</a>
-                            </div>
+            <div class="hero-map-container">
+                <div class="hero-map-header">
+                    <h3 class="mb-2">🗺️ <strong>Live Environmental Map</strong></h3>
+                    <p class="mb-3">Interactive view of global environmental conditions</p>
+                    <div class="hero-map-controls">
+                        <div class="btn-group" role="group">
+                            <input type="checkbox" class="btn-check" id="hero-fire-layer" checked>
+                            <label class="btn btn-outline-danger btn-sm" for="hero-fire-layer">
+                                🔥 Fires
+                            </label>
+
+                            <input type="checkbox" class="btn-check" id="hero-air-layer" checked>
+                            <label class="btn btn-outline-warning btn-sm" for="hero-air-layer">
+                                🌬️ Air Quality
+                            </label>
+
+                            <input type="checkbox" class="btn-check" id="hero-ocean-layer" checked>
+                            <label class="btn btn-outline-info btn-sm" for="hero-ocean-layer">
+                                🌊 Ocean
+                            </label>
                         </div>
+                        <a href="/map" class="btn btn-success btn-sm ms-3">
+                            <i class="fas fa-expand"></i> Full Screen Map
+                        </a>
                     </div>
-                    <div class="col-md-4">
-                        <div class="border-end border-secondary pe-3">
-                            <h5>🌬️ <a href="https://openaq.org/" target="_blank"
-                                    class="text-decoration-none text-success">OpenAQ</a></h5>
-                            <div class="small">
-                                Open Air Quality Platform<br>
-                                10,000+ stations worldwide<br>
-                                100+ countries • Hourly updates<br>
-                                <a href="https://docs.openaq.org/" target="_blank" class="text-info small">API
-                                    Documentation</a>
-                            </div>
+                </div>
+
+                <!-- Hero Map -->
+                <div id="hero-map"></div>
+
+                <div class="hero-map-footer">
+                    <div class="row">
+                        <div class="col-md-8">
+                            <small>
+                                <strong>Data Sources:</strong>
+                                <a href="https://firms.modaps.eosdis.nasa.gov/" target="_blank">NASA FIRMS</a> •
+                                <a href="https://openaq.org/" target="_blank">OpenAQ</a> •
+                                <a href="https://tidesandcurrents.noaa.gov/" target="_blank">NOAA Ocean Service</a>
+                            </small>
                         </div>
-                    </div>
-                    <div class="col-md-4">
-                        <h5>🌊 <a href="https://tidesandcurrents.noaa.gov/" target="_blank"
-                                class="text-decoration-none text-success">NOAA Ocean</a></h5>
-                        <div class="small">
-                            Tides and Currents Service<br>
-                            US coastal monitoring stations<br>
-                            Water levels & temperature • 3hr updates<br>
-                            <a href="https://api.tidesandcurrents.noaa.gov/api/" target="_blank"
-                                class="text-info small">API Documentation</a>
+                        <div class="col-md-4 text-end">
+                            <button class="btn btn-outline-secondary btn-sm" onclick="refreshHeroMap()">
+                                <i class="fas fa-sync-alt" id="hero-refresh-icon"></i> Refresh
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -188,73 +204,36 @@
         </div>
     </div>
 
-
-</div>
-
-<!-- Refresh Button -->
-<button class="refresh-btn" onclick="refreshData()" title="Refresh Environmental Data">
-    <i class="fas fa-sync-alt text-white fs-4" id="refresh-icon"></i>
-</button>
+    <!-- Call to Action -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="eco-card text-center p-4">
+                <h4 class="mb-3">🌱 Environmental Awareness for Everyone</h4>
+                <p class="mb-3">
+                    TERRASCAN makes complex environmental data accessible to everyone.
+                    Monitor our planet's health in real-time with data from NASA, NOAA, and OpenAQ.
+                </p>
+                <div class="d-flex justify-content-center gap-3 flex-wrap">
+                    <a href="/map" class="btn btn-success">
+                        <i class="fas fa-globe"></i> Explore Full Map
+                    </a>
+                    <a href="/dashboard" class="btn btn-success">
+                        <i class="fas fa-chart-line"></i> View Dashboard
+                    </a>
+                    <a href="/about" class="btn btn-success">
+                        <i class="fas fa-info-circle"></i> Learn More
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 {% endblock %}
 
+{% block leaflet_js %}
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+{% endblock %}
+
 {% block extra_js %}
-<script>
-    // Update current time
-    function updateTime() {
-        const now = new Date();
-        document.getElementById('current-time').textContent =
-            now.toISOString().replace('T', ' ').substr(0, 19) + ' UTC';
-    }
-
-    // Refresh environmental data
-    async function refreshData() {
-        const icon = document.getElementById('refresh-icon');
-        icon.classList.add('fa-spin');
-
-        try {
-            const response = await fetch('/api/refresh');
-            const result = await response.json();
-
-            if (result.success) {
-                // Show success and reload page to show new data
-                setTimeout(() => {
-                    location.reload();
-                }, 1000);
-            } else {
-                console.error('Refresh failed:', result.error);
-            }
-        } catch (error) {
-            console.error('Refresh error:', error);
-        } finally {
-            setTimeout(() => {
-                icon.classList.remove('fa-spin');
-            }, 2000);
-        }
-    }
-
-    // Auto-refresh every 15 minutes
-    setInterval(() => {
-        refreshData();
-    }, 15 * 60 * 1000);
-
-    // Update time every second
-    setInterval(updateTime, 1000);
-    updateTime();
-
-    // Add some visual effects
-    document.addEventListener('DOMContentLoaded', function () {
-        // Animate cards on load
-        const cards = document.querySelectorAll('.eco-card');
-        cards.forEach((card, index) => {
-            card.style.opacity = '0';
-            card.style.transform = 'translateY(20px)';
-            setTimeout(() => {
-                card.style.transition = 'all 0.5s ease';
-                card.style.opacity = '1';
-                card.style.transform = 'translateY(0)';
-            }, index * 200);
-        });
-    });
-</script>
+<script src="{{ url_for('static', filename='js/hero-map.js') }}"></script>
 {% endblock %}

@@ -36,8 +36,29 @@ def inject_version():
     return {'version': get_version()}
 
 @app.route('/')
+def index():
+    """TERRASCAN - Homepage with environmental overview and hero map"""
+    try:
+        # Get current environmental data
+        fire_data = get_fire_status()
+        air_data = get_air_quality_status()
+        ocean_data = get_ocean_status()
+        
+        # Calculate overall environmental health score
+        health_score = calculate_environmental_health(fire_data, air_data, ocean_data)
+        
+        return render_template('index.html',
+                             fire_data=fire_data,
+                             air_data=air_data,
+                             ocean_data=ocean_data,
+                             health_score=health_score)
+                             
+    except Exception as e:
+        return f"TERRASCAN Error: {e}", 500
+
+@app.route('/dashboard')
 def dashboard():
-    """ECO WATCH TERRA SCAN - Single dashboard showing environmental health"""
+    """TERRASCAN - Single dashboard showing environmental health"""
     try:
         # Get current environmental data
         fire_data = get_fire_status()
@@ -54,7 +75,30 @@ def dashboard():
                              health_score=health_score)
                              
     except Exception as e:
-        return f"ECO WATCH Error: {e}", 500
+        return f"TERRASCAN Error: {e}", 500
+
+@app.route('/map')
+def map_view():
+    """TERRASCAN - Interactive world map with environmental data layers"""
+    try:
+        # Get current environmental data for health score widget
+        fire_data = get_fire_status()
+        air_data = get_air_quality_status()
+        ocean_data = get_ocean_status()
+        
+        # Calculate overall environmental health score
+        health_score = calculate_environmental_health(fire_data, air_data, ocean_data)
+        
+        return render_template('map.html',
+                             health_score=health_score)
+                             
+    except Exception as e:
+        return f"TERRASCAN Map Error: {e}", 500
+
+@app.route('/about')
+def about():
+    """TERRASCAN - About page with project information"""
+    return render_template('about.html')
 
 def get_fire_status():
     """Get current fire situation"""
@@ -282,6 +326,126 @@ def calculate_environmental_health(fire_data, air_data, ocean_data):
             'factors': {},
             'error': str(e)
         }
+
+@app.route('/api/map-data')
+def api_map_data():
+    """API endpoint to get environmental data for map visualization"""
+    try:
+        # Get fire data with coordinates
+        fires = execute_query("""
+            SELECT location_lat as latitude, location_lng as longitude,
+                   value as brightness, 
+                   CAST(SUBSTR(metadata, INSTR(metadata, '"confidence":') + 13, 2) AS INTEGER) as confidence,
+                   DATE(timestamp) as acq_date
+            FROM metric_data 
+            WHERE provider_key = 'nasa_firms' 
+            AND timestamp > datetime('now', '-24 hours')
+            AND location_lat IS NOT NULL 
+            AND location_lng IS NOT NULL
+            AND value > 300
+            ORDER BY timestamp DESC
+            LIMIT 500
+        """)
+        
+        # Get air quality data with coordinates
+        air_quality = execute_query("""
+            SELECT location_lat as latitude, location_lng as longitude,
+                   AVG(value) as value,
+                   metadata,
+                   MAX(timestamp) as last_updated
+            FROM metric_data 
+            WHERE provider_key = 'openaq' 
+            AND metric_name = 'air_quality_pm25'
+            AND timestamp > datetime('now', '-7 days')
+            AND location_lat IS NOT NULL 
+            AND location_lng IS NOT NULL
+            GROUP BY location_lat, location_lng
+            ORDER BY value DESC
+            LIMIT 100
+        """)
+        
+        # Get ocean data with coordinates
+        ocean_stations = execute_query("""
+            SELECT location_lat as latitude, location_lng as longitude,
+                   AVG(CASE WHEN metric_name = 'water_temperature' THEN value END) as temperature,
+                   AVG(CASE WHEN metric_name = 'water_level' THEN value END) as water_level,
+                   metadata,
+                   MAX(timestamp) as last_updated
+            FROM metric_data 
+            WHERE provider_key = 'noaa_ocean' 
+            AND timestamp > datetime('now', '-7 days')
+            AND location_lat IS NOT NULL 
+            AND location_lng IS NOT NULL
+            GROUP BY location_lat, location_lng
+            LIMIT 20
+        """)
+        
+        # Process data for map
+        fire_data = []
+        for fire in fires or []:
+            fire_data.append({
+                'latitude': fire['latitude'],
+                'longitude': fire['longitude'],
+                'brightness': fire['brightness'],
+                'confidence': fire['confidence'] or 75,
+                'acq_date': fire['acq_date']
+            })
+        
+        air_data = []
+        for station in air_quality or []:
+            # Extract location name from metadata if available
+            location = "Unknown Location"
+            try:
+                if station['metadata']:
+                    metadata = json.loads(station['metadata'])
+                    location = metadata.get('location', location)
+            except:
+                pass
+                
+            air_data.append({
+                'latitude': station['latitude'],
+                'longitude': station['longitude'],
+                'value': round(station['value'], 1),
+                'location': location,
+                'last_updated': station['last_updated']
+            })
+        
+        ocean_data = []
+        for station in ocean_stations or []:
+            # Extract station name from metadata if available
+            name = "Ocean Station"
+            try:
+                if station['metadata']:
+                    metadata = json.loads(station['metadata'])
+                    name = metadata.get('station_name', name)
+            except:
+                pass
+                
+            ocean_data.append({
+                'latitude': station['latitude'],
+                'longitude': station['longitude'],
+                'temperature': round(station['temperature'], 1) if station['temperature'] else 20.0,
+                'water_level': round(station['water_level'], 2) if station['water_level'] else 0.0,
+                'name': name,
+                'last_updated': station['last_updated']
+            })
+        
+        return jsonify({
+            'success': True,
+            'fires': fire_data,
+            'air_quality': air_data,
+            'ocean': ocean_data,
+            'timestamp': datetime.now().isoformat()
+        })
+        
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e),
+            'fires': [],
+            'air_quality': [],
+            'ocean': []
+        })
 
 @app.route('/api/refresh')
 def api_refresh():

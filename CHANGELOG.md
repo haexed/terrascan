@@ -5,6 +5,37 @@ All notable changes to ECO WATCH TERRA SCAN will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.1.0] - 2025-01-21
+### Added - WEBSITE REDESIGN: Modular Templates & Professional UI
+- **Homepage with hero map**: New landing page featuring 60vh interactive map with environmental info cards above
+- **Full-screen map view**: Dedicated `/map` route with professional floating control panels and health score widget
+- **About page**: New `/about` route with mission statement and technology information
+- **Modular template system**: Created `base.html` master template with shared navbar and footer
+- **Template blocks**: Smart block system (title, leaflet_css, extra_css, content, extra_js, nav_container_class)
+- **Hero map functionality**: Simplified version showing top 50 fires and 30 air quality stations
+- **Professional navigation**: Consistent navbar with active state highlighting across all pages
+- **Real-time clock**: Current UTC time display in navigation bar
+
+### Changed
+- **CSS consolidation**: Merged `hero-map.css` into main `style.css` for single source of truth
+- **Navigation styling**: Fixed inconsistent yellow/white link colors - now consistent white across all pages
+- **Map control positioning**: Fixed control panel and health score widget overlapping navbar (moved from top: 20px to top: 80px)
+- **Mobile responsiveness**: Improved mobile layout for control panels and hero map
+- **Template inheritance**: All pages now extend `base.html` instead of duplicating navigation/footer code
+
+### Fixed
+- **Navbar overlap**: Control panels and health score widget now properly positioned below navbar
+- **CSS conflicts**: Eliminated styling inconsistencies between pages
+- **Mobile positioning**: Proper spacing for control panels on mobile devices (top: 70px, health widget: 200px)
+- **Template duplication**: Removed duplicate navigation and footer code across templates
+
+### Technical Improvements
+- **Single CSS file**: All styles consolidated in `/web/static/css/style.css` for better maintainability
+- **Clean separation**: HTML structure, CSS styling, and JavaScript functionality in separate files
+- **Template blocks**: Flexible block system for customizing different page types
+- **Responsive design**: Mobile breakpoints and proper spacing throughout
+- **Code organization**: Better file structure with dedicated CSS and JS files for different components
+
 ## [2.0.0] - 2025-01-21
 ### Changed - MAJOR REFACTOR: TERRASCAN
 - **Complete project transformation**: From complex "environmental time machine" to focused environmental health dashboard
