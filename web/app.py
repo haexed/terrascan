@@ -877,6 +877,192 @@ def api_fix_missing_task():
             'timestamp': datetime.now().isoformat()
         }), 500
 
+@app.route('/api/debug-task-creation')
+@no_cache
+def api_debug_task_creation():
+    """Debug task creation process step by step"""
+    try:
+        debug_info = {}
+        
+        # Step 1: Check current tasks
+        all_tasks = execute_query("SELECT name, provider, active FROM task ORDER BY name")
+        debug_info['existing_tasks'] = all_tasks
+        
+        # Step 2: Check if our task exists
+        temp_task_count = execute_query("SELECT COUNT(*) as count FROM task WHERE name = 'noaa_ocean_temperature'")[0]['count']
+        debug_info['temp_task_exists'] = temp_task_count > 0
+        
+        # Step 3: Try to insert the task manually with detailed error handling
+        try:
+            # Use a direct SQL insert
+            from database.db import get_db_connection
+            import sqlite3
+            
+            conn = get_db_connection()
+            cursor = conn.cursor()
+            
+            cursor.execute("""
+                INSERT INTO task (name, description, task_type, command, cron_schedule, provider, dataset, parameters, active)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """, [
+                'noaa_ocean_temperature',
+                'Fetch water temperature from NOAA Ocean Service', 
+                'fetch_data',
+                'tasks.fetch_noaa_ocean',
+                '0 */3 * * *',
+                'noaa_ocean',
+                'oceanographic',
+                '{"product": "water_temperature"}',
+                1
+            ])
+            
+            conn.commit()
+            conn.close()
+            
+            debug_info['insert_success'] = True
+            debug_info['insert_error'] = None
+            
+        except sqlite3.IntegrityError as e:
+            debug_info['insert_success'] = False
+            debug_info['insert_error'] = f"IntegrityError: {str(e)}"
+            
+        except Exception as e:
+            debug_info['insert_success'] = False
+            debug_info['insert_error'] = f"Error: {str(e)}"
+        
+        # Step 4: Check if task exists now
+        temp_task_count_after = execute_query("SELECT COUNT(*) as count FROM task WHERE name = 'noaa_ocean_temperature'")[0]['count']
+        debug_info['temp_task_exists_after'] = temp_task_count_after > 0
+        
+        # Step 5: Get the task details if it exists
+        if temp_task_count_after > 0:
+            task_details = execute_query("SELECT * FROM task WHERE name = 'noaa_ocean_temperature'")[0]
+            debug_info['task_details'] = task_details
+            
+            # Step 6: Try to run the task
+            try:
+                from tasks.runner import TaskRunner
+                runner = TaskRunner()
+                
+                result = runner.run_task('noaa_ocean_temperature', 
+                                       triggered_by='debug_test',
+                                       trigger_parameters={'product': 'water_temperature'})
+                
+                debug_info['task_run_result'] = result
+                
+                # Check temperature records
+                temp_count = execute_query("SELECT COUNT(*) as count FROM metric_data WHERE provider_key = 'noaa_ocean' AND metric_name = 'water_temperature'")[0]['count']
+                debug_info['temperature_records_after'] = temp_count
+                
+            except Exception as e:
+                debug_info['task_run_error'] = str(e)
+        
+        return jsonify({
+            'success': True,
+            'timestamp': datetime.now().isoformat(),
+            'debug_info': debug_info
+        })
+        
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e),
+            'timestamp': datetime.now().isoformat()
+        }), 500
+
+@app.route('/api/insert-task-direct')
+@no_cache
+def api_insert_task_direct():
+    """Directly insert the missing task using raw SQL"""
+    try:
+        # Check if task already exists
+        existing = execute_query("SELECT COUNT(*) as count FROM task WHERE name = 'noaa_ocean_temperature'")[0]['count']
+        
+        if existing > 0:
+            # Task exists, try to run it
+            from tasks.runner import TaskRunner
+            runner = TaskRunner()
+            
+            result = runner.run_task('noaa_ocean_temperature', 
+                                   triggered_by='direct_run',
+                                   trigger_parameters={'product': 'water_temperature'})
+            
+            temp_count = execute_query("SELECT COUNT(*) as count FROM metric_data WHERE provider_key = 'noaa_ocean' AND metric_name = 'water_temperature'")[0]['count']
+            ocean_status = get_ocean_status()
+            
+            return jsonify({
+                'success': True,
+                'message': 'Task already exists, ran it',
+                'task_run_result': result,
+                'temperature_records': temp_count,
+                'ocean_status': ocean_status,
+                'timestamp': datetime.now().isoformat()
+            })
+        
+        # Insert using raw SQL
+        from database.db import get_db_connection
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        cursor.execute("""
+            INSERT INTO task (name, description, task_type, command, cron_schedule, provider, dataset, parameters, active, created_date, updated_date)
+            VALUES (
+                'noaa_ocean_temperature',
+                'Fetch water temperature from NOAA Ocean Service',
+                'fetch_data',
+                'tasks.fetch_noaa_ocean',
+                '0 */3 * * *',
+                'noaa_ocean',
+                'oceanographic',
+                '{"product": "water_temperature"}',
+                1,
+                CURRENT_TIMESTAMP,
+                CURRENT_TIMESTAMP
+            )
+        """)
+        
+        conn.commit()
+        conn.close()
+        
+        # Verify insertion
+        new_count = execute_query("SELECT COUNT(*) as count FROM task WHERE name = 'noaa_ocean_temperature'")[0]['count']
+        
+        if new_count > 0:
+            # Task created successfully, now run it
+            from tasks.runner import TaskRunner
+            runner = TaskRunner()
+            
+            result = runner.run_task('noaa_ocean_temperature', 
+                                   triggered_by='task_creation',
+                                   trigger_parameters={'product': 'water_temperature'})
+            
+            temp_count = execute_query("SELECT COUNT(*) as count FROM metric_data WHERE provider_key = 'noaa_ocean' AND metric_name = 'water_temperature'")[0]['count']
+            ocean_status = get_ocean_status()
+            
+            return jsonify({
+                'success': True,
+                'message': 'Task created and executed successfully',
+                'task_created': True,
+                'task_run_result': result,
+                'temperature_records': temp_count,
+                'ocean_status': ocean_status,
+                'timestamp': datetime.now().isoformat()
+            })
+        else:
+            return jsonify({
+                'success': False,
+                'message': 'Task insertion failed',
+                'task_created': False,
+                'timestamp': datetime.now().isoformat()
+            })
+        
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e),
+            'timestamp': datetime.now().isoformat()
+        }), 500
+
 @app.errorhandler(404)
 def not_found(error):
     return "ECO WATCH TERRA SCAN - Page not found", 404
