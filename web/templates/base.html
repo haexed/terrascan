@@ -111,18 +111,31 @@
 
     <!-- Base JavaScript -->
     <script>
-        // Update current time
+        // Update current time with timezone info
         function updateTime() {
             const now = new Date();
             const timeElement = document.getElementById('current-time');
             if (timeElement) {
-                timeElement.textContent = now.toISOString().replace('T', ' ').substr(0, 19) + ' UTC';
+                // Get timezone offset in hours and minutes
+                const offsetMinutes = now.getTimezoneOffset();
+                const offsetHours = Math.floor(Math.abs(offsetMinutes) / 60);
+                const offsetMins = Math.abs(offsetMinutes) % 60;
+                const offsetSign = offsetMinutes <= 0 ? '+' : '-';
+                const offsetString = `${offsetSign}${offsetHours.toString().padStart(2, '0')}:${offsetMins.toString().padStart(2, '0')}`;
+
+                timeElement.textContent = now.toISOString().replace('T', ' ').substr(0, 19) + ` UTC (${offsetString})`;
             }
 
             // Also update map widget time if it exists
             const mapTimeElement = document.getElementById('map-current-time');
             if (mapTimeElement) {
-                mapTimeElement.textContent = now.toISOString().replace('T', ' ').substr(0, 19) + ' UTC';
+                const offsetMinutes = now.getTimezoneOffset();
+                const offsetHours = Math.floor(Math.abs(offsetMinutes) / 60);
+                const offsetMins = Math.abs(offsetMinutes) % 60;
+                const offsetSign = offsetMinutes <= 0 ? '+' : '-';
+                const offsetString = `${offsetSign}${offsetHours.toString().padStart(2, '0')}:${offsetMins.toString().padStart(2, '0')}`;
+
+                mapTimeElement.textContent = now.toISOString().replace('T', ' ').substr(0, 19) + ` UTC (${offsetString})`;
             }
         }
 

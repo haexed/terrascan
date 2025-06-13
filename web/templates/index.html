@@ -69,6 +69,22 @@
 
                 <div class="last-update mt-3 text-center">
                     Last update: {{ fire_data.last_update }}
+                    <script>
+                        // Add timezone info to fire update time
+                        (function () {
+                            const now = new Date();
+                            const offsetMinutes = now.getTimezoneOffset();
+                            const offsetHours = Math.floor(Math.abs(offsetMinutes) / 60);
+                            const offsetMins = Math.abs(offsetMinutes) % 60;
+                            const offsetSign = offsetMinutes <= 0 ? '+' : '-';
+                            const offsetString = ` (${offsetSign}${offsetHours.toString().padStart(2, '0')}:${offsetMins.toString().padStart(2, '0')})`;
+
+                            const updateElement = document.currentScript.parentElement;
+                            if (updateElement && !updateElement.textContent.includes('(')) {
+                                updateElement.innerHTML = updateElement.innerHTML.replace('UTC', 'UTC' + offsetString);
+                            }
+                        })();
+                    </script>
                 </div>
             </div>
         </div>
@@ -123,25 +139,40 @@
                 </div>
 
                 <div class="text-center">
+                    <!-- DEBUG: Backend says temp={{ ocean_data.avg_temp }}, status={{ ocean_data.status }} -->
                     <div class="metric-value {% if ocean_data.avg_temp > 26 %}text-warning{% elif ocean_data.avg_temp > 28 %}text-danger{% else %}text-info{% endif %}"
                         data-temp="{{ ocean_data.avg_temp }}" data-status="{{ ocean_data.status }}"
                         data-timestamp="{{ range(1000000) | random }}" id="ocean-temp-display">
                         <span class="temp-value">{{ ocean_data.avg_temp }}</span>°C
+                        <!-- EXTREME DEBUG: Template rendered with {{ ocean_data.avg_temp }} -->
                         <script>
-                            // NUCLEAR CACHE BUSTER - Force correct display
+                            // EXTREME DEBUG + NUCLEAR CACHE BUSTER
                             (function () {
                                 const tempElement = document.getElementById('ocean-temp-display');
                                 const correctTemp = '{{ ocean_data.avg_temp }}';
                                 const correctStatus = '{{ ocean_data.status }}';
 
-                                // Force update the display immediately
-                                if (tempElement && correctTemp !== '0') {
+                                console.log('🔍 TEMPLATE DEBUG:');
+                                console.log('  correctTemp from template:', correctTemp);
+                                console.log('  correctStatus from template:', correctStatus);
+                                console.log('  tempElement found:', !!tempElement);
+
+                                if (tempElement) {
                                     const tempSpan = tempElement.querySelector('.temp-value');
-                                    if (tempSpan && tempSpan.textContent === '0') {
-                                        console.warn('🔥 NUCLEAR CACHE BUST: Forcing correct temperature display');
-                                        tempSpan.textContent = correctTemp;
-                                        tempElement.style.border = '3px solid lime';
-                                        tempElement.title = 'CACHE BUSTED! Showing correct temperature: ' + correctTemp + '°C';
+                                    console.log('  tempSpan found:', !!tempSpan);
+                                    console.log('  tempSpan.textContent:', tempSpan ? tempSpan.textContent : 'N/A');
+                                    console.log('  data-temp attribute:', tempElement.getAttribute('data-temp'));
+
+                                    // Force update the display immediately
+                                    if (correctTemp !== '0' && tempSpan) {
+                                        if (tempSpan.textContent === '0') {
+                                            console.warn('🔥 NUCLEAR CACHE BUST: Forcing correct temperature display');
+                                            tempSpan.textContent = correctTemp;
+                                            tempElement.style.border = '3px solid lime';
+                                            tempElement.title = 'CACHE BUSTED! Showing correct temperature: ' + correctTemp + '°C';
+                                        } else {
+                                            console.log('✅ Temperature display is correct:', tempSpan.textContent);
+                                        }
                                     }
                                 }
                             })();
