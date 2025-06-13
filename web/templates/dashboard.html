@@ -1,85 +1,305 @@
-{% extends "base.html" %}
+<!DOCTYPE html>
+<html lang="en">
 
-{% block title %}Dashboard - Terrascan{% endblock %}
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🌍 TERRASCAN</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
 
-{% block header_subtitle %}Environmental Data Dashboard{% endblock %}
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-dark fixed-top">
+        <div class="container-fluid">
+            <span class="navbar-brand mb-0 h1">
+                <a href="/" class="logo text-white">🌍 TERRASCAN</a>
+                <small class="d-none d-md-inline text-muted ms-2">v{{ version }}</small>
+            </span>
+            <span class="navbar-text">
+                <i class="fas fa-clock me-1"></i>
+                <span id="current-time">Loading...</span>
+            </span>
+        </div>
+    </nav>
 
-{% block content %}
-<!-- System Stats -->
-<div class="card">
-    <h3>📊 System Overview</h3>
-    <div class="stats-grid">
-        <div class="stat-box">
-            <span class="stat-value">{{ stats.total_tasks }}</span>
-            <div class="stat-label">Total Tasks</div>
-        </div>
-        <div class="stat-box">
-            <span class="stat-value">{{ stats.total_runs }}</span>
-            <div class="stat-label">Total Runs</div>
-        </div>
-        <div class="stat-box">
-            <span class="stat-value">{{ stats.total_records }}</span>
-            <div class="stat-label">Records Collected</div>
-        </div>
-        <div class="stat-box">
-            <span class="stat-value">${{ "%.2f"|format(stats.total_cost_cents / 100) }}</span>
-            <div class="stat-label">Total Cost</div>
-        </div>
-    </div>
-</div>
-
-<!-- Recent Activity -->
-<div class="card">
-    <h3>🕒 Recent Activity</h3>
-    {% if recent_logs %}
-    {% for log in recent_logs %}
-    <div class="log-item log-{{ log.status }}">
-        <div class="log-header" onclick="toggleLogDetails(this)">
-            <div>
-                <span class="toggle-icon">▶️</span>
-                <strong>{{ log.task_name }}</strong> |
-                <span class="task-status status-{{ 'active' if log.status == 'completed' else 'inactive' }}">
-                    {{ log.status.upper() }}
-                </span> |
-                {{ log.started_at }} |
-                Duration: {{ log.duration_seconds }}s
+    <!-- Main Dashboard -->
+    <div class="container-fluid mt-5 pt-4">
+        <!-- Environmental Health Score -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="eco-card text-center p-4">
+                    <h2 class="mb-3">🌍 PLANETARY HEALTH STATUS</h2>
+                    <div class="health-score status-{{ health_score.status.split()[1].lower() }}">
+                        {{ health_score.score }}/100
+                    </div>
+                    <h3 class="mt-2 status-{{ health_score.status.split()[1].lower() }}">
+                        {{ health_score.status }}
+                    </h3>
+                    <p class="mt-3">
+                        Based on current fire activity, air quality, and ocean conditions
+                    </p>
+                </div>
             </div>
-            {% if log.records_processed %}
-            <span>{{ log.records_processed }} records</span>
-            {% endif %}
         </div>
-        <div class="log-content">
-            {% if log.status == 'failed' %}
-            <p><strong>❌ Error Details</strong></p>
-            <pre>{{ log.error_message }}</pre>
-            {% if log.stack_trace %}
-            <p><strong>▼ Full Stack Trace</strong></p>
-            <pre>{{ log.stack_trace }}</pre>
-            {% endif %}
-            {% else %}
-            <p><strong>► Output</strong></p>
-            <pre>{{ log.output or 'No output' }}</pre>
-            {% endif %}
-        </div>
-    </div>
-    {% endfor %}
-    {% else %}
-    <p class="text-muted">No recent activity found.</p>
-    {% endif %}
-</div>
 
-<!-- Quick Actions -->
-<div class="card">
-    <h3>⚡ Quick Actions</h3>
-    <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-        {% for task in quick_tasks %}
-        <button class="run-btn" onclick="runTask('{{ task.name }}')">
-            🚀 Run {{ task.name }}
-        </button>
-        {% endfor %}
-        <a href="/tasks" class="run-btn btn-secondary" style="text-decoration: none; display: inline-block;">
-            🔧 Manage All Tasks
-        </a>
+        <!-- Environmental Indicators -->
+        <div class="row g-4 mb-4">
+            <!-- Fire Status -->
+            <div class="col-lg-4">
+                <div class="eco-card p-4">
+                    <div class="d-flex align-items-center mb-3">
+                        <span class="fs-1 me-3">🔥</span>
+                        <div>
+                            <h4 class="mb-0">Global Fires</h4>
+                            <div class="data-source">NASA FIRMS Satellite Data</div>
+                        </div>
+                    </div>
+
+                    <div class="text-center">
+                        <div
+                            class="metric-value {% if fire_data.active_fires > 50 %}text-danger{% elif fire_data.active_fires > 10 %}text-warning{% else %}text-success{% endif %}">
+                            {{ fire_data.active_fires }}
+                        </div>
+                        <div class="mb-2">Active Fires (24h)</div>
+
+                        {% if fire_data.avg_brightness > 0 %}
+                        <div class="small">
+                            Avg Brightness: {{ fire_data.avg_brightness }}K
+                        </div>
+                        {% endif %}
+
+                        <div class="mt-3">
+                            <span
+                                class="badge {% if 'ACTIVE' in fire_data.status %}bg-danger{% elif 'MONITORING' in fire_data.status %}bg-warning{% else %}bg-success{% endif %} pulse">
+                                {{ fire_data.status }}
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="last-update mt-3 text-center">
+                        Last update: {{ fire_data.last_update }}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Air Quality -->
+            <div class="col-lg-4">
+                <div class="eco-card p-4">
+                    <div class="d-flex align-items-center mb-3">
+                        <span class="fs-1 me-3">🌬️</span>
+                        <div>
+                            <h4 class="mb-0">Air Quality</h4>
+                            <div class="data-source">OpenAQ Global Network</div>
+                        </div>
+                    </div>
+
+                    <div class="text-center">
+                        <div
+                            class="metric-value {% if air_data.avg_pm25 > 35 %}text-danger{% elif air_data.avg_pm25 > 12 %}text-warning{% else %}text-success{% endif %}">
+                            {{ air_data.avg_pm25 }}
+                        </div>
+                        <div class="mb-2">PM2.5 μg/m³ (Global Avg)</div>
+
+                        {% if air_data.measurements > 0 %}
+                        <div class="small">
+                            {{ air_data.measurements }} measurements
+                        </div>
+                        {% endif %}
+
+                        <div class="mt-3">
+                            <span
+                                class="badge {% if 'GOOD' in air_data.status %}bg-success{% elif 'MODERATE' in air_data.status %}bg-warning{% elif 'UNHEALTHY' in air_data.status %}bg-danger{% else %}bg-secondary{% endif %}">
+                                {{ air_data.status }}
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="last-update mt-3 text-center">
+                        Last update: {{ air_data.last_update }}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Ocean Temperature -->
+            <div class="col-lg-4">
+                <div class="eco-card p-4">
+                    <div class="d-flex align-items-center mb-3">
+                        <span class="fs-1 me-3">🌊</span>
+                        <div>
+                            <h4 class="mb-0">Ocean Health</h4>
+                            <div class="data-source">NOAA Ocean Service</div>
+                        </div>
+                    </div>
+
+                    <div class="text-center">
+                        <div
+                            class="metric-value {% if ocean_data.avg_temp > 26 %}text-warning{% elif ocean_data.avg_temp > 28 %}text-danger{% else %}text-info{% endif %}">
+                            {{ ocean_data.avg_temp }}°C
+                        </div>
+                        <div class="mb-2">Average Water Temperature</div>
+
+                        {% if ocean_data.measurements > 0 %}
+                        <div class="small">
+                            {{ ocean_data.measurements }} measurements (12 stations)
+                        </div>
+                        {% endif %}
+
+                        <div class="mt-3">
+                            <span
+                                class="badge {% if 'NORMAL' in ocean_data.status %}bg-info{% elif 'WARM' in ocean_data.status %}bg-warning{% elif 'COOL' in ocean_data.status %}bg-primary{% else %}bg-secondary{% endif %}">
+                                {{ ocean_data.status }}
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="last-update mt-3 text-center">
+                        Last update: {{ ocean_data.last_update }}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Real-time Data Sources -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="eco-card p-4">
+                    <h4 class="mb-3">📡 Live Data Sources</h4>
+                    <div class="row text-center">
+                        <div class="col-md-4">
+                            <div class="border-end border-secondary pe-3">
+                                <h5>🛰️ <a href="https://firms.modaps.eosdis.nasa.gov/" target="_blank"
+                                        class="text-decoration-none text-success">NASA FIRMS</a></h5>
+                                <div class="small">
+                                    Fire Information for Resource Management<br>
+                                    MODIS/VIIRS satellite data<br>
+                                    Global coverage • 2hr updates<br>
+                                    <a href="https://firms.modaps.eosdis.nasa.gov/api/" target="_blank"
+                                        class="text-info small">API Documentation</a>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="border-end border-secondary pe-3">
+                                <h5>🌬️ <a href="https://openaq.org/" target="_blank"
+                                        class="text-decoration-none text-success">OpenAQ</a></h5>
+                                <div class="small">
+                                    Open Air Quality Platform<br>
+                                    10,000+ stations worldwide<br>
+                                    100+ countries • Hourly updates<br>
+                                    <a href="https://docs.openaq.org/" target="_blank" class="text-info small">API
+                                        Documentation</a>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <h5>🌊 <a href="https://tidesandcurrents.noaa.gov/" target="_blank"
+                                    class="text-decoration-none text-success">NOAA Ocean</a></h5>
+                            <div class="small">
+                                Tides and Currents Service<br>
+                                US coastal monitoring stations<br>
+                                Water levels & temperature • 3hr updates<br>
+                                <a href="https://api.tidesandcurrents.noaa.gov/api/" target="_blank"
+                                    class="text-info small">API Documentation</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="row">
+            <div class="col-12">
+                <div class="text-center py-4 footer">
+                    <p class="text-muted mb-1">
+                        🌍 TERRASCAN - Keep watch on our planet. Every day.
+                    </p>
+                    <p class="small text-muted">
+                        Data Sources:
+                        <a href="https://firms.modaps.eosdis.nasa.gov/" target="_blank" class="text-info">NASA FIRMS</a>
+                        •
+                        <a href="https://openaq.org/" target="_blank" class="text-info">OpenAQ</a> •
+                        <a href="https://tidesandcurrents.noaa.gov/" target="_blank" class="text-info">NOAA Ocean
+                            Service</a>
+                    </p>
+                    <p class="small text-muted">
+                        <a href="https://github.com/haexed/terrascan" target="_blank" class="text-success">🔓 Open
+                            Source</a> •
+                        Built with ❤️ for Earth • Free environmental awareness for everyone
+                    </p>
+                </div>
+            </div>
+        </div>
     </div>
-</div>
-{% endblock %}
+
+    <!-- Refresh Button -->
+    <button class="refresh-btn" onclick="refreshData()" title="Refresh Environmental Data">
+        <i class="fas fa-sync-alt text-white fs-4" id="refresh-icon"></i>
+    </button>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Update current time
+        function updateTime() {
+            const now = new Date();
+            document.getElementById('current-time').textContent =
+                now.toISOString().replace('T', ' ').substr(0, 19) + ' UTC';
+        }
+
+        // Refresh environmental data
+        async function refreshData() {
+            const icon = document.getElementById('refresh-icon');
+            icon.classList.add('fa-spin');
+
+            try {
+                const response = await fetch('/api/refresh');
+                const result = await response.json();
+
+                if (result.success) {
+                    // Show success and reload page to show new data
+                    setTimeout(() => {
+                        location.reload();
+                    }, 1000);
+                } else {
+                    console.error('Refresh failed:', result.error);
+                }
+            } catch (error) {
+                console.error('Refresh error:', error);
+            } finally {
+                setTimeout(() => {
+                    icon.classList.remove('fa-spin');
+                }, 2000);
+            }
+        }
+
+        // Auto-refresh every 15 minutes
+        setInterval(() => {
+            refreshData();
+        }, 15 * 60 * 1000);
+
+        // Update time every second
+        setInterval(updateTime, 1000);
+        updateTime();
+
+        // Add some visual effects
+        document.addEventListener('DOMContentLoaded', function () {
+            // Animate cards on load
+            const cards = document.querySelectorAll('.eco-card');
+            cards.forEach((card, index) => {
+                card.style.opacity = '0';
+                card.style.transform = 'translateY(20px)';
+                setTimeout(() => {
+                    card.style.transition = 'all 0.5s ease';
+                    card.style.opacity = '1';
+                    card.style.transform = 'translateY(0)';
+                }, index * 200);
+            });
+        });
+    </script>
+</body>
+
+</html>

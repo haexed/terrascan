@@ -1,9 +1,44 @@
 # Changelog
 
-All notable changes to Terrascan will be documented in this file.
+All notable changes to ECO WATCH TERRA SCAN will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [2.0.0] - 2025-01-21
+### Changed - MAJOR REFACTOR: TERRASCAN
+- **Complete project transformation**: From complex "environmental time machine" to focused environmental health dashboard
+- **Single dashboard approach**: Replaced 7-page interface with one beautiful environmental health overview
+- **Real-time focus**: Changed from historical data analysis to current environmental conditions
+- **Public-friendly interface**: Simplified from developer-focused platform to general public awareness tool
+- **Environmental health scoring**: Added unified planetary health indicator (0-100 score)
+- **Live data integration**: Real-time fire, air quality, and ocean temperature monitoring
+- **Mobile-responsive design**: Modern Bootstrap 5 interface with environmental theme
+- **Auto-refresh functionality**: Dashboard updates every 15 minutes automatically
+
+### Added
+- **Environmental Health Score**: Combined indicator based on fire activity, air quality, and ocean temperature
+- **Real-time status cards**: Fire alerts, air quality index, ocean temperature monitoring
+- **Beautiful INFP theme**: Deep #33a474 green environmental palette with improved readability
+- **Auto-refresh system**: Live data updates with spinning refresh button
+- **Simplified data sources section**: Clear explanation of NASA FIRMS, OpenAQ, and NOAA integration
+- **Consolidated CSS styling**: Moved all styles to `/web/static/css/style.css` for better maintainability
+- **Enhanced typography**: Improved logo styling and text contrast for better accessibility
+
+### Removed
+- **Complex multi-page interface**: Eliminated Tasks, Data, Metrics, Providers, Schema, System, and Operational pages
+- **Task management UI**: Removed manual task execution interface (kept backend automation)
+- **Schema visualization**: Removed database structure display
+- **System monitoring**: Removed developer-focused logs and transparency pages
+- **Cost tracking interface**: Removed Railway hosting cost monitoring pages
+- **Data exploration tools**: Removed detailed data browsing and filtering
+
+### Technical Changes
+- **Flask app simplification**: Reduced from 697 lines to ~350 lines focused on single dashboard
+- **Template cleanup**: Removed 7 complex HTML templates, kept only dashboard and base
+- **API streamlining**: Simplified from 10+ endpoints to just dashboard and refresh endpoints
+- **Startup script**: Focused messaging on environmental monitoring instead of task management
+- **CSS optimization**: Consolidated inline styles to external stylesheet with INFP color variables
 
 ## [1.1.6] - 2025-06-10
 ### Removed

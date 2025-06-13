@@ -1,27 +1,21 @@
-# 🌍 Terrascan - Environmental Data Platform
+# 🌍 TERRASCAN
 
-**Environmental data aggregation and analysis platform built for geological timescales.**
+**Real-time environmental health dashboard showing what's happening to our planet right now.**
 
-**🎯 Environmental time machine showing current conditions in deep historical context**
+**🎯 Know your planet's pulse - fires, air quality, ocean temps - all in one view**
 
 ---
 
-## 🌱 **Environmental Impact & Mission**
+## 🌱 **Mission: Environmental Awareness Now**
 
-**Primary Mission**: Create the world's most compelling environmental time machine.
+**TERRASCAN** gives you instant access to current environmental conditions across the globe:
 
-**Core Values**:
-- 🔓 **Open Data** - All environmental data should be freely accessible
-- 🔬 **Scientific Transparency** - Show your work, open source everything
-- 🌍 **Global Perspective** - Environmental challenges need global solutions
-- 🕰️ **Long-term Thinking** - Geological timescales over quarterly reports
+- 🔥 **Active Fires** - Live fire detection from NASA satellites
+- 🌬️ **Air Quality** - Real-time pollution levels in major cities  
+- 🌊 **Ocean Health** - Current water temperature and levels from NOAA
+- 🌍 **Environmental Score** - Overall planetary health indicator
 
-**Technical Philosophy**:
-- Choose simplicity over sophistication
-- SQLite over complex cloud databases
-- Python over JavaScript frameworks
-- Simple hosting over serverless complexity
-- Free data sources over proprietary APIs
+**Philosophy**: Keep it simple, keep it current, keep it accessible to everyone.
 
 ---
 
@@ -31,274 +25,227 @@
 git clone https://github.com/haexed/terrascan.git
 cd terrascan
 
-# Install dependencies
+# Install dependencies  
 pip install -r requirements.txt
 
-# Set up environment (optional - works in simulation mode)
-cp .env.example .env
-
-# Initialize database and start
+# Start the dashboard
 python3 run.py
 
 # Visit: http://localhost:5000
 ```
 
-**That's it!** Terrascan works out of the box with simulated data, then add real API keys when ready.
+**That's it!** TERRASCAN works immediately with live data feeds.
 
 ---
 
-## ✨ **What You Get**
+## ✨ **What You See**
 
-### **🌐 Complete Web Interface**
-- **📊 Dashboard** - System overview with real-time statistics
-- **🔧 Tasks** - Manage data collection with "Run Now" buttons
-- **📈 Data** - Explore 3,000+ environmental records collected
-- **📊 Metrics** - Detailed analysis of all environmental metrics
-- **🌐 Providers** - Browse NASA, NOAA, OpenAQ data sources
-- **🗂️ Schema** - Visual database structure with relationships
-- **🖥️ System** - Full transparency with logs and monitoring
+### **🌐 Single Dashboard View**
+- **🔥 Fire Alert Status** - Global active fires with brightness levels
+- **🌬️ Air Quality Index** - PM2.5 levels from cities worldwide
+- **🌊 Ocean Conditions** - Water temperatures from 12 US coastal stations
+- **🌍 Environmental Health Score** - Combined 0-100 planetary health indicator
+- **📱 Mobile-Friendly** - Check planetary health from anywhere
 
-### **🤖 Automated Data Collection**
-- **🔥 NASA FIRMS** - Global fire detection from satellites
-- **🌊 NOAA Ocean Service** - Water levels, temperature from 12 coastal stations
-- **🌬️ OpenAQ** - Air quality (PM2.5) from global monitoring networks
-- **⚙️ Configurable Tasks** - Easy to add new data sources
+### **📊 Environmental Health Score (0-100)**
 
-### **🗂️ Smart Data Architecture**
-- **SQLite Database** - Simple, fast, no configuration needed
-- **Normalized Schema** - Clean separation of tasks, providers, metrics
-- **Full Transparency** - Every data point traceable to its source
-- **Time-Series Optimized** - Built for geological timescale analysis
+The **Planetary Health Score** combines three critical environmental factors into a single 0-100 indicator:
 
----
+**🔥 Fire Impact (up to -30 points):**
+- 0-10 fires: No deduction
+- 11-50 fires: -10 points  
+- 51-100 fires: -20 points
+- 100+ fires: -30 points
 
-## 🏗️ **Architecture**
+**🌬️ Air Quality Impact (up to -40 points):**
+- 0-12 μg/m³ PM2.5: No deduction (WHO Good)
+- 13-25 μg/m³: -10 points (Moderate)
+- 26-35 μg/m³: -20 points (Unhealthy for Sensitive)
+- 36-55 μg/m³: -30 points (Unhealthy) 
+- 55+ μg/m³: -40 points (Dangerous)
 
-```
-🌐 Flask Web UI ─── 📊 7 Interactive Pages
-         │
-         ▼
-🤖 Task System ──── 🔧 Automated Data Collection
-         │
-         ▼  
-🌍 Data Providers ─ 🔥 NASA/NOAA/OpenAQ APIs
-         │
-         ▼
-💾 SQLite Database ─ 📈 Environmental Time Series
-```
+**🌊 Ocean Temperature Impact (up to -20 points):**
+- 15-25°C: No deduction (Normal range)
+- 26-28°C: -10 points (Warming trend)
+- 28°C+: -20 points (Concerning heat)
 
-### **🎯 Design Philosophy**
-- **🐍 Python-First** - Leverage scientific ecosystem
-- **💾 SQLite Simplicity** - Perfect for read-heavy environmental data
-- **🕰️ Geological Timescales** - Years/decades over real-time
-- **🔍 Full Transparency** - View source code for every data collection
-- **🆓 Free & Open** - No vendor lock-in, runs anywhere
+**🎯 Final Score Ranges:**
+- **85-100**: 🟢 **EXCELLENT** - Healthy planetary conditions
+- **70-84**: 🟡 **GOOD** - Generally stable environment  
+- **50-69**: 🟠 **MODERATE** - Some environmental stress
+- **30-49**: 🔴 **POOR** - Significant environmental concerns
+- **0-29**: 🚨 **CRITICAL** - Severe environmental crisis
 
----
-
-## 📊 **Current Data Collection**
-
-| Provider | Status | Data Type | Records | Coverage |
-|----------|--------|-----------|---------|----------|
-| 🔥 **NASA FIRMS** | ✅ Active | Fire Detection | 2,700+ | Global |
-| 🌊 **NOAA Ocean** | ✅ Active | Water Level/Temp | 720+ | 12 US Stations |
-| 🌬️ **OpenAQ** | ✅ Active | Air Quality PM2.5 | 36+ | Global Cities |
-
-**📈 Total: 3,400+ environmental measurements and growing**
+### **🤖 Live Data Sources**
+- **🔥 [NASA FIRMS](https://firms.modaps.eosdis.nasa.gov/)** - Fire Information for Resource Management System
+  - **Coverage**: Global satellite fire detection via MODIS and VIIRS
+  - **Updates**: Every 2 hours • **API**: [firms.modaps.eosdis.nasa.gov/api](https://firms.modaps.eosdis.nasa.gov/api/)
+- **🌊 [NOAA Ocean Service](https://tidesandcurrents.noaa.gov/)** - Tides and Currents Real-Time Data
+  - **Coverage**: 12 major US coastal monitoring stations 
+  - **Updates**: Every 3 hours • **API**: [api.tidesandcurrents.noaa.gov](https://api.tidesandcurrents.noaa.gov/api/)
+- **🌬️ [OpenAQ](https://openaq.org/)** - Open Air Quality Data Platform
+  - **Coverage**: 10,000+ stations in 100+ countries worldwide
+  - **Updates**: Hourly • **API**: [docs.openaq.org](https://docs.openaq.org/)
+- **🆓 All Free** - No API costs, open data for environmental awareness
 
 ---
 
-## 🔧 **Features Deep Dive**
+## 🎯 **Environmental Health Calculation Example**
 
-### **📊 Dashboard**
-- Live system statistics and health monitoring
-- Recent activity feed from all data collection tasks
-- Quick-action buttons for manual task execution
-- Cost tracking (all current sources are free!)
+**Based on Your Current Data (Score: 30/100 🔴 POOR):**
 
-### **🔧 Task Management**
-- **▶️ One-Click Execution** - Run any data collection task instantly
-- **📄 Source Code Viewer** - See exactly how data is collected
-- **📊 Real-Time Monitoring** - Live task status and performance
-- **⏰ Scheduling** - Automated collection via cron schedules
+| **Factor** | **Current Value** | **Impact** | **Deduction** |
+|------------|-------------------|------------|---------------|
+| 🔥 **Fires** | 807 active fires | Extreme activity | -30 points |
+| 🌬️ **Air Quality** | 78.3 μg/m³ PM2.5 | Dangerous levels | -40 points |
+| 🌊 **Ocean Temp** | 20.0°C average | Normal range | 0 points |
 
-### **📈 Data Exploration**
-- Browse 3,400+ environmental records with full metadata
-- Filter by provider, dataset, time range
-- Geographic distribution of monitoring points
-- Statistical summaries and data quality indicators
+**🧮 Calculation:** 100 - 30 (fires) - 40 (air) - 0 (ocean) = **30/100 🔴 POOR**
 
-### **📊 Metrics Analysis**
-- Comprehensive overview of all environmental metrics (fire brightness, water levels, air quality)
-- Statistical analysis: min/max/average values per metric
-- Geographic coverage: unique monitoring locations
-- Temporal coverage: earliest to latest measurements
-- Provider comparison and data quality insights
-
-### **🌐 Provider Management**
-- Browse all data sources (NASA, NOAA, OpenAQ)
-- Real-time statistics for each provider
-- Documentation links and API information
-- Task configuration and scheduling per provider
-
-### **🗂️ Schema Visualization**
-- Table relationships and foreign keys
-- Column types, constraints, and indexes
-- Live row counts and data freshness
-- Primary key highlighting and constraint visualization
-
-### **🖥️ System Transparency**
-- Complete task execution logs with timestamps
-- Error handling and debugging information
-- Performance metrics and execution times
-- System health monitoring and alerts
+*This score reflects significant environmental stress from high fire activity and dangerous air pollution levels.*
 
 ---
 
-## 🌍 **Supported Data Sources**
+## 🌍 **Global Coverage**
 
-### **🔥 NASA FIRMS (Fire Information)**
-- **Coverage**: Global satellite fire detection
-- **Frequency**: Every 2 hours
-- **Metrics**: Fire brightness temperature (Kelvin)
-- **Locations**: Worldwide fire hotspots
-- **API**: Free, requires registration
+### **🔥 Fire Monitoring (NASA FIRMS)**
+- **🌎 Americas**: California, Amazon rainforest, Canadian boreal forests
+- **🌍 Europe/Africa**: Mediterranean, sub-Saharan Africa, Siberian forests  
+- **🌏 Asia/Pacific**: Indonesia, Australia, Southeast Asian peat fires
+- **📊 Data**: Fire brightness (Kelvin), confidence levels, satellite imagery
+- **🕐 Real-time**: Updates every 2 hours from MODIS/VIIRS satellites
 
-### **🌊 NOAA Ocean Service**
-- **Coverage**: 12 major US coastal stations
-- **Frequency**: Every 3 hours
-- **Metrics**: Water level (meters), temperature (°C)
-- **Locations**: NY, MA, VA, SC, FL, TX, CA, WA, HI, AK
-- **API**: Free, no registration required
+### **🌬️ Air Quality (OpenAQ)**
+- **🏙️ Major Cities**: London, Delhi, Beijing, Mexico City, São Paulo, Cairo
+- **🌐 Regions**: Europe (500+ stations), Asia (3000+ stations), Americas (2000+ stations)
+- **📈 Pollutants**: PM2.5, PM10, NO2, SO2, O3, CO concentrations
+- **🏥 Health Standards**: WHO, EPA, national air quality guidelines
+- **📱 Real-time**: Hourly updates from government and research networks
 
-### **🌬️ OpenAQ (Air Quality)**
-- **Coverage**: Global air quality monitoring networks
-- **Frequency**: Hourly
-- **Metrics**: PM2.5 concentration (μg/m³)
-- **Locations**: Major cities worldwide
-- **API**: Free, no registration required
-
----
-
-## 🛠️ **Development & Customization**
-
-### **Adding New Data Sources**
-
-1. **Create Task Function** (`tasks/fetch_new_source.py`):
-```python
-def fetch_new_data(param1='default'):
-    """Fetch data from new source"""
-    # Get configuration
-    base_url = get_provider_config('new_source', 'base_url')
-    
-    # Fetch and process data
-    # ... your logic here ...
-    
-    # Store results
-    store_metric_data(
-        timestamp=datetime.now().isoformat(),
-        provider_key='new_source',
-        dataset='environmental',
-        metric_name='new_metric',
-        value=measurement_value,
-        unit='units',
-        location_lat=latitude,
-        location_lng=longitude,
-        metadata={'source': 'details'}
-    )
-    
-    return {
-        'output': f'Collected {count} measurements',
-        'records_processed': count,
-        'cost_cents': 0
-    }
-```
-
-2. **Register Provider** (via database):
-```sql
-INSERT INTO provider (key, name, description, base_url) 
-VALUES ('new_source', 'New Data Source', 'Description', 'https://api.example.com');
-```
-
-3. **Register Task**:
-```sql
-INSERT INTO task (name, description, command, provider, dataset) 
-VALUES ('new_data_task', 'Collect new data', 'tasks.fetch_new_source', 'new_source', 'environmental');
-```
-
-4. **Update imports** (`tasks/__init__.py`):
-```python
-from .fetch_new_source import fetch_new_data
-```
-
-**That's it!** The web interface automatically discovers and displays your new data source.
+### **🌊 Ocean Health (NOAA)**  
+- **🇺🇸 East Coast**: Boston, New York, Virginia Beach, Charleston, Miami
+- **🇺🇸 West Coast**: Seattle, San Francisco, Los Angeles, San Diego
+- **🇺🇸 Gulf/Pacific**: New Orleans, Honolulu, Anchorage
+- **🌡️ Climate Data**: Sea surface temperature, water levels, tidal patterns
+- **⏰ Updates**: Every 3 hours from 12 primary monitoring stations
 
 ---
 
-## 📈 **Current Status & Roadmap**
+## 📍 **Current Geographic Coverage**
 
-### **✅ Phase 1: Foundation (COMPLETE)**
-- ✅ Python + SQLite architecture with normalized schema
-- ✅ Comprehensive web interface (7 pages: Dashboard, Tasks, Data, Metrics, Providers, Schema, System)
-- ✅ Task system with full transparency and source code viewing
-- ✅ 3 active data providers (NASA FIRMS, NOAA Ocean Service, OpenAQ)
-- ✅ Schema visualization and metrics analysis pages
-- ✅ NOAA Ocean Service integration with 12 coastal stations
-- ✅ 3,400+ environmental measurements collected and growing
+**🔥 Fire Data**: **8,005 unique fire locations** globally (last 7 days)
+- Comprehensive satellite coverage of all continents
+- Real-time detection from NASA MODIS/VIIRS satellites
 
-### **🔄 Phase 2: Data Visualization (IN PROGRESS)**
-- 🔄 Interactive maps showing fire locations and monitoring stations
-- 🔄 Time-series charts for temperature and pollution trends
-- 🔄 Historical data import and analysis
-- 🔄 Cross-correlation between different environmental factors
+**🌬️ Air Quality**: **126 monitoring stations** currently active
+- **Primary Coverage**: São Paulo, Brazil metropolitan area
+- **Expansion Goal**: Add major cities worldwide (London, Delhi, Beijing, etc.)
 
-### **🔮 Phase 3: Intelligence**
-- 🔮 Automated anomaly detection
-- 🔮 Historical comparison algorithms  
-- 🔮 Trend analysis and predictions
-- 🔮 Custom alert systems
+**🌊 Ocean Monitoring**: **12 NOAA stations** across US coastlines
+- **Pacific**: San Francisco (37.8°N), Seattle (47.6°N), Honolulu (21.3°N), Ketchikan (55.3°N)
+- **Atlantic**: Boston (42.3°N), New York (40.7°N), Virginia Beach (36.8°N), Charleston (29.2°N)
+- **Gulf/Keys**: New Orleans (29.3°N), Key West (24.6°N), Galveston (26.1°N)
 
-### **🚀 Phase 4: Scale**
-- 🚀 Multi-region data collection
-- 🚀 API for external integrations
-- 🚀 Advanced visualization tools
-- 🚀 Community data contributions
+### **🚀 Expansion Roadmap**
+
+**🌆 Priority Cities for Air Quality:**
+- **Europe**: London, Paris, Berlin, Rome, Madrid
+- **Asia**: Delhi, Beijing, Tokyo, Mumbai, Bangkok
+- **Americas**: Mexico City, New York, Los Angeles, Toronto
+- **Africa**: Cairo, Lagos, Johannesburg, Nairobi
+- **Oceania**: Sydney, Melbourne, Auckland
+
+**🌊 Ocean Monitoring Expansion:**
+- **Global NOAA Stations**: Add Caribbean, Pacific islands
+- **International Partners**: European Marine Data, Australian Bureau of Meteorology
+- **New Metrics**: Coral reef health, marine biodiversity indicators
+
+---
+
+## 🛠️ **Tech Stack**
+
+**Simple & Reliable:**
+- **Python + Flask** - Lightweight web framework
+- **SQLite** - Zero-config database
+- **Free APIs** - NASA, NOAA, OpenAQ (no costs!)
+- **Responsive Design** - Works on all devices
+
+**No Complexity:**
+- No Docker required
+- No cloud services needed
+- No configuration files
+- Works offline with cached data
+
+---
+
+## 🌱 **Environmental Impact**
+
+**TERRASCAN** promotes environmental awareness by:
+
+- 🔓 **Making Data Accessible** - Complex environmental data simplified
+- 🌍 **Global Perspective** - See environmental conditions worldwide  
+- 📱 **Instant Awareness** - Check planetary health as easily as weather
+- 🔬 **Scientific Sources** - Trusted data from NASA, NOAA, OpenAQ
+- 🆓 **Free & Open** - No paywalls, no tracking, open source
 
 ---
 
 ## 🤝 **Contributing**
 
-1. **Fork the repository**
-2. **Create feature branch**: `git checkout -b feature/amazing-feature`
-3. **Make your changes**: Add new data sources, improve visualizations
-4. **Test locally**: `python3 run.py`
-5. **Submit pull request**: Describe your environmental data contribution
+Help make environmental data more accessible:
 
-**Most Wanted Contributions**:
-- 🌍 New environmental data sources
-- 📊 Data visualization improvements
-- 🗺️ Interactive mapping features
-- 📈 Historical data analysis tools
-- 🌐 Internationalization and localization
+1. **Fork & Clone** the repository
+2. **Improve the Dashboard** - Better visualizations, new indicators
+3. **Add Data Sources** - More environmental monitoring APIs
+4. **Test & Submit** - `python3 run.py` then pull request
+
+**Most Wanted:**
+- 🗺️ Interactive maps showing fire/pollution locations
+- 📊 Historical trend indicators (24hr, 7day)
+- ⚠️ Alert thresholds for dangerous conditions
+- 🌐 Additional data sources (see expansion roadmap below)
+
+### **🚀 Data Source Expansion Roadmap**
+
+**🌡️ Climate & Weather:**
+- **[ECMWF](https://www.ecmwf.int/)** - European weather forecasts and climate data
+- **[Climate.gov](https://www.climate.gov/)** - NOAA climate monitoring and projections
+- **[Global Temperature Anomaly](https://climate.nasa.gov/)** - NASA temperature trends
+
+**🌿 Environmental Monitoring:**
+- **[USGS Water Data](https://waterdata.usgs.gov/)** - River levels, groundwater, water quality
+- **[EPA Air Quality](https://www.airnow.gov/)** - US air quality forecasts and alerts
+- **[Copernicus Atmosphere](https://atmosphere.copernicus.eu/)** - European satellite atmospheric data
+
+**🌊 Ocean & Marine:**
+- **[NOAA Coral Reef Watch](https://coralreefwatch.noaa.gov/)** - Coral bleaching alerts
+- **[Marine Traffic](https://www.marinetraffic.com/)** - Global shipping and ocean activity
+- **[NOAA Fisheries](https://www.fisheries.noaa.gov/)** - Marine ecosystem health
+
+**🌋 Natural Disasters:**
+- **[USGS Earthquake](https://earthquake.usgs.gov/)** - Real-time seismic activity
+- **[NOAA Storm Prediction](https://www.spc.noaa.gov/)** - Severe weather alerts
+- **[Global Disaster Alert](https://www.gdacs.org/)** - Humanitarian disaster monitoring
 
 ---
 
-## 📄 **License & Credits**
+## 📄 **License**
 
-**MIT License** - Use Terrascan however you want, just keep environmental data free!
+**MIT License** - Use ECO WATCH however you want, spread environmental awareness!
 
-**Development Team**:
-- **Stig Grindland** - Project Manager, Systems Architecture, Vision & Direction
-- **Claude (Anthropic)** - Lead Developer, Code Implementation, Technical Architecture
+**Current Data Sources:**
+- **[NASA FIRMS](https://firms.modaps.eosdis.nasa.gov/)** - Fire detection via MODIS/VIIRS satellites
+- **[NOAA Ocean Service](https://tidesandcurrents.noaa.gov/)** - Ocean temperature and water levels  
+- **[OpenAQ](https://openaq.org/)** - Global air quality monitoring network
 
-**Data Sources**:
-- NASA FIRMS for fire detection data
-- NOAA Ocean Service for water level and temperature
-- OpenAQ for air quality measurements
-- All providers offer free API access
+**Planned Integrations:**
+- **[USGS Water Data](https://waterdata.usgs.gov/)** - River levels and groundwater
+- **[EPA AirNow](https://www.airnow.gov/)** - US air quality forecasts
+- **[Climate.gov](https://www.climate.gov/)** - Climate monitoring and projections
+- **[ECMWF](https://www.ecmwf.int/)** - European weather and climate data
 
-**Built With**: Python, Flask, SQLite, HTML, CSS, JavaScript
+**Built by:** Stig Grindland & Claude (Anthropic)
 
 ---
 
-**🌍 Help us build the environmental time machine the world needs! 🌍**
+**🌍 Keep watch on our planet. Every day. 🌍**
