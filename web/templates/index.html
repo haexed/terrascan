@@ -125,8 +125,27 @@
                 <div class="text-center">
                     <div class="metric-value {% if ocean_data.avg_temp > 26 %}text-warning{% elif ocean_data.avg_temp > 28 %}text-danger{% else %}text-info{% endif %}"
                         data-temp="{{ ocean_data.avg_temp }}" data-status="{{ ocean_data.status }}"
-                        data-timestamp="{{ range(1000000) | random }}">
-                        {{ ocean_data.avg_temp }}°C
+                        data-timestamp="{{ range(1000000) | random }}" id="ocean-temp-display">
+                        <span class="temp-value">{{ ocean_data.avg_temp }}</span>°C
+                        <script>
+                            // NUCLEAR CACHE BUSTER - Force correct display
+                            (function () {
+                                const tempElement = document.getElementById('ocean-temp-display');
+                                const correctTemp = '{{ ocean_data.avg_temp }}';
+                                const correctStatus = '{{ ocean_data.status }}';
+
+                                // Force update the display immediately
+                                if (tempElement && correctTemp !== '0') {
+                                    const tempSpan = tempElement.querySelector('.temp-value');
+                                    if (tempSpan && tempSpan.textContent === '0') {
+                                        console.warn('🔥 NUCLEAR CACHE BUST: Forcing correct temperature display');
+                                        tempSpan.textContent = correctTemp;
+                                        tempElement.style.border = '3px solid lime';
+                                        tempElement.title = 'CACHE BUSTED! Showing correct temperature: ' + correctTemp + '°C';
+                                    }
+                                }
+                            })();
+                        </script>
                     </div>
                     <div class="mb-2">Average Water Temperature</div>
 
@@ -137,16 +156,37 @@
                     {% endif %}
 
                     <div class="mt-3">
-                        <span
+                        <span id="ocean-status-badge"
                             class="badge {% if 'NORMAL' in ocean_data.status %}bg-info{% elif 'WARM' in ocean_data.status %}bg-warning{% elif 'COOL' in ocean_data.status %}bg-primary{% else %}bg-secondary{% endif %}">
-                            {{ ocean_data.status }}
+                            <span class="status-text">{{ ocean_data.status }}</span>
                         </span>
+                        <script>
+                            // NUCLEAR STATUS BUSTER
+                            (function () {
+                                const statusBadge = document.getElementById('ocean-status-badge');
+                                const correctStatus = '{{ ocean_data.status }}';
 
+                                if (statusBadge && correctStatus !== '📊 NO DATA') {
+                                    const statusSpan = statusBadge.querySelector('.status-text');
+                                    if (statusSpan && statusSpan.textContent.includes('NO DATA')) {
+                                        console.warn('🔥 NUCLEAR STATUS BUST: Forcing correct status display');
+                                        statusSpan.textContent = correctStatus;
+                                        statusBadge.className = 'badge bg-info';
+                                        statusBadge.style.border = '2px solid lime';
+                                    }
+                                }
+                            })();
+                        </script>
                     </div>
                 </div>
 
                 <div class="last-update mt-3 text-center">
                     Last update: {{ ocean_data.last_update }}
+                    <br>
+                    <button class="btn btn-sm btn-warning mt-2" onclick="forceOceanRefresh()"
+                        title="If showing 0°C, click to force refresh ocean data">
+                        🌊 Force Ocean Refresh
+                    </button>
                 </div>
             </div>
         </div>
@@ -246,6 +286,29 @@
             const timestamp = new Date().getTime();
             window.location.href = window.location.href.split('?')[0] + '?cache_bust=' + timestamp;
         }
+    }
+
+    // Nuclear ocean refresh function
+    function forceOceanRefresh() {
+        console.log('🔥 NUCLEAR OCEAN REFRESH INITIATED');
+
+        // Clear all possible caches
+        if ('caches' in window) {
+            caches.keys().then(names => {
+                names.forEach(name => {
+                    caches.delete(name);
+                });
+            });
+        }
+
+        // Force reload with multiple cache busting parameters
+        const timestamp = new Date().getTime();
+        const random = Math.random().toString(36).substring(7);
+        window.location.href = window.location.href.split('?')[0] +
+            '?ocean_cache_bust=' + timestamp +
+            '&random=' + random +
+            '&force_ocean=true' +
+            '&v=' + timestamp;
     }
 
     // Debug ocean data on page load
