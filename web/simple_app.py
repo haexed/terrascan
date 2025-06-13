@@ -22,9 +22,34 @@ def create_app():
             # Calculate environmental health score
             health_score = calculate_environmental_health_score(health_data)
             
+            # Transform data to match template expectations
+            fire_data = {
+                'active_fires': health_data['fires']['count'],
+                'avg_brightness': health_data['fires']['avg_brightness'],
+                'status': 'ACTIVE MONITORING' if health_data['fires']['count'] > 0 else 'NO ACTIVITY',
+                'last_update': health_data['last_updated']
+            }
+            
+            air_data = {
+                'avg_pm25': health_data['air_quality']['avg_pm25'],
+                'measurements': health_data['air_quality']['station_count'],
+                'status': get_air_quality_status(health_data['air_quality']['avg_pm25']),
+                'last_update': health_data['last_updated']
+            }
+            
+            ocean_data = {
+                'avg_temp': health_data['ocean_temperature']['avg_temp'],
+                'measurements': health_data['ocean_temperature']['station_count'],
+                'status': get_ocean_status(health_data['ocean_temperature']['avg_temp']),
+                'last_update': health_data['last_updated']
+            }
+            
             return render_template('dashboard.html', 
                                  health_data=health_data,
-                                 health_score=health_score)
+                                 health_score=health_score,
+                                 fire_data=fire_data,
+                                 air_data=air_data,
+                                 ocean_data=ocean_data)
         except Exception as e:
             return f"Dashboard error: {str(e)}", 500
     
@@ -150,19 +175,19 @@ def calculate_environmental_health_score(health_data):
     
     # Determine status based on score
     if score >= 80:
-        status = 'EXCELLENT'
+        status = 'STATUS EXCELLENT'
         color = '#28a745'  # Green
     elif score >= 60:
-        status = 'GOOD'
+        status = 'STATUS GOOD'
         color = '#33a474'  # Deep green
     elif score >= 40:
-        status = 'MODERATE'
+        status = 'STATUS MODERATE'
         color = '#ffc107'  # Yellow
     elif score >= 20:
-        status = 'POOR'
+        status = 'STATUS POOR'
         color = '#fd7e14'  # Orange
     else:
-        status = 'CRITICAL'
+        status = 'STATUS CRITICAL'
         color = '#dc3545'  # Red
     
     return {
@@ -170,6 +195,28 @@ def calculate_environmental_health_score(health_data):
         'status': status,
         'color': color
     }
+
+def get_air_quality_status(pm25):
+    """Get air quality status based on PM2.5 levels"""
+    if pm25 > 75:
+        return 'HAZARDOUS'
+    elif pm25 > 55:
+        return 'VERY UNHEALTHY'
+    elif pm25 > 35:
+        return 'UNHEALTHY'
+    elif pm25 > 15:
+        return 'MODERATE'
+    else:
+        return 'GOOD'
+
+def get_ocean_status(temp):
+    """Get ocean status based on temperature"""
+    if temp > 25:
+        return 'WARM'
+    elif temp < 15:
+        return 'COOL'
+    else:
+        return 'NORMAL'
 
 if __name__ == '__main__':
     app = create_app()
