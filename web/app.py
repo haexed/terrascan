@@ -10,6 +10,8 @@ import json
 from datetime import datetime, timedelta
 from flask import Flask, render_template, jsonify, make_response
 from dotenv import load_dotenv
+import sqlite3
+from database.db import execute_query
 
 # Load environment variables
 load_dotenv()
@@ -21,19 +23,20 @@ from database.db import init_database, execute_query
 from tasks.runner import TaskRunner
 from version import get_version
 
-# Create Flask app
-app = Flask(__name__, 
-            static_folder='static',
-            static_url_path='/static')
-app.config['SECRET_KEY'] = 'eco-watch-terra-scan'
-
-# Initialize database on startup
-init_database()
-
-# Add version to all templates
-@app.context_processor
-def inject_version():
-    return {'version': get_version()}
+def create_app():
+    """Create and configure the Flask application"""
+    app = Flask(__name__, 
+                static_folder='static',
+                static_url_path='/static')
+    app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'eco-watch-terra-scan-2024')
+    
+    # Initialize database on startup
+    init_database()
+    
+    # Add version to all templates
+    @app.context_processor
+    def inject_version():
+        return {'version': get_version()}
 
 # Cache-busting decorator for main pages
 def no_cache(f):
@@ -53,20 +56,13 @@ def index():
     """TERRASCAN - Homepage with environmental overview and hero map"""
     try:
         # Get current environmental data
-        fire_data = get_fire_status()
-        air_data = get_air_quality_status()
-        ocean_data = get_ocean_status()
+        health_data = get_environmental_health_data()
         
-        # Debug: Print ocean data to console
-        print(f"DEBUG: Ocean data - temp: {ocean_data['avg_temp']}°C, status: {ocean_data['status']}")
-        
-        # Calculate overall environmental health score
-        health_score = calculate_environmental_health(fire_data, air_data, ocean_data)
+        # Calculate environmental health score
+        health_score = calculate_environmental_health_score(health_data)
         
         response = make_response(render_template('index.html',
-                                               fire_data=fire_data,
-                                               air_data=air_data,
-                                               ocean_data=ocean_data,
+                                               health_data=health_data,
                                                health_score=health_score))
         
         # Extra aggressive cache busting for this specific issue
@@ -87,17 +83,13 @@ def dashboard():
     """TERRASCAN - Single dashboard showing environmental health"""
     try:
         # Get current environmental data
-        fire_data = get_fire_status()
-        air_data = get_air_quality_status()
-        ocean_data = get_ocean_status()
+        health_data = get_environmental_health_data()
         
-        # Calculate overall environmental health score
-        health_score = calculate_environmental_health(fire_data, air_data, ocean_data)
+        # Calculate environmental health score
+        health_score = calculate_environmental_health_score(health_data)
         
-        return render_template('dashboard.html',
-                             fire_data=fire_data,
-                             air_data=air_data,
-                             ocean_data=ocean_data,
+        return render_template('dashboard.html', 
+                             health_data=health_data,
                              health_score=health_score)
                              
     except Exception as e:
@@ -109,14 +101,13 @@ def map_view():
     """TERRASCAN - Interactive world map with environmental data layers"""
     try:
         # Get current environmental data for health score widget
-        fire_data = get_fire_status()
-        air_data = get_air_quality_status()
-        ocean_data = get_ocean_status()
+        health_data = get_environmental_health_data()
         
-        # Calculate overall environmental health score
-        health_score = calculate_environmental_health(fire_data, air_data, ocean_data)
+        # Calculate environmental health score
+        health_score = calculate_environmental_health_score(health_data)
         
         return render_template('map.html',
+                             health_data=health_data,
                              health_score=health_score)
                              
     except Exception as e:
@@ -226,233 +217,120 @@ def system():
     except Exception as e:
         return f"TERRASCAN System Error: {e}", 500
 
-def get_fire_status():
-    """Get current fire situation"""
+def get_environmental_health_data():
+    """Get current environmental health data from database"""
     try:
-        # Get latest fire data from NASA FIRMS
-        fires = execute_query("""
-            SELECT COUNT(*) as active_fires,
-                   AVG(value) as avg_brightness,
-                   MAX(timestamp) as last_update
+        # Get recent fire data (last 7 days) - using existing metric_data table
+        fire_data = execute_query("""
+            SELECT COUNT(*) as fire_count, AVG(value) as avg_brightness
             FROM metric_data 
             WHERE provider_key = 'nasa_firms' 
-            AND timestamp > datetime('now', '-24 hours')
+            AND timestamp >= datetime('now', '-7 days')
         """)
         
-        # Get recent fire locations for map
-        fire_locations = execute_query("""
-            SELECT location_lat, location_lng, value as brightness,
-                   timestamp, metadata
-            FROM metric_data 
-            WHERE provider_key = 'nasa_firms' 
-            AND timestamp > datetime('now', '-12 hours')
-            AND location_lat IS NOT NULL
-            ORDER BY timestamp DESC
-            LIMIT 100
-        """)
-        
-        if fires and fires[0]['active_fires'] > 0:
-            status = "⚠️ ACTIVE" if fires[0]['active_fires'] > 50 else "🔥 MONITORING"
-        else:
-            status = "✅ QUIET"
-        
-        return {
-            'status': status,
-            'active_fires': fires[0]['active_fires'] if fires else 0,
-            'avg_brightness': round(fires[0]['avg_brightness'], 1) if fires and fires[0]['avg_brightness'] else 0,
-            'last_update': fires[0]['last_update'] if fires else 'Never',
-            'locations': fire_locations
-        }
-    except Exception as e:
-        return {
-            'status': '❌ ERROR',
-            'active_fires': 0,
-            'avg_brightness': 0,
-            'last_update': 'Error',
-            'locations': [],
-            'error': str(e)
-        }
-
-def get_air_quality_status():
-    """Get current air quality"""
-    try:
-        # Get latest air quality data from OpenAQ
-        air_quality = execute_query("""
-            SELECT AVG(value) as avg_pm25,
-                   COUNT(*) as measurements,
-                   MAX(timestamp) as last_update
+        # Get recent air quality data (last 7 days)
+        air_data = execute_query("""
+            SELECT AVG(value) as avg_pm25, COUNT(*) as station_count
             FROM metric_data 
             WHERE provider_key = 'openaq' 
             AND metric_name = 'air_quality_pm25'
-            AND timestamp > datetime('now', '-7 days')
+            AND timestamp >= datetime('now', '-7 days')
         """)
         
-        # Get air quality by location
-        city_data = execute_query("""
-            SELECT location_lat, location_lng, 
-                   AVG(value) as pm25_level,
-                   COUNT(*) as readings,
-                   metadata
-            FROM metric_data 
-            WHERE provider_key = 'openaq' 
-            AND metric_name = 'air_quality_pm25'
-            AND timestamp > datetime('now', '-7 days')
-            AND location_lat IS NOT NULL
-            GROUP BY location_lat, location_lng
-            ORDER BY pm25_level DESC
-            LIMIT 50
-        """)
-        
-        if air_quality and air_quality[0]['avg_pm25']:
-            avg_pm25 = air_quality[0]['avg_pm25']
-            if avg_pm25 <= 12:
-                status = "✅ GOOD"
-            elif avg_pm25 <= 35:
-                status = "🟡 MODERATE"
-            elif avg_pm25 <= 55:
-                status = "🟠 UNHEALTHY"
-            else:
-                status = "🔴 DANGEROUS"
-        else:
-            status = "📊 NO DATA"
-            avg_pm25 = 0
-        
-        return {
-            'status': status,
-            'avg_pm25': round(avg_pm25, 1) if avg_pm25 else 0,
-            'measurements': air_quality[0]['measurements'] if air_quality else 0,
-            'last_update': air_quality[0]['last_update'] if air_quality else 'Never',
-            'cities': city_data
-        }
-    except Exception as e:
-        return {
-            'status': '❌ ERROR',
-            'avg_pm25': 0,
-            'measurements': 0,
-            'last_update': 'Error',
-            'cities': [],
-            'error': str(e)
-        }
-
-def get_ocean_status():
-    """Get current ocean conditions"""
-    try:
-        # Get latest ocean data from NOAA
-        # Fix: Use date() instead of datetime() to handle ISO timestamp format
+        # Get recent ocean temperature data (last 7 days)  
         ocean_data = execute_query("""
-            SELECT AVG(CASE WHEN metric_name = 'water_temperature' THEN value END) as avg_temp,
-                   AVG(CASE WHEN metric_name = 'water_level' THEN value END) as avg_level,
-                   COUNT(*) as measurements,
-                   MAX(timestamp) as last_update
-            FROM metric_data 
-            WHERE provider_key = 'noaa_ocean' 
-            AND date(timestamp) > date('now', '-7 days')
+            SELECT AVG(value) as avg_temp, COUNT(*) as station_count
+            FROM metric_data
+            WHERE provider_key = 'noaa_ocean'
+            AND metric_name = 'water_temperature'
+            AND timestamp >= datetime('now', '-7 days')
         """)
-        
-        # Get station data
-        stations = execute_query("""
-            SELECT location_lat, location_lng,
-                   AVG(CASE WHEN metric_name = 'water_temperature' THEN value END) as temperature,
-                   AVG(CASE WHEN metric_name = 'water_level' THEN value END) as water_level,
-                   metadata
-            FROM metric_data 
-            WHERE provider_key = 'noaa_ocean' 
-            AND date(timestamp) > date('now', '-7 days')
-            AND location_lat IS NOT NULL
-            GROUP BY location_lat, location_lng
-            LIMIT 12
-        """)
-        
-        if ocean_data and ocean_data[0] and ocean_data[0]['avg_temp'] is not None:
-            avg_temp = ocean_data[0]['avg_temp']
-            # Ocean temperature status (rough guidelines)
-            if 15 <= avg_temp <= 25:
-                status = "📊 NORMAL"
-            elif avg_temp > 25:
-                status = "🌡️ WARM"
-            else:
-                status = "🧊 COOL"
-        else:
-            status = "📊 NO DATA"
-            avg_temp = 0
         
         return {
-            'status': status,
-            'avg_temp': round(avg_temp, 1) if avg_temp else 0,
-            'avg_level': round(ocean_data[0]['avg_level'], 2) if ocean_data and ocean_data[0]['avg_level'] else 0,
-            'measurements': ocean_data[0]['measurements'] if ocean_data else 0,
-            'last_update': ocean_data[0]['last_update'] if ocean_data else 'Never',
-            'stations': stations
+            'fires': {
+                'count': fire_data[0]['fire_count'] if fire_data else 0,
+                'avg_brightness': round(fire_data[0]['avg_brightness'] or 0, 1) if fire_data else 0
+            },
+            'air_quality': {
+                'avg_pm25': round(air_data[0]['avg_pm25'] or 0, 1) if air_data else 0,
+                'station_count': air_data[0]['station_count'] if air_data else 0
+            },
+            'ocean_temperature': {
+                'avg_temp': round(ocean_data[0]['avg_temp'] or 0, 1) if ocean_data else 0,
+                'station_count': ocean_data[0]['station_count'] if ocean_data else 0
+            },
+            'last_updated': datetime.utcnow().isoformat()
         }
     except Exception as e:
+        # Return empty data on error
         return {
-            'status': '❌ ERROR',
-            'avg_temp': 0,
-            'avg_level': 0,
-            'measurements': 0,
-            'last_update': 'Error',
-            'stations': [],
+            'fires': {'count': 0, 'avg_brightness': 0},
+            'air_quality': {'avg_pm25': 0, 'station_count': 0},
+            'ocean_temperature': {'avg_temp': 0, 'station_count': 0},
+            'last_updated': datetime.utcnow().isoformat(),
             'error': str(e)
         }
 
-def calculate_environmental_health(fire_data, air_data, ocean_data):
-    """Calculate overall environmental health score"""
-    try:
-        score = 100  # Start with perfect score
-        status = "🟢 EXCELLENT"
-        
-        # Fire impact (0-30 points deduction)
-        if fire_data['active_fires'] > 100:
-            score -= 30
-        elif fire_data['active_fires'] > 50:
-            score -= 20
-        elif fire_data['active_fires'] > 10:
-            score -= 10
-        
-        # Air quality impact (0-40 points deduction)
-        if air_data['avg_pm25'] > 55:
-            score -= 40
-        elif air_data['avg_pm25'] > 35:
-            score -= 30
-        elif air_data['avg_pm25'] > 25:
-            score -= 20
-        elif air_data['avg_pm25'] > 12:
-            score -= 10
-        
-        # Ocean temperature impact (0-30 points deduction)
-        if ocean_data['avg_temp'] > 28:
-            score -= 20
-        elif ocean_data['avg_temp'] > 26:
-            score -= 10
-        
-        # Determine status based on score
-        if score >= 85:
-            status = "🟢 EXCELLENT"
-        elif score >= 70:
-            status = "🟡 GOOD"
-        elif score >= 50:
-            status = "🟠 MODERATE"
-        elif score >= 30:
-            status = "🔴 POOR"
-        else:
-            status = "🚨 CRITICAL"
-        
-        return {
-            'score': max(0, score),
-            'status': status,
-            'factors': {
-                'fires': fire_data['active_fires'],
-                'air_quality': air_data['avg_pm25'],
-                'ocean_temp': ocean_data['avg_temp']
-            }
-        }
-    except Exception as e:
-        return {
-            'score': 0,
-            'status': '❌ ERROR',
-            'factors': {},
-            'error': str(e)
-        }
+def calculate_environmental_health_score(health_data):
+    """Calculate environmental health score (0-100)"""
+    score = 100  # Start with perfect score
+    
+    # Fire impact (up to -30 points)
+    fire_count = health_data['fires']['count']
+    if fire_count > 1000:
+        score -= 30
+    elif fire_count > 500:
+        score -= 20
+    elif fire_count > 100:
+        score -= 10
+    
+    # Air quality impact (up to -40 points)  
+    pm25 = health_data['air_quality']['avg_pm25']
+    if pm25 > 75:  # Hazardous
+        score -= 40
+    elif pm25 > 55:  # Very unhealthy
+        score -= 30
+    elif pm25 > 35:  # Unhealthy
+        score -= 20
+    elif pm25 > 15:  # Moderate
+        score -= 10
+    
+    # Ocean temperature impact (up to -20 points)
+    ocean_temp = health_data['ocean_temperature']['avg_temp']
+    if ocean_temp > 25:  # Very warm
+        score -= 20
+    elif ocean_temp > 23:  # Warm
+        score -= 10
+    elif ocean_temp < 15:  # Very cold
+        score -= 15
+    elif ocean_temp < 18:  # Cold
+        score -= 5
+    
+    # Ensure score stays within bounds
+    score = max(0, min(100, score))
+    
+    # Determine status based on score
+    if score >= 80:
+        status = 'EXCELLENT'
+        color = '#28a745'  # Green
+    elif score >= 60:
+        status = 'GOOD'
+        color = '#33a474'  # Deep green
+    elif score >= 40:
+        status = 'MODERATE'
+        color = '#ffc107'  # Yellow
+    elif score >= 20:
+        status = 'POOR'
+        color = '#fd7e14'  # Orange
+    else:
+        status = 'CRITICAL'
+        color = '#dc3545'  # Red
+    
+    return {
+        'score': score,
+        'status': status,
+        'color': color
+    }
 
 @app.route('/api/map-data')
 @no_cache
@@ -682,7 +560,7 @@ def api_debug_production():
         
         # Actual function test
         try:
-            ocean_status = get_ocean_status()
+            ocean_status = get_environmental_health_data()
             debug_info['ocean_status_function'] = ocean_status
         except Exception as e:
             debug_info['ocean_status_function'] = {'error': str(e)}
@@ -740,7 +618,7 @@ def api_debug_ocean():
         """)
         
         # Get ocean status
-        ocean_status = get_ocean_status()
+        ocean_status = get_environmental_health_data()
         
         # Get recent temperature records
         recent_temps = execute_query("""
@@ -802,7 +680,7 @@ def api_force_ocean_temp():
                                trigger_parameters={'product': 'water_temperature'})
         
         # Get updated ocean status
-        ocean_status = get_ocean_status()
+        ocean_status = get_environmental_health_data()
         
         # Check temperature records after running
         temp_count = execute_query("SELECT COUNT(*) as count FROM metric_data WHERE provider_key = 'noaa_ocean' AND metric_name = 'water_temperature'")[0]['count']
@@ -866,7 +744,7 @@ def api_fix_missing_task():
         
         # Check results
         temp_count = execute_query("SELECT COUNT(*) as count FROM metric_data WHERE provider_key = 'noaa_ocean' AND metric_name = 'water_temperature'")[0]['count']
-        ocean_status = get_ocean_status()
+        ocean_status = get_environmental_health_data()
         
         return jsonify({
             'success': True,
@@ -995,7 +873,7 @@ def api_insert_task_direct():
                                    trigger_parameters={'product': 'water_temperature'})
             
             temp_count = execute_query("SELECT COUNT(*) as count FROM metric_data WHERE provider_key = 'noaa_ocean' AND metric_name = 'water_temperature'")[0]['count']
-            ocean_status = get_ocean_status()
+            ocean_status = get_environmental_health_data()
             
             return jsonify({
                 'success': True,
@@ -1044,7 +922,7 @@ def api_insert_task_direct():
                                    trigger_parameters={'product': 'water_temperature'})
             
             temp_count = execute_query("SELECT COUNT(*) as count FROM metric_data WHERE provider_key = 'noaa_ocean' AND metric_name = 'water_temperature'")[0]['count']
-            ocean_status = get_ocean_status()
+            ocean_status = get_environmental_health_data()
             
             return jsonify({
                 'success': True,
@@ -1069,6 +947,32 @@ def api_insert_task_direct():
             'error': str(e),
             'timestamp': datetime.now().isoformat()
         }), 500
+
+@app.route('/api/health')
+def api_health():
+    """API endpoint for environmental health data"""
+    try:
+        health_data = get_environmental_health_data()
+        health_score = calculate_environmental_health_score(health_data)
+        
+        return jsonify({
+            'success': True,
+            'data': health_data,
+            'score': health_score
+        })
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        })
+
+@app.route('/health')
+def health_check():
+    """Simple health check endpoint"""
+    return jsonify({
+        'status': 'healthy',
+        'timestamp': datetime.utcnow().isoformat()
+    })
 
 @app.errorhandler(404)
 def not_found(error):

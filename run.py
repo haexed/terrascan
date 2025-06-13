@@ -1,88 +1,47 @@
 #!/usr/bin/env python3
 """
-ECO WATCH TERRA SCAN - Environmental Health Dashboard
-Simple startup script for the environmental monitoring dashboard
+ECO WATCH TERRA SCAN
+Environmental Health Monitoring Dashboard
 """
 
-import sys
 import os
-
-# Add current directory to path
-sys.path.append(os.path.dirname(__file__))
-
-# Import version info
-from version import get_version
+import sys
+from web.simple_app import create_app
+from database.config_manager import get_system_config, set_system_config
 
 def main():
-    """Main startup function"""
-    print(f"🌍 Starting ECO WATCH TERRA SCAN v{get_version()}...")
+    """Main application entry point"""
     
-    # Initialize database
-    print("📁 Initializing database...")
-    from database.db import init_database
-    init_database()
+    print("🌍 ECO WATCH TERRA SCAN")
+    print("=" * 50)
+    print("Environmental Health Monitoring Dashboard")
+    print("Real-time tracking of fires, air quality, and ocean data")
+    print("=" * 50)
     
-    # Ensure system configuration is set up
-    print("⚙️ Ensuring system configuration...")
-    from database.config_manager import get_system_config, set_system_config
+    # Initialize database and configurations
+    from setup_configs import setup_system_configs
+    if not setup_system_configs():
+        print("❌ Failed to initialize system configurations")
+        sys.exit(1)
     
-    # Check if simulation mode is configured, if not set it up
-    simulation_mode = get_system_config('simulation_mode', None)
-    if simulation_mode is None:
-        print("🔧 Setting up missing system configurations...")
-        from setup_configs import setup_system_config
-        setup_system_config()
-        print("✅ System configuration initialized")
-    else:
-        print(f"✅ System configuration found (simulation_mode: {simulation_mode})")
+    # Get version info
+    version = get_system_config('version', 'Unknown')
+    print(f"✅ System initialized (version: {version})")
     
-    # Test database connection
-    print("🔍 Testing database connection...")
-    from database.db import execute_query
-    try:
-        result = execute_query("SELECT COUNT(*) as count FROM metric_data")
-        records = result[0]['count'] if result else 0
-        print(f"✅ Found {records} environmental measurements in database")
-    except Exception as e:
-        print(f"⚠️ Database test: {e}")
+    # Create Flask application
+    app = create_app()
     
-    # Test environmental data availability (skip in production for faster boot)
-    is_production = os.getenv('RAILWAY_ENVIRONMENT_NAME') == 'production'
+    # Get port from environment or use default
+    port = int(os.environ.get('PORT', 5000))
+    debug = os.environ.get('FLASK_ENV') == 'development'
     
-    if not is_production:
-        print("🧪 Testing environmental data collection...")
-        from tasks.runner import TaskRunner
-        runner = TaskRunner()
-        
-        # Quick test of data fetching
-        try:
-            result = runner.run_task('nasa_fires_global', triggered_by='startup_test')
-            if result['success']:
-                print(f"✅ Environmental data systems operational!")
-            else:
-                print(f"⚠️ Data collection test: {result.get('error', 'Unknown error')}")
-        except Exception as e:
-            print(f"⚠️ Data collection test failed: {e}")
-    else:
-        print("🚀 Production mode: Skipping startup tests for faster boot")
+    print(f"🚀 Starting server on port {port}")
+    print(f"🌐 Dashboard will be available at: http://localhost:{port}")
+    print("📊 Monitor environmental health in real-time")
+    print("-" * 50)
     
-    # Start web dashboard
-    print("\n🌐 Starting ECO WATCH TERRA SCAN Dashboard...")
-    print("📊 Dashboard available at: http://localhost:5000")
-    print("🔄 Auto-refresh every 15 minutes")
-    print("🌍 Live environmental health monitoring")
-    print("\n⏸️ Press Ctrl+C to stop the dashboard\n")
-    
-    # Import and run the Flask app
-    from web.app import app
-    app.run(debug=True, host='0.0.0.0', port=5000)
+    # Start the application
+    app.run(host='0.0.0.0', port=port, debug=debug)
 
 if __name__ == "__main__":
-    try:
-        main()
-    except KeyboardInterrupt:
-        print("\n👋 Shutting down ECO WATCH TERRA SCAN...")
-    except Exception as e:
-        print(f"❌ Error starting ECO WATCH: {e}")
-        import traceback
-        traceback.print_exc() 
+    main() 

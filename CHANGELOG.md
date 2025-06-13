@@ -5,6 +5,34 @@ All notable changes to ECO WATCH TERRA SCAN will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.2.0] - 2024-12-19
+
+### 🚀 **MAJOR REFACTOR: Simulation Mode Removed**
+
+**Breaking Changes:**
+- **❌ Removed Simulation Mode**: Eliminated all simulation/mock data functionality
+- **✅ Real Data Only**: System now works with live APIs or fails gracefully with clear error messages
+- **🔧 Simplified Configuration**: No more simulation_mode settings or complex fallback logic
+
+**Code Cleanup:**
+- **📁 Task Files**: Completely refactored `fetch_nasa_fires.py`, `fetch_openaq_latest.py`, `fetch_noaa_ocean.py`
+- **🗑️ Removed Functions**: Deleted all `_simulate_*` functions and related mock data generation
+- **📦 Cleaner Imports**: Removed unused dependencies and old database imports
+- **⚙️ Setup Configs**: Simplified system configuration setup, removed simulation_mode parameter
+- **🌐 Flask App**: Updated to use new simplified data functions with proper error handling
+
+**Benefits:**
+- **🎯 Focused Purpose**: Clear distinction between working (with API keys) vs not working
+- **🐛 Better Debugging**: Real errors from real APIs are more useful than fake success
+- **📝 Cleaner Code**: Removed 500+ lines of simulation code and complexity
+- **🚀 Faster Startup**: No simulation data generation during initialization
+- **💡 User Clarity**: Either it works with real data, or shows clear "API key needed" messages
+
+**Migration Notes:**
+- **🔑 API Keys Required**: System now requires actual API keys to function
+- **📊 No Fallback Data**: No more simulated data when APIs are unavailable
+- **⚠️ Clear Errors**: Helpful error messages guide users to configure API keys properly
+
 ## [2.1.3] - 2025-06-13
 ### Added - SYSTEM PAGE & ADVANCED DEBUGGING TOOLS 🔧
 - **🔧 New System Page**: Complete system status and data provider monitoring at `/system`

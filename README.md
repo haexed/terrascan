@@ -1,4 +1,4 @@
-# 🌍 TERRASCAN
+# 🌍 ECO WATCH TERRA SCAN
 
 **Real-time environmental health dashboard showing what's happening to our planet right now.**
 
@@ -8,14 +8,14 @@
 
 ## 🌱 **Mission: Environmental Awareness Now**
 
-**TERRASCAN** gives you instant access to current environmental conditions across the globe:
+**ECO WATCH TERRA SCAN** gives you instant access to current environmental conditions across the globe:
 
 - 🔥 **Active Fires** - Live fire detection from NASA satellites
 - 🌬️ **Air Quality** - Real-time pollution levels in major cities  
 - 🌊 **Ocean Health** - Current water temperature and levels from NOAA
 - 🌍 **Environmental Score** - Overall planetary health indicator
 
-**Philosophy**: Keep it simple, keep it current, keep it accessible to everyone.
+**Philosophy**: Real data only. Either it works with live APIs, or shows clear guidance on what's needed.
 
 ---
 
@@ -28,13 +28,17 @@ cd terrascan
 # Install dependencies
 pip install -r requirements.txt
 
+# Configure API keys (copy .env.example to .env)
+cp .env.example .env
+# Edit .env with your API keys
+
 # Start the dashboard
 python3 run.py
 
 # Visit: http://localhost:5000
 ```
 
-**That's it!** TERRASCAN works immediately with live data feeds.
+**🔑 API Keys Required**: ECO WATCH works with real environmental data from NASA, NOAA, and OpenAQ APIs.
 
 ---
 
@@ -52,29 +56,29 @@ python3 run.py
 The **Planetary Health Score** combines three critical environmental factors into a single 0-100 indicator:
 
 **🔥 Fire Impact (up to -30 points):**
-- 0-10 fires: No deduction
-- 11-50 fires: -10 points  
-- 51-100 fires: -20 points
-- 100+ fires: -30 points
+- 0-100 fires: No deduction
+- 101-500 fires: -10 points  
+- 501-1000 fires: -20 points
+- 1000+ fires: -30 points
 
 **🌬️ Air Quality Impact (up to -40 points):**
-- 0-12 μg/m³ PM2.5: No deduction (WHO Good)
-- 13-25 μg/m³: -10 points (Moderate)
-- 26-35 μg/m³: -20 points (Unhealthy for Sensitive)
-- 36-55 μg/m³: -30 points (Unhealthy) 
-- 55+ μg/m³: -40 points (Dangerous)
+- 0-15 μg/m³ PM2.5: No deduction (WHO Good)
+- 16-35 μg/m³: -10 points (Moderate)
+- 36-55 μg/m³: -20 points (Unhealthy) 
+- 56-75 μg/m³: -30 points (Very Unhealthy)
+- 75+ μg/m³: -40 points (Hazardous)
 
 **🌊 Ocean Temperature Impact (up to -20 points):**
-- 15-25°C: No deduction (Normal range)
-- 26-28°C: -10 points (Warming trend)
-- 28°C+: -20 points (Concerning heat)
+- 18-25°C: No deduction (Normal range)
+- 15-17°C or 26-28°C: -5 to -10 points (Mild deviation)
+- <15°C or >25°C: -15 to -20 points (Concerning deviation)
 
 **🎯 Final Score Ranges:**
-- **85-100**: 🟢 **EXCELLENT** - Healthy planetary conditions
-- **70-84**: 🟡 **GOOD** - Generally stable environment  
-- **50-69**: 🟠 **MODERATE** - Some environmental stress
-- **30-49**: 🔴 **POOR** - Significant environmental concerns
-- **0-29**: 🚨 **CRITICAL** - Severe environmental crisis
+- **80-100**: 🟢 **EXCELLENT** - Healthy planetary conditions
+- **60-79**: 🟡 **GOOD** - Generally stable environment  
+- **40-59**: 🟠 **MODERATE** - Some environmental stress
+- **20-39**: 🔴 **POOR** - Significant environmental concerns
+- **0-19**: 🚨 **CRITICAL** - Severe environmental crisis
 
 ### **🤖 Live Data Sources**
 - **🔥 [NASA FIRMS](https://firms.modaps.eosdis.nasa.gov/)** - Fire Information for Resource Management System
@@ -90,59 +94,42 @@ The **Planetary Health Score** combines three critical environmental factors int
 
 ---
 
-## 🔧 **New in v2.1.3: System Page & Advanced Debugging**
+## 🔧 **New in v2.2.0: Real Data Only**
 
-### ✨ **NEW: System Status Page** (`/system`)
-- **📊 Complete System Overview**: 27,000+ environmental records, active tasks, recent runs
-- **🔥 NASA FIRMS Status**: Fire detection monitoring with operational health
-- **🌬️ OpenAQ Status**: Air quality network (65+ cities) with provider diagnostics  
-- **🌊 NOAA Ocean Status**: Ocean monitoring (12 stations) with temperature/level data
-- **📈 Live Task Execution Log**: Real-time task runs with timing and record counts
-- **🐛 Advanced Debugging Tools**: Ocean data diagnostics, cache detection, API testing
-- **🧹 Cache-Busting Solutions**: One-click refresh for browser caching issues
+### 🚀 **MAJOR REFACTOR: Simulation Mode Removed**
 
-### 🛠️ **Production-Ready Debugging**
-- **Debug Ocean API**: `/api/debug/ocean` - Detailed ocean data analysis and validation
-- **Smart Cache Detection**: Automatic detection of 0°C temperature (indicates cache issues)
-- **Force Refresh Buttons**: Cache-busting with timestamp parameters on homepage and system page
-- **Real-time Testing**: Live API testing with temperature validation and error reporting
+**Breaking Changes:**
+- **❌ Removed Simulation Mode**: Eliminated all simulation/mock data functionality
+- **✅ Real Data Only**: System now works with live APIs or fails gracefully with clear error messages
+- **🔧 Simplified Configuration**: No more simulation_mode settings or complex fallback logic
 
-## 🐛 **Recent Bug Fixes (v2.1.2-2.1.3)**
+**Benefits:**
+- **🎯 Focused Purpose**: Clear distinction between working (with API keys) vs not working
+- **🐛 Better Debugging**: Real errors from real APIs are more useful than fake success
+- **📝 Cleaner Code**: Removed 500+ lines of simulation code and complexity
+- **🚀 Faster Startup**: No simulation data generation during initialization
+- **💡 User Clarity**: Either it works with real data, or shows clear "API key needed" messages
 
-### ✅ **Critical Production Issues Resolved:**
-- **🌊 Ocean Temperature "NO DATA"**: Fixed browser caching showing old 0°C values
-  - **Root Cause**: Browser displaying cached version instead of live 18.3°C data
-  - **Solution**: Multiple cache-busting mechanisms and user-friendly refresh options
-  - **Verification**: Debug tools confirm 1,296+ temperature records with 18.3°C average
-  - **Final Fix**: Enhanced cache-busting with ETag headers and client-side cache detection
-- **⏰ Time Display**: Fixed "Loading..." stuck state → Real-time updates on all pages
-- **📊 Data Freshness**: Ensured all environmental metrics display current values
-- **🔄 Data Collection**: Enhanced ocean monitoring with both water level + temperature
-- **🔧 Cache Detection**: JavaScript automatically highlights cache issues with orange borders
-
-### 🔧 **Technical Fixes:**
-- Added `noaa_ocean_temperature` task for proper sea surface temperature collection
-- Fixed duplicate HTML element IDs causing JavaScript conflicts
-- Enhanced refresh API to collect complete ocean health data
-- Improved time update functions for consistent UI behavior
-- Added comprehensive cache detection and busting mechanisms
-- Built production-ready debugging infrastructure
+**Migration Notes:**
+- **🔑 API Keys Required**: System now requires actual API keys to function
+- **📊 No Fallback Data**: No more simulated data when APIs are unavailable
+- **⚠️ Clear Errors**: Helpful error messages guide users to configure API keys properly
 
 ---
 
 ## 🎯 **Environmental Health Calculation Example**
 
-**Based on Your Current Data (Score: 30/100 🔴 POOR):**
+**Based on Current Live Data:**
 
 | **Factor** | **Current Value** | **Impact** | **Deduction** |
 |------------|-------------------|------------|---------------|
-| 🔥 **Fires** | 807 active fires | Extreme activity | -30 points |
-| 🌬️ **Air Quality** | 78.3 μg/m³ PM2.5 | Dangerous levels | -40 points |
-| 🌊 **Ocean Temp** | 20.0°C average | Normal range | 0 points |
+| 🔥 **Fires** | 14,099 active fires | Extreme activity | -30 points |
+| 🌬️ **Air Quality** | 75.5 μg/m³ PM2.5 | Hazardous levels | -40 points |
+| 🌊 **Ocean Temp** | 18.2°C average | Normal range | 0 points |
 
 **🧮 Calculation:** 100 - 30 (fires) - 40 (air) - 0 (ocean) = **30/100 🔴 POOR**
 
-*This score reflects significant environmental stress from high fire activity and dangerous air pollution levels.*
+*This score reflects significant environmental stress from high fire activity and hazardous air pollution levels.*
 
 ---
 
@@ -173,18 +160,18 @@ The **Planetary Health Score** combines three critical environmental factors int
 
 ## 📍 **Current Geographic Coverage**
 
-**🔥 Fire Data**: **8,005 unique fire locations** globally (last 7 days)
+**🔥 Fire Data**: **14,099 active fire detections** globally (live data)
 - Comprehensive satellite coverage of all continents
 - Real-time detection from NASA MODIS/VIIRS satellites
 
-**🌬️ Air Quality**: **126 monitoring stations** currently active
-- **Primary Coverage**: São Paulo, Brazil metropolitan area
-- **Expansion Goal**: Add major cities worldwide (London, Delhi, Beijing, etc.)
+**🌬️ Air Quality**: **1,908 monitoring stations** currently active
+- **Global Coverage**: Major cities worldwide with real-time PM2.5 measurements
+- **Expansion Goal**: Continue adding cities as OpenAQ network grows
 
 **🌊 Ocean Monitoring**: **12 NOAA stations** across US coastlines
-- **Pacific**: San Francisco (37.8°N), Seattle (47.6°N), Honolulu (21.3°N), Ketchikan (55.3°N)
-- **Atlantic**: Boston (42.3°N), New York (40.7°N), Virginia Beach (36.8°N), Charleston (29.2°N)
-- **Gulf/Keys**: New Orleans (29.3°N), Key West (24.6°N), Galveston (26.1°N)
+- **Pacific**: San Francisco (37.8°N), Seattle (47.6°N), Honolulu (21.3°N)
+- **Atlantic**: Boston (42.3°N), New York (40.7°N), Charleston (32.8°N)
+- **Gulf/Keys**: New Orleans (29.3°N), Key West (24.6°N), Galveston (29.3°N)
 
 ### **🚀 Expansion Roadmap**
 
@@ -213,14 +200,33 @@ The **Planetary Health Score** combines three critical environmental factors int
 **No Complexity:**
 - No Docker required
 - No cloud services needed
-- No configuration files
-- Works offline with cached data
+- No simulation modes
+- Real data or clear error messages
+
+---
+
+## 🔑 **API Configuration**
+
+**Required API Keys:**
+- **NASA FIRMS**: Free registration at [firms.modaps.eosdis.nasa.gov/api](https://firms.modaps.eosdis.nasa.gov/api/)
+- **OpenAQ**: Free registration at [openaq.org](https://openaq.org/)
+- **NOAA Ocean Service**: No API key required (public data)
+
+**Setup:**
+1. Copy `.env.example` to `.env`
+2. Add your API keys to the `.env` file
+3. Start the application with `python3 run.py`
+
+**Without API Keys:**
+- Application will show clear error messages
+- Existing database data will still display
+- Helpful guidance on obtaining API keys
 
 ---
 
 ## 🌱 **Environmental Impact**
 
-**TERRASCAN** promotes environmental awareness by:
+**ECO WATCH TERRA SCAN** promotes environmental awareness by:
 
 - 🔓 **Making Data Accessible** - Complex environmental data simplified
 - 🌍 **Global Perspective** - See environmental conditions worldwide  
@@ -277,12 +283,6 @@ Help make environmental data more accessible:
 - **[NASA FIRMS](https://firms.modaps.eosdis.nasa.gov/)** - Fire detection via MODIS/VIIRS satellites
 - **[NOAA Ocean Service](https://tidesandcurrents.noaa.gov/)** - Ocean temperature and water levels  
 - **[OpenAQ](https://openaq.org/)** - Global air quality monitoring network
-
-**Planned Integrations:**
-- **[USGS Water Data](https://waterdata.usgs.gov/)** - River levels and groundwater
-- **[EPA AirNow](https://www.airnow.gov/)** - US air quality forecasts
-- **[Climate.gov](https://www.climate.gov/)** - Climate monitoring and projections
-- **[ECMWF](https://www.ecmwf.int/)** - European weather and climate data
 
 **Built by:** Stig Grindland & Claude (Anthropic)
 
