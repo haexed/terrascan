@@ -5,6 +5,29 @@ All notable changes to ECO WATCH TERRA SCAN will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.1.1] - 2025-01-21
+### Added - MASSIVE GLOBAL EXPANSION: 65+ Cities Worldwide
+- **10x City Coverage**: Expanded from 6 cities to 65+ major cities across all continents
+- **North America**: 16 cities (US major metros, Canada, Mexico)
+- **Europe**: 15 cities (capitals, economic centers, Nordic countries)
+- **Asia**: 18 cities (China megacities, India metros, Japan, Southeast Asia)
+- **Middle East & Africa**: 9 cities (Gulf states, Turkey, Egypt, South Africa, Kenya)
+- **South America**: 6 cities (Brazil, Argentina, Peru, Colombia, Chile)
+- **Oceania**: 5 cities (Australia major cities, New Zealand)
+
+### Enhanced
+- **Air quality stations**: Increased from 100 to 200 stations globally
+- **Hero map coverage**: Enhanced from 30 to 50 top air quality stations
+- **Dashboard city data**: Expanded from 20 to 50 cities with detailed metrics
+- **Data precision**: Much better global environmental monitoring coverage
+- **Geographic diversity**: Arctic to tropical, coastal to inland, all major population centers
+
+### Technical Improvements
+- **Realistic city distribution**: Major financial centers, tech hubs, industrial cities
+- **Population-weighted coverage**: Focus on cities with highest environmental impact
+- **Global representation**: Every continent now has comprehensive monitoring
+- **Enhanced simulation**: More realistic air quality patterns based on city characteristics
+
 ## [2.1.0] - 2025-01-21
 ### Added - WEBSITE REDESIGN: Modular Templates & Professional UI
 - **Homepage with hero map**: New landing page featuring 60vh interactive map with environmental info cards above

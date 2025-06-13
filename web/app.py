@@ -174,7 +174,7 @@ def get_air_quality_status():
             AND location_lat IS NOT NULL
             GROUP BY location_lat, location_lng
             ORDER BY pm25_level DESC
-            LIMIT 20
+            LIMIT 50
         """)
         
         if air_quality and air_quality[0]['avg_pm25']:
@@ -361,7 +361,7 @@ def api_map_data():
             AND location_lng IS NOT NULL
             GROUP BY location_lat, location_lng
             ORDER BY value DESC
-            LIMIT 100
+            LIMIT 200
         """)
         
         # Get ocean data with coordinates

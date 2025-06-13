@@ -127,10 +127,10 @@ function updateHeroFireLayer() {
 function updateHeroAirLayer() {
     heroAirLayer.clearLayers();
 
-    // Show top 30 air quality stations
+    // Show top 50 air quality stations
     const topStations = heroAirData
         .sort((a, b) => b.value - a.value)
-        .slice(0, 30);
+        .slice(0, 50);
 
     topStations.forEach(station => {
         const color = getHeroAirQualityColor(station.value);
