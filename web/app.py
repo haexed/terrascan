@@ -638,6 +638,57 @@ def api_refresh():
             'error': str(e)
         }), 500
 
+@app.route('/api/collect-biodiversity')
+@no_cache
+def api_collect_biodiversity():
+    """API endpoint to manually trigger biodiversity data collection"""
+    try:
+        from tasks.fetch_biodiversity import fetch_biodiversity_data
+        
+        # Run biodiversity data collection
+        result = fetch_biodiversity_data(product='species_observations')
+        
+        if result['success']:
+            # Get updated biodiversity stats
+            biodiversity_stats = execute_query("""
+                SELECT 
+                    COUNT(*) as total_records,
+                    AVG(CASE WHEN metric_name = 'species_observations' THEN value END) as avg_observations,
+                    AVG(CASE WHEN metric_name = 'species_diversity' THEN value END) as avg_diversity,
+                    COUNT(DISTINCT CASE WHEN metric_name = 'species_observations' THEN location_lat || ',' || location_lng END) as region_count
+                FROM metric_data 
+                WHERE provider_key = 'gbif'
+                AND timestamp >= datetime('now', '-24 hours')
+            """)
+            
+            stats = biodiversity_stats[0] if biodiversity_stats else {}
+            
+            return jsonify({
+                'success': True,
+                'timestamp': datetime.utcnow().isoformat(),
+                'message': result['message'],
+                'records_processed': result['records_processed'],
+                'biodiversity_stats': {
+                    'total_records': stats.get('total_records', 0),
+                    'avg_observations': round(stats.get('avg_observations', 0) or 0, 1),
+                    'avg_diversity': round(stats.get('avg_diversity', 0) or 0, 1),
+                    'region_count': stats.get('region_count', 0)
+                }
+            })
+        else:
+            return jsonify({
+                'success': False,
+                'error': result.get('error', 'Unknown error'),
+                'timestamp': datetime.utcnow().isoformat()
+            }), 500
+            
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e),
+            'timestamp': datetime.utcnow().isoformat()
+        }), 500
+
 
 
 
