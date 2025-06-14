@@ -2,6 +2,17 @@
 
 All notable changes to TERRASCAN will be documented in this file.
 
+## [2.5.3] - 2025-06-14
+
+### Removed
+- "Force Ocean Refresh" debug button from Ocean Health card  
+- Nuclear cache-busting JavaScript function and excessive console logging
+- Debug styling and visual clutter from troubleshooting session
+
+### Improved
+- Clean, professional UI without debugging elements
+- Reduced JavaScript bundle size by removing debug code
+
 ## [2.5.2] - 2025-06-14
 
 ### Removed
