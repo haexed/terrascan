@@ -744,12 +744,14 @@ def create_app():
             updated_count = 0
             for task_name, command, parameters in task_updates:
                 try:
-                    result = execute_query("""
+                    from database.db import execute_insert
+                    result = execute_insert("""
                         UPDATE task 
-                        SET command = %s, parameters = %s, updated_date = CURRENT_TIMESTAMP
-                        WHERE name = %s
+                        SET command = ?, parameters = ?, updated_date = CURRENT_TIMESTAMP
+                        WHERE name = ?
                     """, (command, parameters, task_name))
-                    updated_count += 1
+                    if result:
+                        updated_count += 1
                 except Exception as e:
                     print(f"Failed to update task {task_name}: {e}")
             
