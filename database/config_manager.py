@@ -1,13 +1,12 @@
 """
 Configuration Manager for Terrascan
-Handles dynamic configuration storage and retrieval from database
-Compatible with both SQLite (local) and PostgreSQL (production)
+Handles dynamic configuration storage and retrieval from PostgreSQL database
 """
 
 import os
 import json
 from typing import Dict, Any, Optional
-from database.db import execute_query, execute_insert, IS_PRODUCTION
+from database.db import execute_query, execute_insert
 
 class ConfigManager:
     """Manages configuration for providers, datasets, and system settings"""
@@ -18,24 +17,16 @@ class ConfigManager:
     def init_config_tables(self):
         """Initialize configuration tables (handled by main db.py init)"""
         # Tables are created by the main database initialization
-        # This is just a placeholder for compatibility
         pass
     
     def get_provider_config(self, provider_key: str, config_key: str, default=None) -> Any:
         """Get provider-specific configuration"""
         try:
-            if IS_PRODUCTION:
-                query = """
-                    SELECT value, data_type 
-                    FROM provider_config 
-                    WHERE provider = %s AND key = %s
-                """
-            else:
-                query = """
-                    SELECT value, data_type 
-                    FROM provider_config 
-                    WHERE provider = ? AND key = ?
-                """
+            query = """
+                SELECT value, data_type 
+                FROM provider_config 
+                WHERE provider = %s AND key = %s
+            """
             
             results = execute_query(query, (provider_key, config_key))
             
@@ -53,22 +44,15 @@ class ConfigManager:
         try:
             value_str = self._serialize_config_value(config_value, data_type)
             
-            if IS_PRODUCTION:
-                query = """
-                    INSERT INTO provider_config (provider, key, value, data_type, description)
-                    VALUES (%s, %s, %s, %s, %s)
-                    ON CONFLICT (provider, key) DO UPDATE SET
-                        value = EXCLUDED.value,
-                        data_type = EXCLUDED.data_type,
-                        description = EXCLUDED.description,
-                        updated_date = CURRENT_TIMESTAMP
-                """
-            else:
-                query = """
-                    INSERT OR REPLACE INTO provider_config 
-                    (provider, key, value, data_type, description, updated_date)
-                    VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
-                """
+            query = """
+                INSERT INTO provider_config (provider, key, value, data_type, description)
+                VALUES (%s, %s, %s, %s, %s)
+                ON CONFLICT (provider, key) DO UPDATE SET
+                    value = EXCLUDED.value,
+                    data_type = EXCLUDED.data_type,
+                    description = EXCLUDED.description,
+                    updated_date = CURRENT_TIMESTAMP
+            """
             
             return execute_insert(query, (provider_key, config_key, value_str, data_type, description))
         except Exception as e:
@@ -78,18 +62,11 @@ class ConfigManager:
     def get_system_config(self, config_key: str, default=None) -> Any:
         """Get system-wide configuration"""
         try:
-            if IS_PRODUCTION:
-                query = """
-                    SELECT value, data_type 
-                    FROM system_config 
-                    WHERE key = %s
-                """
-            else:
-                query = """
-                    SELECT value, data_type 
-                    FROM system_config 
-                    WHERE key = ?
-                """
+            query = """
+                SELECT value, data_type 
+                FROM system_config 
+                WHERE key = %s
+            """
             
             results = execute_query(query, (config_key,))
             
@@ -107,22 +84,15 @@ class ConfigManager:
         try:
             value_str = self._serialize_config_value(config_value, data_type)
             
-            if IS_PRODUCTION:
-                query = """
-                    INSERT INTO system_config (key, value, data_type, description)
-                    VALUES (%s, %s, %s, %s)
-                    ON CONFLICT (key) DO UPDATE SET
-                        value = EXCLUDED.value,
-                        data_type = EXCLUDED.data_type,
-                        description = EXCLUDED.description,
-                        updated_date = CURRENT_TIMESTAMP
-                """
-            else:
-                query = """
-                    INSERT OR REPLACE INTO system_config 
-                    (key, value, data_type, description, updated_date)
-                    VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)
-                """
+            query = """
+                INSERT INTO system_config (key, value, data_type, description)
+                VALUES (%s, %s, %s, %s)
+                ON CONFLICT (key) DO UPDATE SET
+                    value = EXCLUDED.value,
+                    data_type = EXCLUDED.data_type,
+                    description = EXCLUDED.description,
+                    updated_date = CURRENT_TIMESTAMP
+            """
             
             return execute_insert(query, (config_key, value_str, data_type, description))
         except Exception as e:
@@ -134,18 +104,11 @@ class ConfigManager:
         try:
             configs = {}
             
-            if IS_PRODUCTION:
-                query = """
-                    SELECT key, value, data_type 
-                    FROM provider_config 
-                    WHERE provider = %s
-                """
-            else:
-                query = """
-                    SELECT key, value, data_type 
-                    FROM provider_config 
-                    WHERE provider = ?
-                """
+            query = """
+                SELECT key, value, data_type 
+                FROM provider_config 
+                WHERE provider = %s
+            """
             
             results = execute_query(query, (provider_key,))
             

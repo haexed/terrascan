@@ -97,7 +97,7 @@ TERRASCAN is production-ready and deployed on Railway at [terrascan.io](https://
 
 ### Task Management Security
 
-**🔒 Admin-Only Task Control**: For security, task management is **read-only** for public users. Task enable/disable controls are managed via environment variables:
+**🔒 Admin Task Control**: For security, task management is **read-only** for public users. Task enable/disable controls are managed via environment variables:
 
 ```bash
 # Environment variables for production task control
@@ -108,12 +108,10 @@ TASK_ENABLED_WEATHER=true
 TASK_ENABLED_BIODIVERSITY=true
 ```
 
-**Public Interface**: The `/tasks` page shows monitoring information only:
+**Public Interface**: The `/tasks` page shows monitoring information:
 - ✅ Task status and last run information
 - ✅ Recent execution logs (last 10 runs)
 - ✅ Success/failure statistics
-- ❌ No toggle switches or run buttons
-- ❌ No administrative controls
 
 **Admin Control**: Task configuration changes require:
 - Railway dashboard environment variable updates
@@ -201,7 +199,7 @@ For local PostgreSQL development, see: [DEVELOPMENT.md](DEVELOPMENT.md)
 | Endpoint | Method | Description |
 |----------|--------|-------------|
 | `/` | GET | Main dashboard |
-| `/tasks` | GET | Task monitoring (read-only) |
+| `/tasks` | GET | Task monitoring |
 | `/system` | GET | System status |
 | `/map` | GET | Interactive map view |
 | `/about` | GET | Project information |
@@ -218,7 +216,7 @@ For local PostgreSQL development, see: [DEVELOPMENT.md](DEVELOPMENT.md)
 
 ### Administrative APIs
 
-**🔒 Note**: Administrative task control is environment-based only. No public APIs for task management.
+**🔒 Note**: Administrative task control is environment-based. No public APIs for task management.
 
 ---
 

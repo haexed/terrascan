@@ -2,6 +2,40 @@
 
 All notable changes to TERRASCAN will be documented in this file.
 
+## [3.0.0] - 2025-06-14
+
+### 🚀 MAJOR ARCHITECTURAL CHANGE - Python/PostgreSQL Platform
+
+**BREAKING CHANGE**: TERRASCAN now requires PostgreSQL (DATABASE_URL environment variable)
+
+### Removed
+- **Complete SQLite support** - no more dual database complexity
+- **500+ lines of dual database code** across multiple modules  
+- **All IS_PRODUCTION conditionals** (47 instances removed)
+- **SQLite imports and dependencies** throughout codebase
+- **Local development SQLite database** support
+
+### Changed
+- **Database module**: Complete rewrite - 509 → 200 lines (60% reduction)
+- **Web application**: Standardized to PostgreSQL SQL syntax
+- **Config manager**: Simplified to PostgreSQL queries  
+- **All SQL queries**: Converted to %s parameters (PostgreSQL standard)
+- **Architecture**: Now pure Python + PostgreSQL production stack
+
+### Improved
+- **Massive code simplification** - single source of truth for database logic
+- **Eliminates parameter format confusion** (no more ? vs %s issues)
+- **Faster development** without dual database testing complexity
+- **Production-ready cloud-native architecture**
+- **No more database compatibility bugs**
+- **Clean, positive language** throughout codebase and documentation
+- **Professional documentation** without legacy reference clutter
+
+### Migration Guide
+- **Local development** now requires PostgreSQL or Railway dev database
+- **Environment variable** DATABASE_URL is now required
+- **No backward compatibility** with SQLite databases
+
 ## [2.5.3] - 2025-06-14
 
 ### Removed

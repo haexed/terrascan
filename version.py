@@ -3,9 +3,9 @@
 Version information for TERRASCAN
 """
 
-VERSION = "2.5.3"
+VERSION = "3.0.0"
 BUILD_DATE = "2025-06-14"
-DESCRIPTION = "Environmental Health Monitoring Dashboard - Railway PostgreSQL Production"
+DESCRIPTION = "Environmental Health Monitoring Dashboard - Python/PostgreSQL Platform"
 
 def get_version():
     """Get current version string"""

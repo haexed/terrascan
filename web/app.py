@@ -18,7 +18,7 @@ load_dotenv()
 # Add parent directory to path for imports
 sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 
-from database.db import init_database, execute_query, IS_PRODUCTION
+from database.db import init_database, execute_query
 from tasks.runner import TaskRunner
 from version import get_version
 
@@ -211,24 +211,14 @@ def create_app():
             """)
             
             # Get currently running tasks
-            if IS_PRODUCTION:
-                running_query = """
-                    SELECT tl.*, t.name as task_name, t.description as task_description
-                    FROM task_log tl 
-                    JOIN task t ON tl.task_id = t.id 
-                    WHERE tl.completed_at IS NULL 
-                    AND tl.started_at > NOW() - INTERVAL '1 hour'
-                    ORDER BY tl.started_at DESC
-                """
-            else:
-                running_query = """
-                    SELECT tl.*, t.name as task_name, t.description as task_description
-                    FROM task_log tl 
-                    JOIN task t ON tl.task_id = t.id 
-                    WHERE tl.completed_at IS NULL 
-                    AND tl.started_at > datetime('now', '-1 hour')
-                    ORDER BY tl.started_at DESC
-                """
+            running_query = """
+                SELECT tl.*, t.name as task_name, t.description as task_description
+                FROM task_log tl 
+                JOIN task t ON tl.task_id = t.id 
+                WHERE tl.completed_at IS NULL 
+                AND tl.started_at > NOW() - INTERVAL '1 hour'
+                ORDER BY tl.started_at DESC
+            """
             
             running_tasks = execute_query(running_query)
             
@@ -258,18 +248,12 @@ def create_app():
             total_records_result = execute_query("SELECT COUNT(*) as count FROM metric_data")
             total_records = total_records_result[0]['count'] if total_records_result and total_records_result[0]['count'] is not None else 0
             
-            if IS_PRODUCTION:
-                active_tasks_query = "SELECT COUNT(*) as count FROM task WHERE active = true"
-            else:
-                active_tasks_query = "SELECT COUNT(*) as count FROM task WHERE active = 1"
+            active_tasks_query = "SELECT COUNT(*) as count FROM task WHERE active = true"
             
             active_tasks_result = execute_query(active_tasks_query)
             active_tasks = active_tasks_result[0]['count'] if active_tasks_result and active_tasks_result[0]['count'] is not None else 0
             
-            if IS_PRODUCTION:
-                recent_runs_query = "SELECT COUNT(*) as count FROM task_log WHERE started_at > NOW() - INTERVAL '24 hours'"
-            else:
-                recent_runs_query = "SELECT COUNT(*) as count FROM task_log WHERE started_at > datetime('now', '-24 hours')"
+            recent_runs_query = "SELECT COUNT(*) as count FROM task_log WHERE started_at > NOW() - INTERVAL '24 hours'"
             
             recent_runs_result = execute_query(recent_runs_query)
             recent_runs_count = recent_runs_result[0]['count'] if recent_runs_result and recent_runs_result[0]['count'] is not None else 0
@@ -365,22 +349,8 @@ def create_app():
                 ORDER BY record_count DESC
             """)
             
-            # Get database size
-            import os
-            try:
-                if IS_PRODUCTION:
-                    # In production, we use PostgreSQL - size info not easily available
-                    database_size = "PostgreSQL (Railway)"
-                else:
-                    # Local development - check for SQLite database
-                    db_path = os.path.join(os.path.dirname(__file__), '..', 'database', 'terrascan.db')
-                    if os.path.exists(db_path):
-                        size_bytes = os.path.getsize(db_path)
-                        database_size = f"{size_bytes / (1024*1024):.1f} MB" if size_bytes else "0.0 MB"
-                    else:
-                        database_size = "No local database"
-            except Exception as e:
-                database_size = f"Error: {e}"
+            # Get database info
+            database_size = "PostgreSQL (Railway)"
             
             # Check if simulation mode is enabled
             from database.config_manager import get_system_config
@@ -403,106 +373,57 @@ def create_app():
         """API endpoint to get environmental data for map visualization"""
         try:
             # Get fire data with coordinates
-            if IS_PRODUCTION:
-                fires_query = """
-                    SELECT location_lat as latitude, location_lng as longitude,
-                           value as brightness, 
-                           75 as confidence,
-                           DATE(timestamp) as acq_date
-                    FROM metric_data 
-                    WHERE provider_key = 'nasa_firms' 
-                    AND timestamp > NOW() - INTERVAL '24 hours'
-                    AND location_lat IS NOT NULL 
-                    AND location_lng IS NOT NULL
-                    AND value > 300
-                    ORDER BY timestamp DESC
-                    LIMIT 500
-                """
-            else:
-                fires_query = """
-                    SELECT location_lat as latitude, location_lng as longitude,
-                           value as brightness, 
-                           75 as confidence,
-                           DATE(timestamp) as acq_date
-                    FROM metric_data 
-                    WHERE provider_key = 'nasa_firms' 
-                    AND timestamp > datetime('now', '-24 hours')
-                    AND location_lat IS NOT NULL 
-                    AND location_lng IS NOT NULL
-                    AND value > 300
-                    ORDER BY timestamp DESC
-                    LIMIT 500
-                """
+            fires_query = """
+                SELECT location_lat as latitude, location_lng as longitude,
+                       value as brightness, 
+                       75 as confidence,
+                       DATE(timestamp) as acq_date
+                FROM metric_data 
+                WHERE provider_key = 'nasa_firms' 
+                AND timestamp > NOW() - INTERVAL '24 hours'
+                AND location_lat IS NOT NULL 
+                AND location_lng IS NOT NULL
+                AND value > 300
+                ORDER BY timestamp DESC
+                LIMIT 500
+            """
             
             fires = execute_query(fires_query)
             
             # Get air quality data with coordinates
-            if IS_PRODUCTION:
-                air_query = """
-                    SELECT location_lat as latitude, location_lng as longitude,
-                           AVG(value) as value,
-                           MAX(metadata) as metadata,
-                           MAX(timestamp) as last_updated
-                    FROM metric_data 
-                    WHERE provider_key = 'openaq' 
-                    AND metric_name = 'air_quality_pm25'
-                    AND timestamp > NOW() - INTERVAL '7 days'
-                    AND location_lat IS NOT NULL 
-                    AND location_lng IS NOT NULL
-                    GROUP BY location_lat, location_lng
-                    ORDER BY value DESC
-                    LIMIT 200
-                """
-            else:
-                air_query = """
-                    SELECT location_lat as latitude, location_lng as longitude,
-                           AVG(value) as value,
-                           MAX(metadata) as metadata,
-                           MAX(timestamp) as last_updated
-                    FROM metric_data 
-                    WHERE provider_key = 'openaq' 
-                    AND metric_name = 'air_quality_pm25'
-                    AND timestamp > datetime('now', '-7 days')
-                    AND location_lat IS NOT NULL 
-                    AND location_lng IS NOT NULL
-                    GROUP BY location_lat, location_lng
-                    ORDER BY value DESC
-                    LIMIT 200
-                """
+            air_query = """
+                SELECT location_lat as latitude, location_lng as longitude,
+                       AVG(value) as value,
+                       MAX(metadata) as metadata,
+                       MAX(timestamp) as last_updated
+                FROM metric_data 
+                WHERE provider_key = 'openaq' 
+                AND metric_name = 'air_quality_pm25'
+                AND timestamp > NOW() - INTERVAL '7 days'
+                AND location_lat IS NOT NULL 
+                AND location_lng IS NOT NULL
+                GROUP BY location_lat, location_lng
+                ORDER BY value DESC
+                LIMIT 200
+            """
             
             air_quality = execute_query(air_query)
             
             # Get ocean data with coordinates
-            if IS_PRODUCTION:
-                ocean_query = """
-                    SELECT location_lat as latitude, location_lng as longitude,
-                           AVG(CASE WHEN metric_name = 'water_temperature' THEN value END) as temperature,
-                           AVG(CASE WHEN metric_name = 'water_level' THEN value END) as water_level,
-                           MAX(metadata) as metadata,
-                           MAX(timestamp) as last_updated
-                    FROM metric_data 
-                    WHERE provider_key = 'noaa_ocean' 
-                    AND DATE(timestamp) > CURRENT_DATE - INTERVAL '7 days'
-                    AND location_lat IS NOT NULL 
-                    AND location_lng IS NOT NULL
-                    GROUP BY location_lat, location_lng
-                    LIMIT 20
-                """
-            else:
-                ocean_query = """
-                    SELECT location_lat as latitude, location_lng as longitude,
-                           AVG(CASE WHEN metric_name = 'water_temperature' THEN value END) as temperature,
-                           AVG(CASE WHEN metric_name = 'water_level' THEN value END) as water_level,
-                           MAX(metadata) as metadata,
-                           MAX(timestamp) as last_updated
-                    FROM metric_data 
-                    WHERE provider_key = 'noaa_ocean' 
-                    AND date(timestamp) > date('now', '-7 days')
-                    AND location_lat IS NOT NULL 
-                    AND location_lng IS NOT NULL
-                    GROUP BY location_lat, location_lng
-                    LIMIT 20
-                """
+            ocean_query = """
+                SELECT location_lat as latitude, location_lng as longitude,
+                       AVG(CASE WHEN metric_name = 'water_temperature' THEN value END) as temperature,
+                       AVG(CASE WHEN metric_name = 'water_level' THEN value END) as water_level,
+                       MAX(metadata) as metadata,
+                       MAX(timestamp) as last_updated
+                FROM metric_data 
+                WHERE provider_key = 'noaa_ocean' 
+                AND DATE(timestamp) > CURRENT_DATE - INTERVAL '7 days'
+                AND location_lat IS NOT NULL 
+                AND location_lng IS NOT NULL
+                GROUP BY location_lat, location_lng
+                LIMIT 20
+            """
             
             ocean_stations = execute_query(ocean_query)
             
@@ -966,7 +887,7 @@ def create_app():
             for task in tasks:
                 last_run = execute_query("""
                     SELECT * FROM task_log 
-                    WHERE task_id = ? 
+                    WHERE task_id = %s 
                     ORDER BY started_at DESC 
                     LIMIT 1
                 """, (task['id'],))
@@ -1026,7 +947,7 @@ def create_app():
                 SELECT tl.*, t.name as task_name, t.description as task_description
                 FROM task_log tl 
                 JOIN task t ON tl.task_id = t.id 
-                WHERE t.name = ?
+                WHERE t.name = %s
                 ORDER BY tl.started_at DESC 
                 LIMIT 100
             """, (task_name,))
@@ -1070,7 +991,7 @@ def create_app():
         """Enable or disable a task"""
         try:
             # Get current task status
-            task = execute_query("SELECT * FROM task WHERE name = ?", (task_name,))
+            task = execute_query("SELECT * FROM task WHERE name = %s", (task_name,))
             if not task:
                 return jsonify({
                     'success': False,
@@ -1080,18 +1001,11 @@ def create_app():
             # Toggle active status
             new_status = not task[0]['active']
             
-            if IS_PRODUCTION:
-                execute_query("""
-                    UPDATE task 
-                    SET active = %s, updated_date = NOW() 
-                    WHERE name = %s
-                """, (new_status, task_name))
-            else:
-                execute_query("""
-                    UPDATE task 
-                    SET active = ?, updated_date = datetime('now') 
-                    WHERE name = ?
-                """, (new_status, task_name))
+            execute_query("""
+                UPDATE task 
+                SET active = %s, updated_date = NOW() 
+                WHERE name = %s
+            """, (new_status, task_name))
             
             return jsonify({
                 'success': True,
@@ -1120,113 +1034,61 @@ def create_app():
 def get_environmental_health_data():
     """Get current environmental health data from database"""
     try:
-        # Get recent fire data (last 7 days) - using existing metric_data table
-        if IS_PRODUCTION:
-            fire_query = """
-                SELECT COUNT(*) as fire_count, AVG(value) as avg_brightness
-                FROM metric_data 
-                WHERE provider_key = 'nasa_firms' 
-                AND timestamp >= NOW() - INTERVAL '7 days'
-            """
-        else:
-            fire_query = """
-                SELECT COUNT(*) as fire_count, AVG(value) as avg_brightness
-                FROM metric_data 
-                WHERE provider_key = 'nasa_firms' 
-                AND timestamp >= datetime('now', '-7 days')
-            """
+        # Get recent fire data (last 7 days)
+        fire_query = """
+            SELECT COUNT(*) as fire_count, AVG(value) as avg_brightness
+            FROM metric_data 
+            WHERE provider_key = 'nasa_firms' 
+            AND timestamp >= NOW() - INTERVAL '7 days'
+        """
         fire_data = execute_query(fire_query)
         
         # Get recent air quality data (last 7 days)
-        if IS_PRODUCTION:
-            air_query = """
-                SELECT AVG(value) as avg_pm25, COUNT(*) as station_count
-                FROM metric_data 
-                WHERE provider_key = 'openaq' 
-                AND metric_name = 'air_quality_pm25'
-                AND timestamp >= NOW() - INTERVAL '7 days'
-            """
-        else:
-            air_query = """
-                SELECT AVG(value) as avg_pm25, COUNT(*) as station_count
-                FROM metric_data 
-                WHERE provider_key = 'openaq' 
-                AND metric_name = 'air_quality_pm25'
-                AND timestamp >= datetime('now', '-7 days')
-            """
+        air_query = """
+            SELECT AVG(value) as avg_pm25, COUNT(*) as station_count
+            FROM metric_data 
+            WHERE provider_key = 'openaq' 
+            AND metric_name = 'air_quality_pm25'
+            AND timestamp >= NOW() - INTERVAL '7 days'
+        """
         air_data = execute_query(air_query)
         
         # Get recent ocean temperature data (last 7 days)  
-        if IS_PRODUCTION:
-            ocean_query = """
-                SELECT AVG(value) as avg_temp, COUNT(*) as station_count
-                FROM metric_data
-                WHERE provider_key = 'noaa_ocean'
-                AND metric_name = 'water_temperature'
-                AND timestamp >= NOW() - INTERVAL '7 days'
-            """
-        else:
-            ocean_query = """
-                SELECT AVG(value) as avg_temp, COUNT(*) as station_count
-                FROM metric_data
-                WHERE provider_key = 'noaa_ocean'
-                AND metric_name = 'water_temperature'
-                AND timestamp >= datetime('now', '-7 days')
-            """
+        ocean_query = """
+            SELECT AVG(value) as avg_temp, COUNT(*) as station_count
+            FROM metric_data
+            WHERE provider_key = 'noaa_ocean'
+            AND metric_name = 'water_temperature'
+            AND timestamp >= NOW() - INTERVAL '7 days'
+        """
         ocean_data = execute_query(ocean_query)
         
         # Get recent weather data (last 24 hours)
-        if IS_PRODUCTION:
-            weather_query = """
-                SELECT 
-                    AVG(CASE WHEN metric_name = 'temperature' THEN value END) as avg_temp,
-                    AVG(CASE WHEN metric_name = 'humidity' THEN value END) as avg_humidity,
-                    AVG(CASE WHEN metric_name = 'wind_speed' THEN value END) as avg_wind_speed,
-                    AVG(CASE WHEN metric_name = 'atmospheric_pressure' THEN value END) as avg_pressure,
-                    COUNT(CASE WHEN metric_name = 'weather_alert' THEN 1 END) as alert_count,
-                    COUNT(DISTINCT CASE WHEN metric_name = 'temperature' THEN CONCAT(location_lat, ',', location_lng) END) as city_count
-                FROM metric_data
-                WHERE provider_key = 'openweather'
-                AND timestamp >= NOW() - INTERVAL '24 hours'
-            """
-        else:
-            weather_query = """
-                SELECT 
-                    AVG(CASE WHEN metric_name = 'temperature' THEN value END) as avg_temp,
-                    AVG(CASE WHEN metric_name = 'humidity' THEN value END) as avg_humidity,
-                    AVG(CASE WHEN metric_name = 'wind_speed' THEN value END) as avg_wind_speed,
-                    AVG(CASE WHEN metric_name = 'atmospheric_pressure' THEN value END) as avg_pressure,
-                    COUNT(CASE WHEN metric_name = 'weather_alert' THEN 1 END) as alert_count,
-                    COUNT(DISTINCT CASE WHEN metric_name = 'temperature' THEN location_lat || ',' || location_lng END) as city_count
-                FROM metric_data
-                WHERE provider_key = 'openweather'
-                AND timestamp >= datetime('now', '-24 hours')
-            """
+        weather_query = """
+            SELECT 
+                AVG(CASE WHEN metric_name = 'temperature' THEN value END) as avg_temp,
+                AVG(CASE WHEN metric_name = 'humidity' THEN value END) as avg_humidity,
+                AVG(CASE WHEN metric_name = 'wind_speed' THEN value END) as avg_wind_speed,
+                AVG(CASE WHEN metric_name = 'atmospheric_pressure' THEN value END) as avg_pressure,
+                COUNT(CASE WHEN metric_name = 'weather_alert' THEN 1 END) as alert_count,
+                COUNT(DISTINCT CASE WHEN metric_name = 'temperature' THEN CONCAT(location_lat, ',', location_lng) END) as city_count
+            FROM metric_data
+            WHERE provider_key = 'openweather'
+            AND timestamp >= NOW() - INTERVAL '24 hours'
+        """
         weather_data = execute_query(weather_query)
         
         # Get recent biodiversity data (last 7 days)
-        if IS_PRODUCTION:
-            biodiversity_query = """
-                SELECT 
-                    AVG(CASE WHEN metric_name = 'species_observations' THEN value END) as avg_observations,
-                    AVG(CASE WHEN metric_name = 'species_diversity' THEN value END) as avg_diversity,
-                    COUNT(DISTINCT CASE WHEN metric_name = 'species_observations' THEN CONCAT(location_lat, ',', location_lng) END) as region_count,
-                    SUM(CASE WHEN metric_name = 'species_observations' THEN value ELSE 0 END) as total_observations
-                FROM metric_data
-                WHERE provider_key = 'gbif'
-                AND timestamp >= NOW() - INTERVAL '7 days'
-            """
-        else:
-            biodiversity_query = """
-                SELECT 
-                    AVG(CASE WHEN metric_name = 'species_observations' THEN value END) as avg_observations,
-                    AVG(CASE WHEN metric_name = 'species_diversity' THEN value END) as avg_diversity,
-                    COUNT(DISTINCT CASE WHEN metric_name = 'species_observations' THEN location_lat || ',' || location_lng END) as region_count,
-                    SUM(CASE WHEN metric_name = 'species_observations' THEN value ELSE 0 END) as total_observations
-                FROM metric_data
-                WHERE provider_key = 'gbif'
-                AND timestamp >= datetime('now', '-7 days')
-            """
+        biodiversity_query = """
+            SELECT 
+                AVG(CASE WHEN metric_name = 'species_observations' THEN value END) as avg_observations,
+                AVG(CASE WHEN metric_name = 'species_diversity' THEN value END) as avg_diversity,
+                COUNT(DISTINCT CASE WHEN metric_name = 'species_observations' THEN CONCAT(location_lat, ',', location_lng) END) as region_count,
+                SUM(CASE WHEN metric_name = 'species_observations' THEN value ELSE 0 END) as total_observations
+            FROM metric_data
+            WHERE provider_key = 'gbif'
+            AND timestamp >= NOW() - INTERVAL '7 days'
+        """
         
         biodiversity_data = execute_query(biodiversity_query)
         

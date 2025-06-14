@@ -149,7 +149,7 @@ terrascan/
 **View current database:**
 ```bash
 # Check which database is being used
-python3 -c "from database.db import IS_PRODUCTION, get_db_path; print('PostgreSQL' if IS_PRODUCTION else f'SQLite: {get_db_path()}')"
+python3 -c "from database.db import get_db_path; print(get_db_path())"
 ```
 
 **Reset SQLite database:**
