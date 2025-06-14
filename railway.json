@@ -4,7 +4,7 @@
         "builder": "NIXPACKS"
     },
     "deploy": {
-        "startCommand": "python run.py",
+        "startCommand": "python database/add_deduplication.py && python run.py",
         "healthcheckPath": "/",
         "healthcheckTimeout": 30,
         "restartPolicyType": "ON_FAILURE",

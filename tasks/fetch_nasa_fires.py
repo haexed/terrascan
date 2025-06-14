@@ -8,7 +8,7 @@ import os
 import requests
 from datetime import datetime, timedelta
 from typing import Dict, Any, List
-from database.db import store_metric_data
+from database.db import batch_store_metric_data, get_latest_timestamp
 
 def fetch_nasa_fires(region: str = 'WORLD', days: int = 7) -> Dict[str, Any]:
     """
@@ -60,10 +60,14 @@ def fetch_nasa_fires(region: str = 'WORLD', days: int = 7) -> Dict[str, Any]:
             }
             
         header = lines[0].split(',')
-        records_stored = 0
         
-        # Process each fire detection and store as metric data
-        current_time = datetime.utcnow().isoformat()
+        # Check latest data we have to avoid re-fetching
+        latest_timestamp = get_latest_timestamp('nasa_firms', 'fire_brightness')
+        print(f"🔍 Latest NASA FIRMS data: {latest_timestamp}")
+        
+        # Process each fire detection with actual timestamps
+        fire_data_batch = []
+        skipped_old = 0
         
         for line in lines[1:]:
             if line.strip():
@@ -76,17 +80,31 @@ def fetch_nasa_fires(region: str = 'WORLD', days: int = 7) -> Dict[str, Any]:
                         brightness = float(values[2])
                         confidence = float(values[9]) / 100.0 if values[9] else 0.5
                         
-                        # Store as metric data
-                        store_metric_data(
-                            timestamp=current_time,
-                            provider_key='nasa_firms',
-                            dataset='active_fires',
-                            metric_name='fire_brightness',
-                            value=brightness,
-                            unit='kelvin',
-                            location_lat=lat,
-                            location_lng=lng,
-                            metadata={
+                        # Build actual timestamp from fire detection time
+                        acq_date = values[5]  # YYYY-MM-DD
+                        acq_time = values[6]  # HHMM
+                        
+                        # Parse and format timestamp
+                        hour = int(acq_time[:2]) if len(acq_time) >= 2 else 0
+                        minute = int(acq_time[2:4]) if len(acq_time) >= 4 else 0
+                        
+                        fire_timestamp = f"{acq_date}T{hour:02d}:{minute:02d}:00"
+                        
+                        # Skip if we already have newer data
+                        if latest_timestamp and fire_timestamp <= latest_timestamp:
+                            skipped_old += 1
+                            continue
+                        
+                        # Add to batch
+                        fire_data_batch.append({
+                            'provider_key': 'nasa_firms',
+                            'metric_name': 'fire_brightness',
+                            'value': brightness,
+                            'unit': 'kelvin',
+                            'location_lat': lat,
+                            'location_lng': lng,
+                            'timestamp': fire_timestamp,
+                            'metadata': {
                                 'confidence': confidence,
                                 'satellite': values[7],
                                 'instrument': values[8],
@@ -95,17 +113,29 @@ def fetch_nasa_fires(region: str = 'WORLD', days: int = 7) -> Dict[str, Any]:
                                 'scan': values[3],
                                 'track': values[4],
                                 'frp': values[12],
-                                'acq_date': values[5],
-                                'acq_time': values[6]
+                                'acq_date': acq_date,
+                                'acq_time': acq_time
                             }
-                        )
-                        records_stored += 1
+                        })
+                        
                 except (ValueError, IndexError) as e:
                     continue  # Skip malformed records
         
+        # Store all fire data in batch with deduplication
+        if fire_data_batch:
+            batch_result = batch_store_metric_data(fire_data_batch)
+            records_stored = batch_result.get('processed', 0)
+            
+            message = f'NASA FIRMS: {records_stored} new fires processed'
+            if skipped_old > 0:
+                message += f', {skipped_old} duplicates skipped'
+        else:
+            records_stored = 0
+            message = f'NASA FIRMS: No new fire data (skipped {skipped_old} existing records)'
+        
         return {
             'success': True,
-            'message': f'Successfully fetched {records_stored} fire detections from NASA FIRMS for {region}',
+            'message': message,
             'records_stored': records_stored
         }
         

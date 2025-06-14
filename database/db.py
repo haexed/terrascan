@@ -128,14 +128,24 @@ def store_metric_data(timestamp: str, provider_key: str, dataset: str,
                      metric_name: str, value: float, unit: str = None,
                      location_lat: float = None, location_lng: float = None,
                      metadata: dict = None, task_log_id: int = None) -> bool:
-    """Store environmental metric data in PostgreSQL"""
+    """
+    Store environmental metric data with automatic deduplication
+    Uses UPSERT to prevent duplicate data while updating existing records
+    """
     try:
         metadata_json = json.dumps(metadata) if metadata else None
         
+        # UPSERT query with deduplication - updates if exists, inserts if new
         query = """
             INSERT INTO metric_data 
             (provider_key, metric_name, value, unit, location_lat, location_lng, timestamp, metadata)
             VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+            ON CONFLICT (provider_key, metric_name, timestamp, location_lat, location_lng)
+            DO UPDATE SET
+                value = EXCLUDED.value,
+                unit = EXCLUDED.unit,
+                metadata = EXCLUDED.metadata,
+                created_date = NOW()
         """
         
         return execute_insert(query, (provider_key, metric_name, value, unit, 
@@ -143,7 +153,18 @@ def store_metric_data(timestamp: str, provider_key: str, dataset: str,
         
     except Exception as e:
         print(f"❌ Error storing metric data: {e}")
-        return False
+        # Fallback for databases without deduplication constraint yet
+        try:
+            fallback_query = """
+                INSERT INTO metric_data 
+                (provider_key, metric_name, value, unit, location_lat, location_lng, timestamp, metadata)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+            """
+            return execute_insert(fallback_query, (provider_key, metric_name, value, unit, 
+                                                 location_lat, location_lng, timestamp, metadata_json))
+        except Exception as fallback_error:
+            print(f"❌ Fallback insert also failed: {fallback_error}")
+            return False
 
 def get_tasks(active_only: bool = True) -> List[Dict[str, Any]]:
     """Get all tasks, optionally filtered by active status"""
@@ -246,6 +267,104 @@ def get_running_tasks() -> List[Dict[str, Any]]:
     except Exception as e:
         print(f"❌ Error getting running tasks: {e}")
         return []
+
+def get_latest_timestamp(provider_key: str, metric_name: str = None) -> Optional[str]:
+    """
+    Get the most recent timestamp for a provider/metric combination
+    Used for incremental data fetching to avoid re-fetching existing data
+    """
+    try:
+        if metric_name:
+            query = """
+                SELECT MAX(timestamp) as latest_timestamp 
+                FROM metric_data 
+                WHERE provider_key = %s AND metric_name = %s
+            """
+            params = (provider_key, metric_name)
+        else:
+            query = """
+                SELECT MAX(timestamp) as latest_timestamp 
+                FROM metric_data 
+                WHERE provider_key = %s
+            """
+            params = (provider_key,)
+        
+        result = execute_query(query, params)
+        return result[0]['latest_timestamp'] if result and result[0]['latest_timestamp'] else None
+        
+    except Exception as e:
+        print(f"❌ Error getting latest timestamp: {e}")
+        return None
+
+def get_data_coverage_stats(provider_key: str) -> Dict[str, Any]:
+    """Get data coverage statistics for a provider"""
+    try:
+        query = """
+            SELECT 
+                MIN(timestamp) as earliest_data,
+                MAX(timestamp) as latest_data,
+                COUNT(*) as total_records,
+                COUNT(DISTINCT metric_name) as unique_metrics,
+                COUNT(DISTINCT DATE(timestamp)) as days_covered
+            FROM metric_data 
+            WHERE provider_key = %s
+        """
+        
+        result = execute_query(query, (provider_key,))
+        return result[0] if result else {}
+        
+    except Exception as e:
+        print(f"❌ Error getting coverage stats: {e}")
+        return {}
+
+def batch_store_metric_data(data_batch: List[Dict[str, Any]]) -> Dict[str, Any]:
+    """
+    Store multiple metric data points in a single transaction
+    More efficient for bulk operations
+    """
+    try:
+        if not data_batch:
+            return {'success': True, 'inserted': 0, 'updated': 0}
+        
+        # Prepare batch query with UPSERT
+        query = """
+            INSERT INTO metric_data 
+            (provider_key, metric_name, value, unit, location_lat, location_lng, timestamp, metadata)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+            ON CONFLICT (provider_key, metric_name, timestamp, location_lat, location_lng)
+            DO UPDATE SET
+                value = EXCLUDED.value,
+                unit = EXCLUDED.unit,
+                metadata = EXCLUDED.metadata,
+                created_date = NOW()
+        """
+        
+        # Prepare parameters for batch
+        params_list = []
+        for data in data_batch:
+            metadata_json = json.dumps(data.get('metadata')) if data.get('metadata') else None
+            params_list.append((
+                data['provider_key'],
+                data['metric_name'], 
+                data['value'],
+                data.get('unit'),
+                data.get('location_lat'),
+                data.get('location_lng'),
+                data['timestamp'],
+                metadata_json
+            ))
+        
+        success = execute_many(query, params_list)
+        
+        return {
+            'success': success,
+            'processed': len(data_batch),
+            'message': f"Batch stored {len(data_batch)} records with deduplication"
+        }
+        
+    except Exception as e:
+        print(f"❌ Error in batch store: {e}")
+        return {'success': False, 'error': str(e), 'processed': 0}
 
 def get_db_path():
     """Get database connection info"""
