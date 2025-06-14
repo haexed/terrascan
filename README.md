@@ -2,8 +2,8 @@
 
 **Monitor Earth's environmental health in real-time**
 
-![Version](https://img.shields.io/badge/version-2.5.0-blue)
-![Database](https://img.shields.io/badge/database-PostgreSQL%2FSQLite-green)
+![Version](https://img.shields.io/badge/version-3.0.1-blue)
+![Database](https://img.shields.io/badge/database-PostgreSQL-green)
 ![License](https://img.shields.io/badge/license-MIT-blue)
 ![Status](https://img.shields.io/badge/status-production-green)
 
@@ -122,20 +122,21 @@ TASK_ENABLED_BIODIVERSITY=true
 
 ## 📊 System Architecture
 
-### Database Support
+### Database Architecture
 
-TERRASCAN supports both SQLite (local development) and PostgreSQL (production):
+TERRASCAN is built on **PostgreSQL** for production deployment:
 
-**SQLite (Local Development)**
-```bash
-# Automatic - no configuration needed
-# Database created at: ./database/terrascan.db
-```
-
-**PostgreSQL (Production)**
+**PostgreSQL (Production & Development)**
 ```bash
 # Set via environment variable
 DATABASE_URL=postgresql://user:pass@host:port/db
+```
+
+**Railway PostgreSQL** (Recommended)
+```bash
+# Automatically configured via Railway
+railway add postgresql
+# DATABASE_URL automatically set
 ```
 
 ### Data Collection Tasks

@@ -9,8 +9,8 @@
 }
 
 body {
-    background: linear-gradient(180deg, #33a474 0%, #2E7D5A 100%);
-    color: #2E7D5A;
+    background: linear-gradient(180deg, var(--infp-green) 0%, var(--infp-forest) 100%);
+    color: var(--infp-forest);
     font-family: 'Segoe UI', system-ui, sans-serif;
     min-height: 100vh;
 }
@@ -33,12 +33,12 @@ h6,
 }
 
 .legend h6 {
-    color: #2E7D5A;
+    color: var(--infp-forest);
 }
 
 .control-panel h5,
 .health-score-widget h6 {
-    color: #2E7D5A;
+    color: var(--infp-forest);
 }
 
 .eco-card a,
@@ -53,7 +53,7 @@ h6,
 .eco-card h4,
 .eco-card h5,
 .eco-card h6 {
-    color: #2E7D5A;
+    color: var(--infp-forest);
 }
 
 .hero-map-header h1,
@@ -62,11 +62,11 @@ h6,
 .hero-map-header h4,
 .hero-map-header h5,
 .hero-map-header h6 {
-    color: #2E7D5A;
+    color: var(--infp-forest);
 }
 
 .card-title {
-    color: #2E7D5A;
+    color: var(--infp-forest);
 }
 
 .navbar {
@@ -81,7 +81,7 @@ h6,
     border: 1.5px solid var(--infp-gray);
     border-radius: 18px;
     box-shadow: 0 4px 24px rgba(51, 164, 116, 0.08);
-    color: #2E7D5A;
+    color: var(--infp-forest);
     transition: all 0.3s ease;
 }
 
@@ -121,7 +121,7 @@ h6,
 .metric-value {
     font-size: 2.5rem;
     font-weight: bold;
-    color: #2E7D5A;
+    color: var(--infp-forest);
 }
 
 .pulse {
@@ -207,13 +207,13 @@ a:hover {
 .footer,
 .footer-bar {
     color: #fff !important;
-    background: #33a474 !important;
+    background: var(--infp-green) !important;
 }
 
 .footer a,
 .footer-bar a {
-    color: #F6E27A !important;
-    text-decoration: underline dotted #F6E27A;
+    color: var(--infp-yellow) !important;
+    text-decoration: underline dotted var(--infp-yellow);
 }
 
 .footer a:hover,
@@ -383,4 +383,202 @@ a:hover {
     .hero-map-footer .col-md-4 {
         margin-top: 10px;
     }
+}
+
+/* === TASKS PAGE STYLES === */
+
+.task-card {
+    transition: all 0.3s ease;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    background: white;
+    margin-bottom: 1rem;
+}
+
+.task-card:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    transform: translateY(-2px);
+}
+
+.task-active {
+    border-left: 4px solid #28a745;
+}
+
+.task-inactive {
+    border-left: 4px solid #6c757d;
+    background-color: #f8f9fa;
+}
+
+.task-running {
+    border-left: 4px solid #007bff;
+    background: linear-gradient(135deg, #e3f2fd 0%, #f8f9fa 100%);
+}
+
+.status-badge {
+    font-size: 0.75rem;
+    padding: 0.25rem 0.5rem;
+}
+
+.log-entry {
+    border-left: 3px solid #ddd;
+    padding: 0.75rem;
+    margin-bottom: 0.5rem;
+    border-radius: 0 4px 4px 0;
+    background: #f8f9fa;
+}
+
+.log-success {
+    border-left-color: #28a745;
+    background-color: #d4edda;
+}
+
+.log-error {
+    border-left-color: #dc3545;
+    background-color: #f8d7da;
+}
+
+.log-running {
+    border-left-color: #007bff;
+    background-color: #d1ecf1;
+}
+
+.stats-card {
+    background: white;
+    color: var(--infp-forest);
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.run-button {
+    transition: all 0.2s ease;
+}
+
+.run-button:hover {
+    transform: scale(1.05);
+}
+
+.task-controls {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+.loading-spinner {
+    display: none;
+    width: 20px;
+    height: 20px;
+    border: 2px solid #f3f3f3;
+    border-top: 2px solid #007bff;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+.fade-in {
+    animation: fadeIn 0.5s ease-in;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Notification styles */
+.toast-notification {
+    position: fixed;
+    top: 100px;
+    right: 20px;
+    z-index: 9999;
+    max-width: 400px;
+}
+
+/* Task grid responsive adjustments */
+@media (max-width: 768px) {
+    .stats-card {
+        padding: 1rem;
+        margin-bottom: 1rem;
+    }
+
+    .task-controls {
+        flex-direction: column;
+        gap: 0.25rem;
+    }
+
+    .task-controls .btn {
+        width: 100%;
+    }
+}
+
+/* Status indicator animations */
+.task-running .status-badge {
+    animation: pulse 2s infinite;
+}
+
+/* Log entry hover effects */
+.log-entry:hover {
+    transform: translateX(5px);
+    transition: transform 0.2s ease;
+}
+
+/* Button loading state */
+.btn-loading {
+    position: relative;
+    color: transparent !important;
+}
+
+.btn-loading::after {
+    content: "";
+    position: absolute;
+    width: 16px;
+    height: 16px;
+    top: 50%;
+    left: 50%;
+    margin-left: -8px;
+    margin-top: -8px;
+    border: 2px solid #ffffff;
+    border-radius: 50%;
+    border-top: 2px solid transparent;
+    animation: spin 1s linear infinite;
+}
+
+/* Task card states */
+.task-card.updating {
+    opacity: 0.7;
+    transition: opacity 0.3s ease;
+}
+
+/* Modal improvements */
+.modal-lg {
+    max-width: 90vw;
+}
+
+.modal-body {
+    max-height: 70vh;
+    overflow-y: auto;
+}
+
+/* Scrollbar styling for logs */
+.modal-body::-webkit-scrollbar {
+    width: 8px;
+}
+
+.modal-body::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+}
+
+.modal-body::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 4px;
+}
+
+.modal-body::-webkit-scrollbar-thumb:hover {
+    background: #555;
 }

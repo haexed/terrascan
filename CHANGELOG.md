@@ -2,6 +2,32 @@
 
 All notable changes to TERRASCAN will be documented in this file.
 
+## [3.0.1] - 2025-06-14
+
+### Improved
+- **Enhanced datetime formatting**: Centralized ISO 8601 compliant system with timezone display
+- **PostgreSQL compatibility**: Fixed datetime subscriptable errors in task templates
+- **Ultra-aggressive cache busting**: Railway deployment cache clearing with multiple strategies  
+- **Consolidated CSS architecture**: Merged tasks.css into style.css for cleaner codebase
+- **Streamlined UI**: Removed verbose admin notices and redundant text for professional interface
+- **Better accessibility**: Removed all text-muted classes (16 instances) for improved readability
+
+### Added
+- **utils/datetime_utils.py**: Centralized datetime formatting with template filters
+- **Template filters**: `format_dt`, `time_ago`, `format_iso` for consistent datetime display
+- **Enhanced cache headers**: CDN and proxy cache busting for Railway deployments
+- **Version consolidation**: Moved version.py into utils package for better organization
+
+### Fixed
+- **PostgreSQL datetime errors**: Tasks page template datetime formatting issues resolved
+- **Template cache disabled**: Flask template caching disabled for production consistency
+- **Railway cache issues**: Build and nixpacks cache disabling for fresh deployments
+
+### Removed  
+- **Redundant admin notices**: Cleaned verbose task control explanations
+- **text-muted classes**: Enhanced contrast and accessibility across all templates
+- **Duplicate CSS files**: Consolidated styling into single style.css file
+
 ## [3.0.0] - 2025-06-14
 
 ### 🚀 MAJOR ARCHITECTURAL CHANGE - Python/PostgreSQL Platform
