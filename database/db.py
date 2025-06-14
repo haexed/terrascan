@@ -300,6 +300,160 @@ def get_database_stats():
         }
 
 # Backward compatibility functions
+def store_metric_data(timestamp: str, provider_key: str, dataset: str, 
+                     metric_name: str, value: float, unit: str = None,
+                     location_lat: float = None, location_lng: float = None,
+                     metadata: dict = None, task_log_id: int = None) -> bool:
+    """Store environmental metric data (backward compatibility function)"""
+    try:
+        metadata_json = json.dumps(metadata) if metadata else None
+        
+        if IS_PRODUCTION:
+            # PostgreSQL query
+            query = """
+                INSERT INTO metric_data 
+                (provider_key, metric_name, value, unit, location_lat, location_lng, timestamp, metadata)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+            """
+        else:
+            # SQLite query
+            query = """
+                INSERT INTO metric_data 
+                (provider_key, metric_name, value, unit, location_lat, location_lng, timestamp, metadata)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            """
+        
+        return execute_insert(query, (provider_key, metric_name, value, unit, 
+                                    location_lat, location_lng, timestamp, metadata_json))
+        
+    except Exception as e:
+        print(f"❌ Error storing metric data: {e}")
+        return False
+
+def get_tasks(active_only: bool = True) -> List[Dict[str, Any]]:
+    """Get all tasks, optionally filtered by active status"""
+    try:
+        query = "SELECT * FROM task"
+        if active_only:
+            query += " WHERE active = true" if IS_PRODUCTION else " WHERE active = 1"
+        query += " ORDER BY created_date DESC"
+        
+        return execute_query(query)
+    except Exception as e:
+        print(f"❌ Error getting tasks: {e}")
+        return []
+
+def get_task_by_name(name: str) -> Optional[Dict[str, Any]]:
+    """Get a specific task by name"""
+    try:
+        if IS_PRODUCTION:
+            query = "SELECT * FROM task WHERE name = %s"
+        else:
+            query = "SELECT * FROM task WHERE name = ?"
+        
+        results = execute_query(query, (name,))
+        return results[0] if results else None
+    except Exception as e:
+        print(f"❌ Error getting task by name: {e}")
+        return None
+
+def start_task_run(task_id: int, triggered_by: str = 'manual', 
+                   trigger_parameters: dict = None) -> Optional[int]:
+    """Create a new task run record in 'running' status"""
+    try:
+        params_json = json.dumps(trigger_parameters) if trigger_parameters else None
+        
+        if IS_PRODUCTION:
+            query = """
+                INSERT INTO task_log (task_id, status, started_at, triggered_by, trigger_parameters) 
+                VALUES (%s, %s, NOW(), %s, %s) RETURNING id
+            """
+            conn = get_db_connection()
+            cursor = conn.cursor()
+            cursor.execute(query, (task_id, 'running', triggered_by, params_json))
+            result = cursor.fetchone()
+            conn.commit()
+            cursor.close()
+            conn.close()
+            return result[0] if result else None
+        else:
+            query = """
+                INSERT INTO task_log (task_id, status, started_at, triggered_by, trigger_parameters) 
+                VALUES (?, 'running', CURRENT_TIMESTAMP, ?, ?)
+            """
+            conn = get_db_connection()
+            cursor = conn.cursor()
+            cursor.execute(query, (task_id, triggered_by, params_json))
+            lastrowid = cursor.lastrowid
+            conn.commit()
+            cursor.close()
+            conn.close()
+            return lastrowid
+            
+    except Exception as e:
+        print(f"❌ Error starting task run: {e}")
+        return None
+
+def complete_task_run(run_id: int, exit_code: int, stdout: str = None, 
+                     stderr: str = None, error_details: str = None, 
+                     actual_cost_cents: int = 0, records_processed: int = 0):
+    """Mark a task run as completed with results"""
+    try:
+        status = 'completed' if exit_code == 0 else 'failed'
+        
+        if IS_PRODUCTION:
+            # Calculate duration using PostgreSQL
+            query = """
+                UPDATE task_log SET 
+                completed_at = NOW(),
+                duration_seconds = EXTRACT(EPOCH FROM (NOW() - started_at)),
+                status = %s,
+                records_processed = %s,
+                error_message = %s
+                WHERE id = %s
+            """
+            params = (status, records_processed, error_details, run_id)
+        else:
+            # Calculate duration using SQLite
+            query = """
+                UPDATE task_log SET 
+                completed_at = CURRENT_TIMESTAMP,
+                duration_seconds = (julianday(CURRENT_TIMESTAMP) - julianday(started_at)) * 86400,
+                status = ?,
+                records_processed = ?,
+                error_message = ?
+                WHERE id = ?
+            """
+            params = (status, records_processed, error_details, run_id)
+        
+        return execute_insert(query, params)
+        
+    except Exception as e:
+        print(f"❌ Error completing task run: {e}")
+        return False
+
+def get_recent_task_runs(limit: int = 50) -> List[Dict[str, Any]]:
+    """Get recent task runs with task information"""
+    try:
+        query = """
+            SELECT tl.*, t.name as task_name, t.description as task_description
+            FROM task_log tl 
+            JOIN task t ON tl.task_id = t.id 
+            ORDER BY tl.started_at DESC 
+            LIMIT %s
+        """ if IS_PRODUCTION else """
+            SELECT tl.*, t.name as task_name, t.description as task_description
+            FROM task_log tl 
+            JOIN task t ON tl.task_id = t.id 
+            ORDER BY tl.started_at DESC 
+            LIMIT ?
+        """
+        
+        return execute_query(query, (limit,))
+    except Exception as e:
+        print(f"❌ Error getting recent task runs: {e}")
+        return []
+
 def get_db_path():
     """Get database path (for SQLite only)"""
     if IS_PRODUCTION:
