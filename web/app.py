@@ -32,22 +32,37 @@ def create_app():
     # Initialize database on startup
     init_database()
     
-    # Add version to all templates
+    # Add version and cache-busting to all templates
     @app.context_processor
     def inject_version():
-        return {'version': get_version()}
+        return {
+            'version': get_version(),
+            'cache_bust': datetime.now().timestamp(),
+            'build_time': datetime.now().strftime('%Y%m%d-%H%M%S')
+        }
+    
+    # Disable Flask template caching in production
+    app.jinja_env.cache = {}
+    app.jinja_env.auto_reload = True
     
     # Register datetime template filters
     register_template_filters(app)
 
-    # Cache-busting decorator for main pages
+    # Enhanced cache-busting decorator for main pages
     def no_cache(f):
-        """Decorator to prevent browser caching of dynamic content"""
+        """Decorator to prevent ALL caching of dynamic content"""
         def decorated_function(*args, **kwargs):
             response = make_response(f(*args, **kwargs))
-            response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate, max-age=0'
+            # Ultra-aggressive cache busting headers
+            response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate, max-age=0, private'
             response.headers['Pragma'] = 'no-cache'
             response.headers['Expires'] = '0'
+            response.headers['Last-Modified'] = datetime.now().strftime('%a, %d %b %Y %H:%M:%S GMT')
+            response.headers['ETag'] = f'"{datetime.now().timestamp()}"'
+            # Additional Railway/CDN cache busting
+            response.headers['Vary'] = 'Accept-Encoding, User-Agent'
+            response.headers['X-Accel-Expires'] = '0'  # Nginx cache busting
+            response.headers['Surrogate-Control'] = 'no-store'  # Varnish/CDN cache busting
             return response
         decorated_function.__name__ = f.__name__
         return decorated_function
