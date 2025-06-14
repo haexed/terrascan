@@ -20,7 +20,7 @@ sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 
 from database.db import init_database, execute_query
 from tasks.runner import TaskRunner
-from version import get_version
+from utils import get_version, register_template_filters
 
 def create_app():
     """Create and configure the Flask application"""
@@ -36,6 +36,9 @@ def create_app():
     @app.context_processor
     def inject_version():
         return {'version': get_version()}
+    
+    # Register datetime template filters
+    register_template_filters(app)
 
     # Cache-busting decorator for main pages
     def no_cache(f):

@@ -131,16 +131,21 @@
                                 <!-- Last Run Info -->
                                 {% if task.last_run %}
                                 <div class="small text-muted">
-                                    <div><strong>Last run:</strong> {{ task.last_run.started_at[:19] }}</div>
-                                    {% if task.last_run.exit_code == 0 %}
+                                    <div><strong>Last run:</strong> {{ task.last_run.started_at | format_dt }}</div>
+                                    {% if task.last_run.status == 'completed' %}
                                     <div class="text-success">
                                         <i class="fas fa-check-circle"></i>
                                         Success ({{ task.last_run.records_processed or 0 }} records)
                                     </div>
-                                    {% else %}
+                                    {% elif task.last_run.status == 'failed' %}
                                     <div class="text-danger">
                                         <i class="fas fa-exclamation-circle"></i>
                                         Failed
+                                    </div>
+                                    {% elif task.last_run.status == 'running' %}
+                                    <div class="text-warning">
+                                        <i class="fas fa-spinner fa-spin"></i>
+                                        Running
                                     </div>
                                     {% endif %}
                                 </div>
@@ -178,22 +183,22 @@
                         {% for run in recent_runs[:10] %}
                         <div
                             class="log-entry 
-                            {% if run.exit_code == 0 %}log-success{% elif run.exit_code is none %}log-running{% else %}log-error{% endif %}">
+                            {% if run.status == 'completed' %}log-success{% elif run.status == 'running' %}log-running{% else %}log-error{% endif %}">
                             <div class="d-flex justify-content-between align-items-start">
                                 <div>
                                     <strong>{{ run.task_name }}</strong>
-                                    <span class="text-muted">- {{ run.started_at[:19] }}</span>
+                                    <span class="text-muted">- {{ run.started_at | format_dt }}</span>
                                     {% if run.triggered_by %}
                                     <span class="badge bg-light text-dark">{{ run.triggered_by }}</span>
                                     {% endif %}
                                 </div>
                                 <div class="text-end">
-                                    {% if run.exit_code == 0 %}
+                                    {% if run.status == 'completed' %}
                                     <span class="badge bg-success">Success</span>
                                     {% if run.records_processed %}
                                     <small class="text-muted d-block">{{ run.records_processed }} records</small>
                                     {% endif %}
-                                    {% elif run.exit_code is none %}
+                                    {% elif run.status == 'running' %}
                                     <span class="badge bg-warning">
                                         <i class="fas fa-spinner fa-spin"></i> Running
                                     </span>
@@ -202,10 +207,10 @@
                                     {% endif %}
                                 </div>
                             </div>
-                            {% if run.stderr and run.exit_code != 0 %}
+                            {% if run.error_message and run.status == 'failed' %}
                             <div class="mt-2 small text-danger">
-                                <i class="fas fa-exclamation-triangle"></i> {{ run.stderr[:200] }}{% if
-                                run.stderr|length > 200 %}...{% endif %}
+                                <i class="fas fa-exclamation-triangle"></i> {{ run.error_message[:200] }}{% if
+                                run.error_message|length > 200 %}...{% endif %}
                             </div>
                             {% endif %}
                         </div>
