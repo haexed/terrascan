@@ -334,7 +334,12 @@
                 <h5 class="mb-3">🔧 System Configuration</h5>
                 <div class="small">
                     <strong>Version:</strong> {{ version }}<br>
-                    <strong>Database:</strong> SQLite ({{ database_size }})<br>
+                    <strong>Database:</strong>
+                    {% if database_size == "PostgreSQL (Railway)" %}
+                    PostgreSQL (Railway Production)
+                    {% else %}
+                    SQLite ({{ database_size }})
+                    {% endif %}<br>
                     <strong>Data Sources:</strong> NASA FIRMS, OpenAQ, NOAA<br>
                     <strong>Auto-refresh:</strong> Every 15 minutes<br>
                     <strong>Data Retention:</strong> 30 days<br>

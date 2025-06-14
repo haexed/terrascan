@@ -1,6 +1,5 @@
 import os
 import requests
-import sqlite3
 from datetime import datetime, timedelta
 from typing import Dict, Any, List, Optional
 from database.db import store_metric_data

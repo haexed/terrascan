@@ -10,7 +10,6 @@ import json
 from datetime import datetime, timedelta
 from flask import Flask, render_template, jsonify, make_response
 from dotenv import load_dotenv
-import sqlite3
 from database.db import execute_query
 
 # Load environment variables
@@ -188,6 +187,67 @@ def create_app():
     def about():
         """TERRASCAN - About page with project information"""
         return render_template('about.html')
+
+    @app.route('/tasks')
+    @no_cache
+    def tasks():
+        """TERRASCAN - Task management and monitoring interface"""
+        try:
+            # Get all tasks from database
+            all_tasks = execute_query("""
+                SELECT id, name, description, command, active, cron_schedule, 
+                       created_at, updated_at, parameters
+                FROM task 
+                ORDER BY name
+            """)
+            
+            # Get recent task runs with details
+            recent_runs = execute_query("""
+                SELECT tl.*, t.name as task_name, t.description as task_description
+                FROM task_log tl 
+                JOIN task t ON tl.task_id = t.id 
+                ORDER BY tl.started_at DESC 
+                LIMIT 50
+            """)
+            
+            # Get currently running tasks
+            if IS_PRODUCTION:
+                running_query = """
+                    SELECT tl.*, t.name as task_name, t.description as task_description
+                    FROM task_log tl 
+                    JOIN task t ON tl.task_id = t.id 
+                    WHERE tl.completed_at IS NULL 
+                    AND tl.started_at > NOW() - INTERVAL '1 hour'
+                    ORDER BY tl.started_at DESC
+                """
+            else:
+                running_query = """
+                    SELECT tl.*, t.name as task_name, t.description as task_description
+                    FROM task_log tl 
+                    JOIN task t ON tl.task_id = t.id 
+                    WHERE tl.completed_at IS NULL 
+                    AND tl.started_at > datetime('now', '-1 hour')
+                    ORDER BY tl.started_at DESC
+                """
+            
+            running_tasks = execute_query(running_query)
+            
+            # Calculate task statistics
+            stats = {
+                'total_tasks': len(all_tasks),
+                'active_tasks': len([t for t in all_tasks if t['active']]),
+                'running_tasks': len(running_tasks),
+                'recent_runs': len(recent_runs)
+            }
+            
+            return render_template('tasks.html',
+                                 tasks=all_tasks,
+                                 recent_runs=recent_runs,
+                                 running_tasks=running_tasks,
+                                 stats=stats)
+                                 
+        except Exception as e:
+            return f"TERRASCAN Tasks Error: {e}", 500
 
     @app.route('/system')
     @no_cache
@@ -878,6 +938,163 @@ def create_app():
                 'error': str(e),
                 'traceback': traceback.format_exc(),
                 'timestamp': datetime.utcnow().isoformat()
+            }), 500
+
+    # Task Management API Endpoints
+    @app.route('/api/tasks')
+    @no_cache
+    def api_tasks():
+        """Get all tasks with their current status"""
+        try:
+            # Get all tasks
+            tasks = execute_query("""
+                SELECT id, name, description, command, active, cron_schedule, 
+                       created_at, updated_at, parameters
+                FROM task 
+                ORDER BY name
+            """)
+            
+            # Get last run for each task
+            for task in tasks:
+                last_run = execute_query("""
+                    SELECT * FROM task_log 
+                    WHERE task_id = ? 
+                    ORDER BY started_at DESC 
+                    LIMIT 1
+                """, (task['id'],))
+                
+                task['last_run'] = last_run[0] if last_run else None
+            
+            return jsonify({
+                'success': True,
+                'tasks': tasks
+            })
+            
+        except Exception as e:
+            return jsonify({
+                'success': False,
+                'error': f'Failed to get tasks: {str(e)}'
+            }), 500
+
+    @app.route('/api/tasks/<task_name>/run', methods=['POST'])
+    @no_cache
+    def api_run_task(task_name):
+        """Trigger a task to run manually"""
+        try:
+            # Initialize task runner
+            runner = TaskRunner()
+            
+            # Run the task
+            result = runner.run_task(task_name, triggered_by='web_interface')
+            
+            if result['success']:
+                return jsonify({
+                    'success': True,
+                    'message': f'Task "{task_name}" started successfully',
+                    'run_id': result['run_id'],
+                    'duration': result.get('duration', 0),
+                    'records_processed': result.get('records_processed', 0)
+                })
+            else:
+                return jsonify({
+                    'success': False,
+                    'error': result.get('error', 'Unknown error'),
+                    'run_id': result.get('run_id')
+                }), 500
+                
+        except Exception as e:
+            return jsonify({
+                'success': False,
+                'error': f'Failed to run task: {str(e)}'
+            }), 500
+
+    @app.route('/api/tasks/<task_name>/logs')
+    @no_cache
+    def api_task_logs(task_name):
+        """Get logs for a specific task"""
+        try:
+            # Get task logs
+            logs = execute_query("""
+                SELECT tl.*, t.name as task_name, t.description as task_description
+                FROM task_log tl 
+                JOIN task t ON tl.task_id = t.id 
+                WHERE t.name = ?
+                ORDER BY tl.started_at DESC 
+                LIMIT 100
+            """, (task_name,))
+            
+            return jsonify({
+                'success': True,
+                'logs': logs
+            })
+            
+        except Exception as e:
+            return jsonify({
+                'success': False,
+                'error': f'Failed to get task logs: {str(e)}'
+            }), 500
+
+    @app.route('/api/tasks/status')
+    @no_cache
+    def api_tasks_status():
+        """Get overall task system status"""
+        try:
+            # Initialize task runner
+            runner = TaskRunner()
+            
+            # Get task status
+            status = runner.get_task_status()
+            
+            return jsonify({
+                'success': True,
+                'status': status
+            })
+            
+        except Exception as e:
+            return jsonify({
+                'success': False,
+                'error': f'Failed to get task status: {str(e)}'
+            }), 500
+
+    @app.route('/api/tasks/<task_name>/toggle', methods=['POST'])
+    @no_cache
+    def api_toggle_task(task_name):
+        """Enable or disable a task"""
+        try:
+            # Get current task status
+            task = execute_query("SELECT * FROM task WHERE name = ?", (task_name,))
+            if not task:
+                return jsonify({
+                    'success': False,
+                    'error': f'Task "{task_name}" not found'
+                }), 404
+            
+            # Toggle active status
+            new_status = not task[0]['active']
+            
+            if IS_PRODUCTION:
+                execute_query("""
+                    UPDATE task 
+                    SET active = %s, updated_at = NOW() 
+                    WHERE name = %s
+                """, (new_status, task_name))
+            else:
+                execute_query("""
+                    UPDATE task 
+                    SET active = ?, updated_at = datetime('now') 
+                    WHERE name = ?
+                """, (new_status, task_name))
+            
+            return jsonify({
+                'success': True,
+                'message': f'Task "{task_name}" {"enabled" if new_status else "disabled"}',
+                'active': new_status
+            })
+            
+        except Exception as e:
+            return jsonify({
+                'success': False,
+                'error': f'Failed to toggle task: {str(e)}'
             }), 500
 
 

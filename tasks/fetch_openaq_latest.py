@@ -7,7 +7,6 @@ Fetches latest air quality data from OpenAQ API
 import os
 import requests
 import json
-import sqlite3
 from datetime import datetime
 from typing import Dict, Any, List, Optional
 from database.db import store_metric_data
