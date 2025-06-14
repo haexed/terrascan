@@ -6,7 +6,7 @@ Environmental Health Monitoring Dashboard
 
 import os
 import sys
-from web.simple_app import create_app
+from web.app import create_app
 from database.config_manager import get_system_config, set_system_config
 
 def main():

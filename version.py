@@ -3,9 +3,9 @@
 Version information for ECO WATCH TERRA SCAN
 """
 
-VERSION = "2.4.1"
+VERSION = "2.5.0"
 BUILD_DATE = "2024-12-19"
-DESCRIPTION = "Environmental Health Monitoring Dashboard - Production Biodiversity Integration"
+DESCRIPTION = "Environmental Health Monitoring Dashboard - Full-Featured Production System"
 
 def get_version():
     """Get current version string"""
