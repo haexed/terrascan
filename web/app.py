@@ -775,6 +775,49 @@ def create_app():
             'timestamp': datetime.utcnow().isoformat()
         })
 
+    @app.route('/api/debug-task/<task_name>')
+    @no_cache
+    def api_debug_task(task_name):
+        """Debug endpoint to test individual task execution"""
+        try:
+            from tasks.runner import TaskRunner
+            runner = TaskRunner()
+            
+            # Get the task details first
+            from database.db import get_task_by_name
+            task = get_task_by_name(task_name)
+            
+            if not task:
+                return jsonify({
+                    'success': False,
+                    'error': f'Task {task_name} not found',
+                    'timestamp': datetime.utcnow().isoformat()
+                }), 404
+            
+            # Try to run the task with detailed error reporting
+            result = runner.run_task(task_name, triggered_by='debug')
+            
+            return jsonify({
+                'success': True,
+                'task_details': {
+                    'name': task['name'],
+                    'command': task['command'],
+                    'parameters': task['parameters'],
+                    'active': task['active']
+                },
+                'execution_result': result,
+                'timestamp': datetime.utcnow().isoformat()
+            })
+            
+        except Exception as e:
+            import traceback
+            return jsonify({
+                'success': False,
+                'error': str(e),
+                'traceback': traceback.format_exc(),
+                'timestamp': datetime.utcnow().isoformat()
+            }), 500
+
 
 
     @app.errorhandler(404)
