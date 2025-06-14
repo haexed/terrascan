@@ -14,13 +14,13 @@
             <div class="d-flex justify-content-between align-items-center">
                 <div>
                     <h1 class="h2 mb-1">📊 Task Monitoring</h1>
-                    <p class="text-muted mb-0">Real-time monitoring of data collection tasks</p>
+                    <p class="mb-0">Real-time monitoring of data collection tasks</p>
                 </div>
                 <div class="d-flex gap-2">
                     <button class="btn btn-primary" onclick="refreshAllData()" id="refresh-btn">
                         <i class="fas fa-sync-alt"></i> Refresh Status
                     </button>
-                    <small class="text-muted align-self-center">
+                    <small class="align-self-center">
                         <i class="fas fa-info-circle"></i> Read-only monitoring
                     </small>
                 </div>
@@ -97,7 +97,7 @@
                             <div class="d-flex justify-content-between align-items-start mb-3">
                                 <div>
                                     <h5 class="card-title mb-1">{{ task.name }}</h5>
-                                    <p class="text-muted small mb-0">{{ task.description or 'Data fetching task' }}</p>
+                                    <p class="small mb-0">{{ task.description or 'Data fetching task' }}</p>
                                 </div>
                                 <div class="task-status-badge">
                                     {% if task.active %}
@@ -130,7 +130,7 @@
 
                                 <!-- Last Run Info -->
                                 {% if task.last_run %}
-                                <div class="small text-muted">
+                                <div class="small">
                                     <div><strong>Last run:</strong> {{ task.last_run.started_at | format_dt }}</div>
                                     {% if task.last_run.status == 'completed' %}
                                     <div class="text-success">
@@ -150,7 +150,7 @@
                                     {% endif %}
                                 </div>
                                 {% else %}
-                                <div class="small text-muted">Never run</div>
+                                <div class="small">Never run</div>
                                 {% endif %}
                             </div>
 
@@ -161,7 +161,7 @@
                                     <i class="fas fa-list"></i> View Logs
                                 </button>
 
-                                <small class="text-muted ms-2">
+                                <small class="ms-2">
                                     <i class="fas fa-lock"></i> Admin-controlled
                                 </small>
                             </div>
@@ -187,7 +187,7 @@
                             <div class="d-flex justify-content-between align-items-start">
                                 <div>
                                     <strong>{{ run.task_name }}</strong>
-                                    <span class="text-muted">- {{ run.started_at | format_dt }}</span>
+                                    <span>- {{ run.started_at | format_dt }}</span>
                                     {% if run.triggered_by %}
                                     <span class="badge bg-light text-dark">{{ run.triggered_by }}</span>
                                     {% endif %}
@@ -196,7 +196,7 @@
                                     {% if run.status == 'completed' %}
                                     <span class="badge bg-success">Success</span>
                                     {% if run.records_processed %}
-                                    <small class="text-muted d-block">{{ run.records_processed }} records</small>
+                                    <small class="d-block">{{ run.records_processed }} records</small>
                                     {% endif %}
                                     {% elif run.status == 'running' %}
                                     <span class="badge bg-warning">
@@ -217,7 +217,7 @@
                         {% endfor %}
 
                         {% if not recent_runs %}
-                        <div class="text-center text-muted py-4">
+                        <div class="text-center py-4">
                             <i class="fas fa-clock fa-2x mb-2"></i>
                             <div>No recent task runs</div>
                         </div>

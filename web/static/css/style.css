@@ -187,9 +187,6 @@ a:hover {
     text-align: center !important;
 }
 
-.text-muted {
-    color: #ddd !important;
-}
 
 .mt-3 {
     margin-top: 1rem !important;
@@ -221,9 +218,7 @@ a:hover {
     text-decoration: underline solid #fff;
 }
 
-.footer .text-muted {
-    color: #fff !important;
-}
+/* footer text-muted rule removed - no longer needed */
 
 /* === HERO MAP STYLES === */
 

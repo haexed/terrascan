@@ -227,7 +227,7 @@ function showTaskLogs(taskName) {
                 let html = '';
 
                 if (data.logs.length === 0) {
-                    html = '<div class="text-center text-muted py-4">No logs found for this task</div>';
+                    html = '<div class="text-center py-4">No logs found for this task</div>';
                 } else {
                     data.logs.forEach(log => {
                         const statusClass = log.exit_code === 0 ? 'log-success' :
@@ -248,9 +248,9 @@ function showTaskLogs(taskName) {
                                     ${statusText}
                                 </span>
                             </div>
-                            ${log.records_processed ? `<div class="small text-muted mt-1">Records processed: ${log.records_processed}</div>` : ''}
+                            ${log.records_processed ? `<div class="small mt-1">Records processed: ${log.records_processed}</div>` : ''}
                             ${log.stderr ? `<div class="small text-danger mt-2"><strong>Error:</strong> ${escapeHtml(log.stderr)}</div>` : ''}
-                            ${log.stdout ? `<div class="small text-muted mt-2"><strong>Output:</strong> ${escapeHtml(log.stdout.substring(0, 500))}${log.stdout.length > 500 ? '...' : ''}</div>` : ''}
+                            ${log.stdout ? `<div class="small mt-2"><strong>Output:</strong> ${escapeHtml(log.stdout.substring(0, 500))}${log.stdout.length > 500 ? '...' : ''}</div>` : ''}
                         </div>
                     `;
                     });
