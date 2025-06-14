@@ -491,6 +491,67 @@ def create_app():
                 'error': str(e)
             }), 500
 
+    @app.route('/api/collect-all-data')
+    @no_cache
+    def api_collect_all_data():
+        """API endpoint to manually trigger all environmental data collection"""
+        try:
+            from tasks.runner import TaskRunner
+            runner = TaskRunner()
+            
+            # List of all data collection tasks to run
+            tasks_to_run = [
+                'nasa_fires_global',
+                'openaq_latest', 
+                'noaa_ocean_water_level',
+                'noaa_ocean_temperature',
+                'openweather_current',
+                'gbif_species_observations'
+            ]
+            
+            results = []
+            total_records = 0
+            
+            for task_name in tasks_to_run:
+                try:
+                    result = runner.run_task(task_name, triggered_by='manual_collection')
+                    results.append({
+                        'task': task_name,
+                        'success': result['success'],
+                        'records': result.get('records_processed', 0),
+                        'message': result.get('message', 'Completed')
+                    })
+                    if result['success']:
+                        total_records += result.get('records_processed', 0)
+                except Exception as e:
+                    results.append({
+                        'task': task_name,
+                        'success': False,
+                        'records': 0,
+                        'error': str(e)
+                    })
+            
+            successful_tasks = sum(1 for r in results if r['success'])
+            
+            return jsonify({
+                'success': True,
+                'timestamp': datetime.utcnow().isoformat(),
+                'summary': {
+                    'total_tasks': len(tasks_to_run),
+                    'successful_tasks': successful_tasks,
+                    'failed_tasks': len(tasks_to_run) - successful_tasks,
+                    'total_records_collected': total_records
+                },
+                'task_results': results
+            })
+            
+        except Exception as e:
+            return jsonify({
+                'success': False,
+                'error': str(e),
+                'timestamp': datetime.utcnow().isoformat()
+            }), 500
+
     @app.route('/api/collect-biodiversity')
     @no_cache
     def api_collect_biodiversity():

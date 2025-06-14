@@ -147,6 +147,121 @@
         </div>
     </div>
 
+    <!-- Additional Data Providers -->
+    <div class="row g-4 mb-4">
+        <!-- OpenWeatherMap -->
+        <div class="col-lg-4">
+            <div class="eco-card p-4">
+                <div class="d-flex align-items-center mb-3">
+                    <span class="fs-1 me-3">⛈️</span>
+                    <div>
+                        <h4 class="mb-0">OpenWeatherMap</h4>
+                        <div class="data-source">Global Weather Data Network</div>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <strong>Latest Data Collection</strong><br>
+                    <span class="small">{{ providers.openweather.last_run if providers.openweather.last_run else 'Never'
+                        }}</span>
+                </div>
+
+                <div class="mb-3">
+                    <strong>Records Collected</strong><br>
+                    <span class="metric-value text-primary">{{ providers.openweather.total_records }}</span>
+                    <span class="small"> weather measurements</span>
+                </div>
+
+                <div class="mb-3">
+                    <strong>Status</strong><br>
+                    <span
+                        class="badge {% if providers.openweather.status == 'operational' %}bg-success{% else %}bg-warning{% endif %}">
+                        {{ providers.openweather.status.upper() }}
+                    </span>
+                </div>
+
+                <div class="small">
+                    <strong>Coverage:</strong> 24 major cities worldwide<br>
+                    <strong>Update Frequency:</strong> Every 2 hours<br>
+                    <strong>Metrics:</strong> Temperature, humidity, wind, pressure, alerts
+                </div>
+            </div>
+        </div>
+
+        <!-- GBIF Biodiversity -->
+        <div class="col-lg-4">
+            <div class="eco-card p-4">
+                <div class="d-flex align-items-center mb-3">
+                    <span class="fs-1 me-3">🦋</span>
+                    <div>
+                        <h4 class="mb-0">GBIF</h4>
+                        <div class="data-source">Global Biodiversity Information Facility</div>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <strong>Latest Data Collection</strong><br>
+                    <span class="small">{{ providers.gbif.last_run if providers.gbif.last_run else 'Never' }}</span>
+                </div>
+
+                <div class="mb-3">
+                    <strong>Records Collected</strong><br>
+                    <span class="metric-value text-success">{{ providers.gbif.total_records }}</span>
+                    <span class="small"> biodiversity records</span>
+                </div>
+
+                <div class="mb-3">
+                    <strong>Status</strong><br>
+                    <span
+                        class="badge {% if providers.gbif.status == 'operational' %}bg-success{% else %}bg-warning{% endif %}">
+                        {{ providers.gbif.status.upper() }}
+                    </span>
+                </div>
+
+                <div class="small">
+                    <strong>Coverage:</strong> 18 biodiversity hotspots<br>
+                    <strong>Update Frequency:</strong> Every 6 hours<br>
+                    <strong>Metrics:</strong> Species observations, diversity indices
+                </div>
+            </div>
+        </div>
+
+        <!-- System Health -->
+        <div class="col-lg-4">
+            <div class="eco-card p-4">
+                <div class="d-flex align-items-center mb-3">
+                    <span class="fs-1 me-3">💚</span>
+                    <div>
+                        <h4 class="mb-0">System Health</h4>
+                        <div class="data-source">Overall Platform Status</div>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <strong>Database Type</strong><br>
+                    <span class="small">{{ database_size }}</span>
+                </div>
+
+                <div class="mb-3">
+                    <strong>Active Data Sources</strong><br>
+                    <span class="metric-value text-info">5</span>
+                    <span class="small"> environmental APIs</span>
+                </div>
+
+                <div class="mb-3">
+                    <strong>Status</strong><br>
+                    <span class="badge bg-success">OPERATIONAL</span>
+                </div>
+
+                <div class="small">
+                    <strong>Version:</strong> {{ version }}<br>
+                    <strong>Data Retention:</strong> 30 days<br>
+                    <strong>Auto-refresh:</strong> Manual trigger
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Recent Task Runs -->
     <div class="row mb-4">
         <div class="col-12">
@@ -232,7 +347,10 @@
             <div class="eco-card p-4 text-center">
                 <h5 class="mb-3">🚀 Quick Actions</h5>
                 <button class="btn btn-success me-2" onclick="refreshAllData()">
-                    <i class="fas fa-sync-alt"></i> Refresh All Data
+                    <i class="fas fa-sync-alt"></i> Collect All Environmental Data
+                </button>
+                <button class="btn btn-primary me-2" onclick="collectBiodiversity()">
+                    <i class="fas fa-leaf"></i> Collect Biodiversity Data
                 </button>
                 <button class="btn btn-info me-2" onclick="viewLogs()">
                     <i class="fas fa-list"></i> View System Logs
@@ -252,18 +370,53 @@
         const button = event.target;
         const originalText = button.innerHTML;
 
-        button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Refreshing...';
+        button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Collecting Data...';
         button.disabled = true;
 
         try {
-            const response = await fetch('/api/refresh');
+            const response = await fetch('/api/collect-all-data');
             const result = await response.json();
 
             if (result.success) {
-                alert('✅ All environmental data refreshed successfully!');
+                const summary = result.summary;
+                alert(`✅ Data collection completed!\n\n` +
+                    `📊 Tasks: ${summary.successful_tasks}/${summary.total_tasks} successful\n` +
+                    `📈 Records collected: ${summary.total_records_collected}\n\n` +
+                    `Page will reload to show new data.`);
                 location.reload();
             } else {
-                alert('❌ Refresh failed: ' + (result.error || 'Unknown error'));
+                alert('❌ Data collection failed: ' + (result.error || 'Unknown error'));
+            }
+        } catch (error) {
+            alert('❌ Error: ' + error.message);
+        } finally {
+            button.innerHTML = originalText;
+            button.disabled = false;
+        }
+    }
+
+    async function collectBiodiversity() {
+        const button = event.target;
+        const originalText = button.innerHTML;
+
+        button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Collecting...';
+        button.disabled = true;
+
+        try {
+            const response = await fetch('/api/collect-biodiversity');
+            const result = await response.json();
+
+            if (result.success) {
+                const stats = result.biodiversity_stats;
+                alert(`🦋 Biodiversity data collected!\n\n` +
+                    `📊 Records processed: ${result.records_processed}\n` +
+                    `🌍 Regions monitored: ${stats.region_count}\n` +
+                    `🔬 Avg observations: ${stats.avg_observations}\n` +
+                    `🌿 Avg species diversity: ${stats.avg_diversity}\n\n` +
+                    `Page will reload to show new data.`);
+                location.reload();
+            } else {
+                alert('❌ Biodiversity collection failed: ' + (result.error || 'Unknown error'));
             }
         } catch (error) {
             alert('❌ Error: ' + error.message);
