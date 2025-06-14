@@ -6,7 +6,7 @@ Setup initial system configurations for the Terrascan platform.
 import os
 import sys
 from database.config_manager import set_system_config, get_system_config
-from database.db import DB_PATH, init_database
+from database.db import init_database, get_db_path
 
 def setup_system_configs():
     """Set up initial system configurations"""
@@ -16,10 +16,11 @@ def setup_system_configs():
     try:
         # Initialize database if needed
         init_database()
-        print(f"✅ Database configured: {DB_PATH}")
+        db_info = get_db_path()
+        print(f"✅ Database configured: {db_info}")
         
         # Set version information
-        version = "2.4.0"
+        version = "2.6.0"
         set_system_config('version', version, 'str', 'Current system version')
         print(f"✅ Version set to: {version}")
         
@@ -37,7 +38,7 @@ def setup_system_configs():
         print("\n🎉 System configurations completed successfully!")
         print("\n📋 Configuration Summary:")
         print(f"   • Version: {version}")
-        print(f"   • Database: {DB_PATH}")
+        print(f"   • Database: {db_info}")
         print(f"   • Platform: {platform_info}")
         print(f"   • Startup: {startup_time}")
         
