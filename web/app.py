@@ -133,9 +133,35 @@ def create_app():
             # Calculate environmental health score
             health_score = calculate_environmental_health_score(health_data)
             
+            # Prepare template data with individual data sections (same as index route)
+            fire_data = {
+                'active_fires': health_data['fires']['count'],
+                'count': health_data['fires']['count'],
+                'avg_brightness': health_data['fires']['avg_brightness'],
+                'status': 'ACTIVE MONITORING' if health_data['fires']['count'] > 0 else 'NORMAL',
+                'last_update': health_data['last_updated']
+            }
+            
+            air_data = {
+                'avg_pm25': health_data['air_quality']['avg_pm25'],
+                'measurements': health_data['air_quality']['station_count'],
+                'status': get_air_quality_status(health_data['air_quality']['avg_pm25']),
+                'last_update': health_data['last_updated']
+            }
+            
+            ocean_data = {
+                'avg_temp': health_data['ocean_temperature']['avg_temp'],
+                'measurements': health_data['ocean_temperature']['station_count'],
+                'status': get_ocean_status(health_data['ocean_temperature']['avg_temp']),
+                'last_update': health_data['last_updated']
+            }
+            
             return render_template('dashboard.html', 
                                  health_data=health_data,
-                                 health_score=health_score)
+                                 health_score=health_score,
+                                 fire_data=fire_data,
+                                 air_data=air_data,
+                                 ocean_data=ocean_data)
                                  
         except Exception as e:
             return f"TERRASCAN Error: {e}", 500
@@ -168,10 +194,20 @@ def create_app():
     def system():
         """TERRASCAN - System status and data provider information"""
         try:
-            # Get system statistics
-            total_records = execute_query("SELECT COUNT(*) as count FROM metric_data")[0]['count'] or 0
-            active_tasks = execute_query("SELECT COUNT(*) as count FROM task WHERE active = 1")[0]['count'] or 0
-            recent_runs_count = execute_query("SELECT COUNT(*) as count FROM task_log WHERE started_at > datetime('now', '-24 hours')")[0]['count'] or 0
+            # Get system statistics (safely handle empty results)
+            total_records_result = execute_query("SELECT COUNT(*) as count FROM metric_data")
+            total_records = total_records_result[0]['count'] if total_records_result else 0
+            
+            active_tasks_result = execute_query("SELECT COUNT(*) as count FROM task WHERE active = 1")
+            active_tasks = active_tasks_result[0]['count'] if active_tasks_result else 0
+            
+            if IS_PRODUCTION:
+                recent_runs_query = "SELECT COUNT(*) as count FROM task_log WHERE started_at > NOW() - INTERVAL '24 hours'"
+            else:
+                recent_runs_query = "SELECT COUNT(*) as count FROM task_log WHERE started_at > datetime('now', '-24 hours')"
+            
+            recent_runs_result = execute_query(recent_runs_query)
+            recent_runs_count = recent_runs_result[0]['count'] if recent_runs_result else 0
             
             system_status = {
                 'total_records': total_records,
@@ -183,11 +219,12 @@ def create_app():
             providers = {}
             
             # NASA FIRMS stats
-            nasa_stats = execute_query("""
+            nasa_stats_result = execute_query("""
                 SELECT COUNT(*) as total_records, MAX(timestamp) as last_run
                 FROM metric_data
                 WHERE provider_key = 'nasa_firms'
-            """)[0]
+            """)
+            nasa_stats = nasa_stats_result[0] if nasa_stats_result else {'total_records': 0, 'last_run': None}
             providers['nasa_firms'] = {
                 'total_records': nasa_stats['total_records'] or 0,
                 'last_run': nasa_stats['last_run'] or 'Never',
@@ -195,11 +232,12 @@ def create_app():
             }
             
             # OpenAQ stats
-            openaq_stats = execute_query("""
+            openaq_stats_result = execute_query("""
                 SELECT COUNT(*) as total_records, MAX(timestamp) as last_run
                 FROM metric_data 
                 WHERE provider_key = 'openaq'
-            """)[0]
+            """)
+            openaq_stats = openaq_stats_result[0] if openaq_stats_result else {'total_records': 0, 'last_run': None}
             providers['openaq'] = {
                 'total_records': openaq_stats['total_records'] or 0,
                 'last_run': openaq_stats['last_run'] or 'Never',
@@ -207,11 +245,12 @@ def create_app():
             }
             
             # NOAA Ocean stats
-            noaa_stats = execute_query("""
+            noaa_stats_result = execute_query("""
                 SELECT COUNT(*) as total_records, MAX(timestamp) as last_run
                 FROM metric_data
                 WHERE provider_key = 'noaa_ocean'
-            """)[0]
+            """)
+            noaa_stats = noaa_stats_result[0] if noaa_stats_result else {'total_records': 0, 'last_run': None}
             providers['noaa_ocean'] = {
                 'total_records': noaa_stats['total_records'] or 0,
                 'last_run': noaa_stats['last_run'] or 'Never',
@@ -219,11 +258,12 @@ def create_app():
             }
             
             # OpenWeather stats
-            weather_stats = execute_query("""
+            weather_stats_result = execute_query("""
                 SELECT COUNT(*) as total_records, MAX(timestamp) as last_run
                 FROM metric_data
                 WHERE provider_key = 'openweather'
-            """)[0]
+            """)
+            weather_stats = weather_stats_result[0] if weather_stats_result else {'total_records': 0, 'last_run': None}
             providers['openweather'] = {
                 'total_records': weather_stats['total_records'] or 0,
                 'last_run': weather_stats['last_run'] or 'Never',
@@ -231,11 +271,12 @@ def create_app():
             }
             
             # GBIF Biodiversity stats
-            gbif_stats = execute_query("""
+            gbif_stats_result = execute_query("""
                 SELECT COUNT(*) as total_records, MAX(timestamp) as last_run
                 FROM metric_data
                 WHERE provider_key = 'gbif'
-            """)[0]
+            """)
+            gbif_stats = gbif_stats_result[0] if gbif_stats_result else {'total_records': 0, 'last_run': None}
             providers['gbif'] = {
                 'total_records': gbif_stats['total_records'] or 0,
                 'last_run': gbif_stats['last_run'] or 'Never',
@@ -262,12 +303,17 @@ def create_app():
             # Get database size
             import os
             try:
-                db_path = os.path.join(os.path.dirname(__file__), '..', 'database', 'terrascan.db')
-                if os.path.exists(db_path):
-                    size_bytes = os.path.getsize(db_path)
-                    database_size = f"{size_bytes / (1024*1024):.1f} MB" if size_bytes else "0.0 MB"
+                if IS_PRODUCTION:
+                    # In production, we use PostgreSQL - size info not easily available
+                    database_size = "PostgreSQL (Railway)"
                 else:
-                    database_size = "Unknown"
+                    # Local development - check for SQLite database
+                    db_path = os.path.join(os.path.dirname(__file__), '..', 'database', 'terrascan.db')
+                    if os.path.exists(db_path):
+                        size_bytes = os.path.getsize(db_path)
+                        database_size = f"{size_bytes / (1024*1024):.1f} MB" if size_bytes else "0.0 MB"
+                    else:
+                        database_size = "No local database"
             except Exception as e:
                 database_size = f"Error: {e}"
             
