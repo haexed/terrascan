@@ -1,0 +1,22 @@
+# TERRASCAN Railway Configuration
+# This file defines our deployment settings as code
+
+[build]
+builder = "nixpacks"
+# Use Nixpacks (Railway's default Python builder)
+
+[deploy] 
+startCommand = "python run.py"
+# Our Flask application start command
+
+healthcheckPath = "/"
+# Check homepage to ensure deployment is healthy
+
+healthcheckTimeout = 30
+# Wait up to 30 seconds for health check
+
+restartPolicyType = "on-failure"
+# Restart container if it crashes
+
+restartPolicyMaxRetries = 2
+# Only try to restart 2 times (reasonable limit)
