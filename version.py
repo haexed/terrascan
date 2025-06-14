@@ -3,7 +3,7 @@
 Version information for TERRASCAN
 """
 
-VERSION = "2.5.0"
+VERSION = "2.5.1"
 BUILD_DATE = "2025-06-14"
 DESCRIPTION = "Environmental Health Monitoring Dashboard - Railway PostgreSQL Production"
 

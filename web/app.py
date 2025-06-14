@@ -441,7 +441,7 @@ def create_app():
                 air_query = """
                     SELECT location_lat as latitude, location_lng as longitude,
                            AVG(value) as value,
-                           metadata,
+                           MAX(metadata) as metadata,
                            MAX(timestamp) as last_updated
                     FROM metric_data 
                     WHERE provider_key = 'openaq' 
@@ -457,7 +457,7 @@ def create_app():
                 air_query = """
                     SELECT location_lat as latitude, location_lng as longitude,
                            AVG(value) as value,
-                           metadata,
+                           MAX(metadata) as metadata,
                            MAX(timestamp) as last_updated
                     FROM metric_data 
                     WHERE provider_key = 'openaq' 
@@ -478,7 +478,7 @@ def create_app():
                     SELECT location_lat as latitude, location_lng as longitude,
                            AVG(CASE WHEN metric_name = 'water_temperature' THEN value END) as temperature,
                            AVG(CASE WHEN metric_name = 'water_level' THEN value END) as water_level,
-                           metadata,
+                           MAX(metadata) as metadata,
                            MAX(timestamp) as last_updated
                     FROM metric_data 
                     WHERE provider_key = 'noaa_ocean' 
@@ -493,7 +493,7 @@ def create_app():
                     SELECT location_lat as latitude, location_lng as longitude,
                            AVG(CASE WHEN metric_name = 'water_temperature' THEN value END) as temperature,
                            AVG(CASE WHEN metric_name = 'water_level' THEN value END) as water_level,
-                           metadata,
+                           MAX(metadata) as metadata,
                            MAX(timestamp) as last_updated
                     FROM metric_data 
                     WHERE provider_key = 'noaa_ocean' 

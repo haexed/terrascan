@@ -2,6 +2,13 @@
 
 All notable changes to TERRASCAN will be documented in this file.
 
+## [2.5.1] - 2025-06-14
+
+### Fixed
+- PostgreSQL GROUP BY SQL errors in map data queries
+- Changed `metadata` to `MAX(metadata)` in air quality and ocean data aggregation
+- Resolves production database errors preventing map visualization
+
 ## [2.5.0] - 2025-06-14
 
 ### Added
