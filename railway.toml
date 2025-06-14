@@ -15,7 +15,7 @@ healthcheckPath = "/"
 healthcheckTimeout = 30
 # Wait up to 30 seconds for health check
 
-restartPolicyType = "on-failure"
+restartPolicyType = "ON_FAILURE"
 # Restart container if it crashes
 
 restartPolicyMaxRetries = 2
