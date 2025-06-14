@@ -454,6 +454,33 @@ def get_recent_task_runs(limit: int = 50) -> List[Dict[str, Any]]:
         print(f"❌ Error getting recent task runs: {e}")
         return []
 
+def get_running_tasks() -> List[Dict[str, Any]]:
+    """Get currently running tasks"""
+    try:
+        if IS_PRODUCTION:
+            query = """
+                SELECT tl.*, t.name as task_name 
+                FROM task_log tl 
+                JOIN task t ON tl.task_id = t.id 
+                WHERE tl.status = %s
+                ORDER BY tl.started_at DESC
+            """
+            params = ('running',)
+        else:
+            query = """
+                SELECT tl.*, t.name as task_name 
+                FROM task_log tl 
+                JOIN task t ON tl.task_id = t.id 
+                WHERE tl.status = ?
+                ORDER BY tl.started_at DESC
+            """
+            params = ('running',)
+        
+        return execute_query(query, params)
+    except Exception as e:
+        print(f"❌ Error getting running tasks: {e}")
+        return []
+
 def get_db_path():
     """Get database path (for SQLite only)"""
     if IS_PRODUCTION:
