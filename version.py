@@ -3,7 +3,7 @@
 Version information for ECO WATCH TERRA SCAN
 """
 
-VERSION = "2.6.0"
+VERSION = "2.6.1"
 BUILD_DATE = "2024-12-19"
 DESCRIPTION = "Environmental Health Monitoring Dashboard - Railway PostgreSQL Production"
 
