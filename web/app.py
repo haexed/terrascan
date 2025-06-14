@@ -514,6 +514,61 @@ def create_app():
                 'error': str(e)
             })
 
+    @app.route('/api/setup-production')
+    @no_cache
+    def api_setup_production():
+        """API endpoint to initialize production database"""
+        try:
+            # Check if we're in production
+            database_url = os.environ.get('DATABASE_URL')
+            if not database_url:
+                return jsonify({
+                    'success': False,
+                    'error': 'Not in production environment - DATABASE_URL not found',
+                    'timestamp': datetime.utcnow().isoformat()
+                }), 400
+            
+            # Import and run the production setup
+            from setup_production_railway import setup_railway_production
+            
+            success = setup_railway_production()
+            
+            if success:
+                return jsonify({
+                    'success': True,
+                    'message': 'Production database initialized successfully',
+                    'timestamp': datetime.utcnow().isoformat(),
+                    'database_type': 'PostgreSQL',
+                    'tables_created': [
+                        'system_config',
+                        'provider_config', 
+                        'task',
+                        'task_log',
+                        'metric_data'
+                    ],
+                    'tasks_configured': 10,
+                    'data_sources': [
+                        'NASA FIRMS (fires)',
+                        'OpenAQ (air quality)',
+                        'NOAA Ocean (ocean data)',
+                        'OpenWeatherMap (weather)',
+                        'GBIF (biodiversity)'
+                    ]
+                })
+            else:
+                return jsonify({
+                    'success': False,
+                    'error': 'Production setup failed - check logs',
+                    'timestamp': datetime.utcnow().isoformat()
+                }), 500
+                
+        except Exception as e:
+            return jsonify({
+                'success': False,
+                'error': str(e),
+                'timestamp': datetime.utcnow().isoformat()
+            }), 500
+
     @app.route('/health')
     def health_check():
         """Simple health check endpoint"""
