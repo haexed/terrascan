@@ -10,7 +10,7 @@ function runTask(taskName) {
         button.innerHTML = '<span class="loading"></span> Running...';
         button.disabled = true;
 
-        fetch(`/api/run_task/${taskName}`, {
+        fetch(`/api/tasks/${taskName}/run`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({})
@@ -36,7 +36,7 @@ function runTask(taskName) {
 }
 
 function viewSource(taskName) {
-    fetch(`/api/task_source/${taskName}`)
+    fetch(`/api/tasks/${taskName}/logs`)
         .then(response => response.json())
         .then(data => {
             if (data.source_code) {
@@ -215,7 +215,7 @@ function refreshRailwayData() {
     refreshBtn.innerHTML = '<span class="loading"></span> Refreshing...';
     refreshBtn.disabled = true;
 
-    fetch('/api/railway/refresh', {
+    fetch('/api/refresh', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
@@ -272,7 +272,7 @@ async function refreshRailwayData() {
     btn.disabled = true;
 
     try {
-        const response = await fetch('/operational');
+        const response = await fetch('/api/health');
         if (response.ok) {
             // Reload the page to show updated data
             window.location.reload();

@@ -2,6 +2,24 @@
 
 All notable changes to TERRASCAN will be documented in this file.
 
+## [2.5.2] - 2025-06-14
+
+### Removed
+- Degraded system status warning banner from yesterday's launch issues
+- Broken API configuration check functionality from system page
+
+### Fixed
+- Broken API endpoint `/api/run_task/<name>` → `/api/tasks/<name>/run`
+- Broken API endpoint `/api/task_source/<name>` → `/api/tasks/<name>/logs`
+- Broken API endpoint `/api/railway/refresh` → `/api/refresh`  
+- Broken API endpoint `/operational` → `/api/health`
+- Duplicate dashboard link now points to home page
+
+### Changed
+- Converted Railway configuration from TOML to JSON format
+- Added JSON schema reference for better validation
+- All navigation links and API endpoints now working properly
+
 ## [2.5.1] - 2025-06-14
 
 ### Fixed
