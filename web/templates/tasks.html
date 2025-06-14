@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}🔧 TERRASCAN Tasks{% endblock %}
+{% block title %}📊 TERRASCAN Tasks{% endblock %}
 
 {% block extra_css %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/tasks.css') }}">
@@ -13,19 +13,31 @@
         <div class="col-12">
             <div class="d-flex justify-content-between align-items-center">
                 <div>
-                    <h1 class="h2 mb-1">🔧 Task Management</h1>
-                    <p class="text-muted mb-0">Monitor and control data fetching tasks</p>
+                    <h1 class="h2 mb-1">📊 Task Monitoring</h1>
+                    <p class="text-muted mb-0">Real-time monitoring of data collection tasks</p>
                 </div>
                 <div class="d-flex gap-2">
                     <button class="btn btn-primary" onclick="refreshAllData()" id="refresh-btn">
                         <i class="fas fa-sync-alt"></i> Refresh Status
                     </button>
-                    <button class="btn btn-success" onclick="runAllTasks()" id="run-all-btn">
-                        <i class="fas fa-play-circle"></i> Run All Active
-                    </button>
+                    <small class="text-muted align-self-center">
+                        <i class="fas fa-info-circle"></i> Read-only monitoring
+                    </small>
                 </div>
             </div>
         </div>
+    </div>
+
+    <!-- Task Control Notice -->
+    <div class="alert alert-info mb-4" role="alert">
+        <i class="fas fa-shield-alt me-2"></i>
+        <strong>Admin-Only Task Control:</strong> Task enable/disable and manual execution are controlled via
+        environment variables for security.
+        This interface provides real-time monitoring and logs viewing only.
+        <br><small class="mt-1 d-block">
+            <strong>Admin control:</strong> Set <code>TASK_ENABLED_*</code> environment variables in Railway dashboard
+            to enable/disable tasks.
+        </small>
     </div>
 
     <!-- Statistics Cards -->
@@ -87,24 +99,18 @@
                                     <h5 class="card-title mb-1">{{ task.name }}</h5>
                                     <p class="text-muted small mb-0">{{ task.description or 'Data fetching task' }}</p>
                                 </div>
-                                <div class="task-controls">
-                                    <!-- Active/Inactive Toggle -->
-                                    <div class="form-check form-switch">
-                                        <input class="form-check-input" type="checkbox" {% if task.active %}checked{%
-                                            endif %} onchange="toggleTask('{{ task.name }}', this)">
-                                    </div>
+                                <div class="task-status-badge">
+                                    {% if task.active %}
+                                    <span class="badge bg-success">Active</span>
+                                    {% else %}
+                                    <span class="badge bg-secondary">Inactive</span>
+                                    {% endif %}
                                 </div>
                             </div>
 
                             <!-- Task Status -->
                             <div class="mb-3">
                                 <div class="d-flex flex-wrap gap-1 mb-2">
-                                    {% if task.active %}
-                                    <span class="badge bg-success status-badge">Active</span>
-                                    {% else %}
-                                    <span class="badge bg-secondary status-badge">Inactive</span>
-                                    {% endif %}
-
                                     {% if task.cron_schedule %}
                                     <span class="badge bg-info status-badge">
                                         {% if task.cron_schedule == 'on_demand' %}
@@ -143,19 +149,16 @@
                                 {% endif %}
                             </div>
 
-                            <!-- Action Buttons -->
+                            <!-- Action Buttons - Read Only -->
                             <div class="task-controls">
-                                <button class="btn btn-sm btn-primary run-button" onclick="runTask('{{ task.name }}')"
-                                    {% if not task.active %}disabled{% endif %}>
-                                    <i class="fas fa-play"></i> Run Now
-                                </button>
-
                                 <button class="btn btn-sm btn-outline-secondary"
                                     onclick="showTaskLogs('{{ task.name }}')">
-                                    <i class="fas fa-list"></i> Logs
+                                    <i class="fas fa-list"></i> View Logs
                                 </button>
 
-                                <div class="loading-spinner" id="spinner-{{ task.name }}"></div>
+                                <small class="text-muted ms-2">
+                                    <i class="fas fa-lock"></i> Admin-controlled
+                                </small>
                             </div>
                         </div>
                     </div>
@@ -244,13 +247,29 @@
 {% endblock %}
 
 {% block extra_js %}
+<!-- Hidden data element for JavaScript -->
+<script type="application/json" id="terrascan-tasks-data">
+{
+    "runningTasksCount": {{ stats.running_tasks }},
+    "totalTasks": {{ stats.total_tasks }},
+    "activeTasks": {{ stats.active_tasks }},
+    "readOnlyMode": true
+}
+</script>
+
 <script src="{{ url_for('static', filename='js/tasks.js') }}"></script>
 <script>
-    // Pass template data to JavaScript
-    window.TERRASCAN_TASKS_DATA = {
-        runningTasksCount: {{ stats.running_tasks }},
-    totalTasks: { { stats.total_tasks } },
-    activeTasks: { { stats.active_tasks } }
-    };
+    // Load data from JSON element to avoid linter conflicts
+    document.addEventListener('DOMContentLoaded', function () {
+        const dataElement = document.getElementById('terrascan-tasks-data');
+        if (dataElement) {
+            try {
+                window.TERRASCAN_TASKS_DATA = JSON.parse(dataElement.textContent);
+            } catch (e) {
+                console.error('Failed to parse tasks data:', e);
+                window.TERRASCAN_TASKS_DATA = { readOnlyMode: true };
+            }
+        }
+    });
 </script>
 {% endblock %}

@@ -31,9 +31,9 @@ def setup_biodiversity_tasks():
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
         """, [
             'gbif_species_observations',
-            'Collect species observations from GBIF for major biodiversity hotspots worldwide',
+            'Global biodiversity monitoring using GBIF species observation data',
             'fetch_data',
-            'tasks.fetch_biodiversity',
+            'tasks.fetch_gbif_biodiversity.fetch_biodiversity_data',
             '0 */6 * * *',  # Every 6 hours
             'gbif',
             'biodiversity',
@@ -48,71 +48,42 @@ def setup_biodiversity_tasks():
             (name, description, task_type, command, cron_schedule, provider, dataset, parameters, active, created_date, updated_date)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
         """, [
-            'gbif_comprehensive',
-            'Collect comprehensive biodiversity data including species observations and diversity metrics',
+            'gbif_ecosystem_health',
+            'Ecosystem health assessment using GBIF biodiversity metrics',
             'fetch_data',
-            'tasks.fetch_biodiversity',
+            'tasks.fetch_gbif_biodiversity.fetch_biodiversity_data',
             '0 */12 * * *',  # Every 12 hours
             'gbif',
-            'biodiversity',
-            '{"product": "all"}',
+            'ecosystem_health',
+            '{"product": "ecosystem_health"}',
             1
         ])
         
         # Test the biodiversity data collection
-        print("🧪 Testing biodiversity data collection...")
-        from tasks.fetch_biodiversity import fetch_biodiversity_data
-        
-        result = fetch_biodiversity_data(product='species_observations')
-        
-        if result['success']:
-            print(f"✅ Test successful! Collected {result['records_processed']} records")
-        else:
-            print(f"❌ Test failed: {result.get('error', 'Unknown error')}")
+        print("\n🧪 Testing GBIF biodiversity data collection...")
+        try:
+            from tasks.fetch_gbif_biodiversity import fetch_biodiversity_data
+            
+            result = fetch_biodiversity_data(product='species_observations')
+            if result['success']:
+                print(f"   ✅ Success! Collected {result['records_processed']} biodiversity records")
+            else:
+                print(f"   ❌ Error: {result['error']}")
+        except Exception as e:
+            print(f"   ⚠️  Import error: {e}")
+            print("   💡 Make sure GBIF API is accessible (no key required)")
         
         # Verify tasks were created
         tasks = execute_query("SELECT name, description, active FROM task WHERE provider = 'gbif' ORDER BY name")
         
-        print("\n✅ Biodiversity tasks setup completed!")
-        print("\n📋 Created Tasks:")
-        for task in tasks:
-            status = "🟢 ACTIVE" if task['active'] else "🔴 INACTIVE"
-            print(f"   • {task['name']}: {task['description']} ({status})")
+        print(f"\n✅ Biodiversity monitoring tasks setup complete!")
+        print(f"   📊 Tasks created: {len(tasks)}")
+        print(f"   🌿 GBIF hotspots: 18 global biodiversity regions")
+        print(f"   🔄 Frequency: Every 6-12 hours")
+        print(f"   🆓 Cost: Free (GBIF requires no API key)")
         
-        print("\n🌿 Biodiversity Data Types:")
-        print("   • Species Observations (count)")
-        print("   • Species Diversity (unique species count)")
-        print("   • Ecosystem Health Index (calculated)")
-        print("   • Threatened Species Count (conservation status)")
-        
-        print("\n🌍 Coverage:")
-        print("   • 18 major biodiversity hotspots worldwide")
-        print("   • Amazon Rainforest, African Savannas, Asian Forests")
-        print("   • North American National Parks, European Forests")
-        print("   • Australian Ecosystems, Arctic Tundra, Marine Islands")
-        print("   • Real-time species observation data")
-        
-        print("\n🆓 GBIF API Benefits:")
-        print("   • Completely FREE - no API key required!")
-        print("   • 2+ billion species observations")
-        print("   • Global coverage from research institutions")
-        print("   • High-quality, verified biodiversity data")
-        
-        # Check current biodiversity data
-        biodiversity_stats = execute_query("""
-            SELECT COUNT(*) as total_records, 
-                   COUNT(DISTINCT metric_name) as metric_types,
-                   AVG(value) as avg_observations
-            FROM metric_data 
-            WHERE provider_key = 'gbif'
-        """)
-        
-        if biodiversity_stats and biodiversity_stats[0]['total_records'] > 0:
-            stats = biodiversity_stats[0]
-            print(f"\n📊 Current Biodiversity Data:")
-            print(f"   • {stats['total_records']} total records")
-            print(f"   • {stats['metric_types']} metric types")
-            print(f"   • {stats['avg_observations']:.1f} average observations per region")
+        print(f"\n🧪 Manual test command:")
+        print(f"   Run: python -c \"from tasks.fetch_gbif_biodiversity import fetch_biodiversity_data; print(fetch_biodiversity_data())\"")
         
         return True
         

@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
-"""
-ECO WATCH TERRA SCAN
-Environmental Health Monitoring Dashboard
+"""TERRASCAN
+Advanced environmental data monitoring and analysis platform
 """
 
 import os
@@ -12,7 +11,7 @@ from database.config_manager import get_system_config, set_system_config
 def main():
     """Main application entry point"""
     
-    print("🌍 ECO WATCH TERRA SCAN")
+    print("🌍 TERRASCAN")
     print("=" * 50)
     print("Environmental Health Monitoring Dashboard")
     print("Real-time tracking of fires, air quality, and ocean data")

@@ -129,9 +129,10 @@ terrascan/
 │   ├── fetch_nasa_fires.py
 │   ├── fetch_openaq_latest.py
 │   ├── fetch_noaa_ocean.py
-│   ├── fetch_weather.py
-│   ├── fetch_biodiversity.py
-│   └── runner.py         # Task execution engine
+│   ├── fetch_openweathermap_weather.py
+│   ├── fetch_gbif_biodiversity.py
+│   ├── runner.py
+│   └── __init__.py
 ├── web/                  # Flask web application
 │   ├── app.py           # Main application
 │   ├── static/          # CSS, JS, images

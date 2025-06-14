@@ -207,14 +207,18 @@ def setup_railway_production():
              'tasks.fetch_noaa_ocean.fetch_water_temperature_data', '30 */3 * * *', 'noaa_ocean', 'ocean',
              '{}'),
             
-            # OpenWeatherMap Weather Data
-            ('openweather_current', 'Collect current weather data from major cities', 'fetch_data',
-             'tasks.fetch_weather.fetch_weather_data', '0 */2 * * *', 'openweather', 'weather',
+            # Weather monitoring tasks (OpenWeatherMap)
+            ('openweather_current', 
+             'tasks.fetch_openweathermap_weather.fetch_weather_data', 
+             'Tasks weather monitoring for 24 major cities using OpenWeatherMap API',
+             'tasks.fetch_openweathermap_weather.fetch_weather_data', '0 */2 * * *', 'openweather', 'weather',
              '{"product": "current"}'),
             
-            # GBIF Biodiversity Data
-            ('gbif_species_observations', 'Collect species observations from GBIF hotspots', 'fetch_data',
-             'tasks.fetch_biodiversity.fetch_biodiversity_data', '0 */6 * * *', 'gbif', 'biodiversity',
+            # Biodiversity monitoring tasks (GBIF)
+            ('gbif_species_observations', 
+             'tasks.fetch_gbif_biodiversity.fetch_biodiversity_data', 
+             'Global biodiversity monitoring using GBIF species observation data',
+             'tasks.fetch_gbif_biodiversity.fetch_biodiversity_data', '0 */6 * * *', 'gbif', 'biodiversity',
              '{"product": "species_observations"}'),
         ]
         

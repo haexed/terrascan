@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-ECO WATCH TERRA SCAN
+TERRASCAN
 Full-featured environmental health dashboard
 """
 
@@ -704,56 +704,64 @@ def create_app():
                     except:
                         pass  # Continue with biodiversity collection
             
-            from tasks.fetch_biodiversity import fetch_biodiversity_data
-            
-            # Run biodiversity data collection
-            result = fetch_biodiversity_data(product='species_observations')
-            
-            if result['success']:
-                # Get updated biodiversity stats
-                if IS_PRODUCTION:
-                    stats_query = """
-                        SELECT 
-                            COUNT(*) as total_records,
-                            AVG(CASE WHEN metric_name = 'species_observations' THEN value END) as avg_observations,
-                            AVG(CASE WHEN metric_name = 'species_diversity' THEN value END) as avg_diversity,
-                            COUNT(DISTINCT CASE WHEN metric_name = 'species_observations' THEN CONCAT(location_lat, ',', location_lng) END) as region_count
-                        FROM metric_data 
-                        WHERE provider_key = 'gbif'
-                        AND timestamp >= NOW() - INTERVAL '24 hours'
-                    """
+            # Test GBIF biodiversity collection
+            try:
+                from tasks.fetch_gbif_biodiversity import fetch_biodiversity_data
+                
+                print("🧪 Testing GBIF biodiversity data collection...")
+                result = fetch_biodiversity_data(product='species_observations')
+                
+                if result['success']:
+                    # Get updated biodiversity stats
+                    if IS_PRODUCTION:
+                        stats_query = """
+                            SELECT 
+                                COUNT(*) as total_records,
+                                AVG(CASE WHEN metric_name = 'species_observations' THEN value END) as avg_observations,
+                                AVG(CASE WHEN metric_name = 'species_diversity' THEN value END) as avg_diversity,
+                                COUNT(DISTINCT CASE WHEN metric_name = 'species_observations' THEN CONCAT(location_lat, ',', location_lng) END) as region_count
+                            FROM metric_data 
+                            WHERE provider_key = 'gbif'
+                            AND timestamp >= NOW() - INTERVAL '24 hours'
+                        """
+                    else:
+                        stats_query = """
+                            SELECT 
+                                COUNT(*) as total_records,
+                                AVG(CASE WHEN metric_name = 'species_observations' THEN value END) as avg_observations,
+                                AVG(CASE WHEN metric_name = 'species_diversity' THEN value END) as avg_diversity,
+                                COUNT(DISTINCT CASE WHEN metric_name = 'species_observations' THEN location_lat || ',' || location_lng END) as region_count
+                            FROM metric_data 
+                            WHERE provider_key = 'gbif'
+                            AND timestamp >= datetime('now', '-24 hours')
+                        """
+                    
+                    biodiversity_stats = execute_query(stats_query)
+                    
+                    stats = biodiversity_stats[0] if biodiversity_stats else {}
+                    
+                    return jsonify({
+                        'success': True,
+                        'timestamp': datetime.utcnow().isoformat(),
+                        'message': result['message'],
+                        'records_processed': result['records_processed'],
+                        'biodiversity_stats': {
+                            'total_records': stats.get('total_records', 0),
+                            'avg_observations': round(stats.get('avg_observations', 0) or 0, 1),
+                            'avg_diversity': round(stats.get('avg_diversity', 0) or 0, 1),
+                            'region_count': stats.get('region_count', 0)
+                        }
+                    })
                 else:
-                    stats_query = """
-                        SELECT 
-                            COUNT(*) as total_records,
-                            AVG(CASE WHEN metric_name = 'species_observations' THEN value END) as avg_observations,
-                            AVG(CASE WHEN metric_name = 'species_diversity' THEN value END) as avg_diversity,
-                            COUNT(DISTINCT CASE WHEN metric_name = 'species_observations' THEN location_lat || ',' || location_lng END) as region_count
-                        FROM metric_data 
-                        WHERE provider_key = 'gbif'
-                        AND timestamp >= datetime('now', '-24 hours')
-                    """
-                
-                biodiversity_stats = execute_query(stats_query)
-                
-                stats = biodiversity_stats[0] if biodiversity_stats else {}
-                
-                return jsonify({
-                    'success': True,
-                    'timestamp': datetime.utcnow().isoformat(),
-                    'message': result['message'],
-                    'records_processed': result['records_processed'],
-                    'biodiversity_stats': {
-                        'total_records': stats.get('total_records', 0),
-                        'avg_observations': round(stats.get('avg_observations', 0) or 0, 1),
-                        'avg_diversity': round(stats.get('avg_diversity', 0) or 0, 1),
-                        'region_count': stats.get('region_count', 0)
-                    }
-                })
-            else:
+                    return jsonify({
+                        'success': False,
+                        'error': result.get('error', 'Unknown error'),
+                        'timestamp': datetime.utcnow().isoformat()
+                    }), 500
+            except Exception as e:
                 return jsonify({
                     'success': False,
-                    'error': result.get('error', 'Unknown error'),
+                    'error': str(e),
                     'timestamp': datetime.utcnow().isoformat()
                 }), 500
                 
@@ -857,8 +865,8 @@ def create_app():
                 ('openaq_latest', 'tasks.fetch_openaq_latest.fetch_openaq_latest', '{}'),
                 ('noaa_ocean_water_level', 'tasks.fetch_noaa_ocean.fetch_noaa_ocean_data', '{"product": "water_level"}'),
                 ('noaa_ocean_temperature', 'tasks.fetch_noaa_ocean.fetch_noaa_ocean_data', '{"product": "water_temperature"}'),
-                ('openweather_current', 'tasks.fetch_weather.fetch_weather_data', '{"product": "current"}'),
-                ('gbif_species_observations', 'tasks.fetch_biodiversity.fetch_biodiversity_data', '{"product": "species_observations"}'),
+                ('openweather_current', 'tasks.fetch_openweathermap_weather.fetch_weather_data', '{"product": "current"}'),
+                ('gbif_species_observations', 'tasks.fetch_gbif_biodiversity.fetch_biodiversity_data', '{"product": "species_observations"}'),
             ]
             
             updated_count = 0
@@ -1101,11 +1109,11 @@ def create_app():
 
     @app.errorhandler(404)
     def not_found(error):
-        return "ECO WATCH TERRA SCAN - Page not found", 404
+        return "TERRASCAN - Page not found", 404
 
     @app.errorhandler(500)
     def internal_error(error):
-        return "ECO WATCH TERRA SCAN - Internal error", 500
+        return "TERRASCAN - Internal error", 500
 
     return app
 

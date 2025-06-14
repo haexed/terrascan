@@ -1,11 +1,12 @@
 /**
- * Tasks Page JavaScript
- * Handles task management, running tasks, and real-time updates
+ * Tasks Page JavaScript - Read-Only Monitoring Mode
+ * Handles task monitoring and log viewing (admin controls disabled for security)
  */
 
 // Global state
 let isRefreshing = false;
 let runningTasksCount = 0;
+let readOnlyMode = false;
 
 // Initialize when page loads
 document.addEventListener('DOMContentLoaded', function () {
@@ -18,37 +19,44 @@ document.addEventListener('DOMContentLoaded', function () {
  * Initialize the tasks page
  */
 function initializePage() {
-    // Set initial running tasks count from global data
+    // Set initial data from global data
     if (window.TERRASCAN_TASKS_DATA) {
         runningTasksCount = window.TERRASCAN_TASKS_DATA.runningTasksCount || 0;
+        readOnlyMode = window.TERRASCAN_TASKS_DATA.readOnlyMode || false;
     } else {
         // Fallback: get from DOM
         const statsElement = document.querySelector('.stats-card .text-warning');
         if (statsElement) {
             runningTasksCount = parseInt(statsElement.textContent) || 0;
         }
+        readOnlyMode = true; // Default to read-only for safety
     }
 
     // Setup event listeners
     setupEventListeners();
 
-    console.log('Tasks page initialized with running tasks:', runningTasksCount);
+    // Show read-only mode status
+    if (readOnlyMode) {
+        console.log('Tasks page initialized in READ-ONLY mode');
+    }
 }
 
 /**
  * Setup event listeners
  */
 function setupEventListeners() {
-    // Refresh button
+    // Refresh button (always available)
     const refreshBtn = document.getElementById('refresh-btn');
     if (refreshBtn) {
         refreshBtn.addEventListener('click', refreshAllData);
     }
 
-    // Run all button
-    const runAllBtn = document.getElementById('run-all-btn');
-    if (runAllBtn) {
-        runAllBtn.addEventListener('click', runAllTasks);
+    // Admin controls only in non-read-only mode
+    if (!readOnlyMode) {
+        const runAllBtn = document.getElementById('run-all-btn');
+        if (runAllBtn) {
+            runAllBtn.addEventListener('click', runAllTasks);
+        }
     }
 }
 
@@ -77,9 +85,14 @@ function showNotification(message, type = 'info') {
 }
 
 /**
- * Run a single task
+ * Run a single task (disabled in read-only mode)
  */
 function runTask(taskName) {
+    if (readOnlyMode) {
+        showNotification('❌ Task execution disabled. Admin-only control via environment variables.', 'error');
+        return;
+    }
+
     const spinner = document.getElementById(`spinner-${taskName}`);
     const button = event.target.closest('button');
     const taskCard = document.querySelector(`[data-task-name="${taskName}"]`);
@@ -131,9 +144,16 @@ function runTask(taskName) {
 }
 
 /**
- * Toggle task active/inactive status
+ * Toggle task active/inactive status (disabled in read-only mode)
  */
 function toggleTask(taskName, checkbox) {
+    if (readOnlyMode) {
+        showNotification('❌ Task toggle disabled. Admin-only control via environment variables.', 'error');
+        // Revert checkbox
+        checkbox.checked = !checkbox.checked;
+        return;
+    }
+
     const taskCard = document.querySelector(`[data-task-name="${taskName}"]`);
 
     if (!taskCard) {
@@ -183,7 +203,7 @@ function toggleTask(taskName, checkbox) {
 }
 
 /**
- * Show task logs in modal
+ * Show task logs in modal (always available)
  */
 function showTaskLogs(taskName) {
     const modal = new bootstrap.Modal(document.getElementById('logsModal'));
@@ -222,7 +242,7 @@ function showTaskLogs(taskName) {
                             <div class="d-flex justify-content-between align-items-start">
                                 <div>
                                     <strong>${log.started_at}</strong>
-                                    <span class="badge bg-light text-dark ms-2">${log.triggered_by || 'unknown'}</span>
+                                    <span class="badge bg-light text-dark ms-2">${log.triggered_by || 'system'}</span>
                                 </div>
                                 <span class="badge ${badgeClass}">
                                     ${statusText}
@@ -248,9 +268,14 @@ function showTaskLogs(taskName) {
 }
 
 /**
- * Run all active tasks
+ * Run all active tasks (disabled in read-only mode)
  */
 function runAllTasks() {
+    if (readOnlyMode) {
+        showNotification('❌ Bulk task execution disabled. Admin-only control via environment variables.', 'error');
+        return;
+    }
+
     if (isRefreshing) return;
 
     const button = document.getElementById('run-all-btn');
@@ -414,7 +439,7 @@ function formatTime(dateString) {
     return date.toLocaleDateString();
 }
 
-// Export functions for global access
+// Export functions for global access (but with read-only restrictions)
 window.runTask = runTask;
 window.toggleTask = toggleTask;
 window.showTaskLogs = showTaskLogs;

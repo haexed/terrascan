@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """
-Version information for ECO WATCH TERRA SCAN
+Version information for TERRASCAN
 """
 
-VERSION = "2.6.7"
-BUILD_DATE = "2024-12-19"
+VERSION = "2.5.0"
+BUILD_DATE = "2025-06-14"
 DESCRIPTION = "Environmental Health Monitoring Dashboard - Railway PostgreSQL Production"
 
 def get_version():
@@ -20,6 +20,6 @@ def get_build_info():
     }
 
 if __name__ == "__main__":
-    print(f"ECO WATCH TERRA SCAN v{VERSION}")
+    print(f"TERRASCAN v{VERSION}")
     print(f"Build Date: {BUILD_DATE}")
     print(f"Description: {DESCRIPTION}") 

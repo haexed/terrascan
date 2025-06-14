@@ -23,59 +23,44 @@ def setup_weather_tasks():
         set_provider_config('openweather', 'timeout_seconds', 30, 'int', 'API request timeout in seconds')
         set_provider_config('openweather', 'rate_limit_delay', 0.1, 'float', 'Delay between API calls in seconds')
         
-        # Add current weather task
-        print("📊 Adding current weather task...")
-        execute_query("""
-            INSERT OR REPLACE INTO task 
-            (name, description, task_type, command, cron_schedule, provider, dataset, parameters, active, created_date, updated_date)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-        """, [
-            'openweather_current',
-            'Collect current weather data from OpenWeatherMap for major cities worldwide',
-            'fetch_data',
-            'tasks.fetch_weather',
-            '0 */2 * * *',  # Every 2 hours
-            'openweather',
-            'weather',
-            '{"product": "current"}',
-            1
-        ])
+        # Weather monitoring tasks (OpenWeatherMap)
+        tasks = [
+            ('openweather_current', 
+             'Current weather monitoring for 24 major cities using OpenWeatherMap API',
+             'fetch_data',
+             'tasks.fetch_openweathermap_weather.fetch_weather_data', 
+             '0 */2 * * *', 
+             'openweather', 
+             'weather',
+             '{"product": "current"}'),
+            
+            ('openweather_alerts', 
+             'Weather alerts and severe weather monitoring using OpenWeatherMap API',
+             'fetch_data',
+             'tasks.fetch_openweathermap_weather.fetch_weather_data', 
+             '0 */1 * * *', 
+             'openweather', 
+             'alerts',
+             '{"product": "alerts"}'),
+            
+            ('openweather_comprehensive', 
+             'Comprehensive weather data collection including forecasts and historical data',
+             'fetch_data',
+             'tasks.fetch_openweathermap_weather.fetch_weather_data', 
+             '0 */4 * * *', 
+             'openweather', 
+             'comprehensive',
+             '{"product": "all"}'),
+        ]
         
-        # Add weather alerts task
-        print("🚨 Adding weather alerts task...")
-        execute_query("""
-            INSERT OR REPLACE INTO task 
-            (name, description, task_type, command, cron_schedule, provider, dataset, parameters, active, created_date, updated_date)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-        """, [
-            'openweather_alerts',
-            'Collect weather alerts and warnings from OpenWeatherMap',
-            'fetch_data',
-            'tasks.fetch_weather',
-            '0 */1 * * *',  # Every hour
-            'openweather',
-            'weather',
-            '{"product": "alerts"}',
-            1
-        ])
-        
-        # Add comprehensive weather task (runs less frequently)
-        print("🌍 Adding comprehensive weather task...")
-        execute_query("""
-            INSERT OR REPLACE INTO task 
-            (name, description, task_type, command, cron_schedule, provider, dataset, parameters, active, created_date, updated_date)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-        """, [
-            'openweather_comprehensive',
-            'Collect comprehensive weather data including current conditions and alerts',
-            'fetch_data',
-            'tasks.fetch_weather',
-            '0 */6 * * *',  # Every 6 hours
-            'openweather',
-            'weather',
-            '{"product": "all"}',
-            1
-        ])
+        # Add tasks to the database
+        for task in tasks:
+            print(f"📊 Adding {task[0]} task...")
+            execute_query("""
+                INSERT OR REPLACE INTO task 
+                (name, description, task_type, command, cron_schedule, provider, dataset, parameters, active, created_date, updated_date)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+            """, task)
         
         # Verify tasks were created
         tasks = execute_query("SELECT name, description, active FROM task WHERE provider = 'openweather' ORDER BY name")
@@ -108,6 +93,9 @@ def setup_weather_tasks():
         print("   • Real-time weather conditions")
         print("   • Government weather alerts")
         
+        print(f"\n🧪 Manual test command:")
+        print(f"   Run: python -c \"from tasks.fetch_openweathermap_weather import fetch_weather_data; print(fetch_weather_data())\"")
+        
         return True
         
     except Exception as e:
@@ -120,4 +108,4 @@ if __name__ == "__main__":
         exit(1)
     
     print("\n🚀 Ready to collect weather data!")
-    print("   Run: python -c \"from tasks.fetch_weather import fetch_weather_data; print(fetch_weather_data())\"") 
+    print("   Run: python -c \"from tasks.fetch_openweathermap_weather import fetch_weather_data; print(fetch_weather_data())\"") 
