@@ -725,6 +725,8 @@ def create_app():
             'timestamp': datetime.utcnow().isoformat()
         })
 
+
+
     @app.errorhandler(404)
     def not_found(error):
         return "ECO WATCH TERRA SCAN - Page not found", 404

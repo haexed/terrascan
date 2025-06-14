@@ -77,7 +77,7 @@ class TaskRunner:
                 stdout=result.get('output', ''),
                 stderr=result.get('error', ''),
                 actual_cost_cents=result.get('cost_cents', 0),
-                records_processed=result.get('records_processed', 0)
+                records_processed=result.get('records_stored', result.get('records_processed', 0))
             )
             
             duration = (datetime.now() - start_time).total_seconds()
@@ -88,7 +88,7 @@ class TaskRunner:
                 'run_id': run_id,
                 'output': result.get('output', ''),
                 'duration': duration,
-                'records_processed': result.get('records_processed', 0),
+                'records_processed': result.get('records_stored', result.get('records_processed', 0)),
                 'cost_cents': result.get('cost_cents', 0)
             }
             

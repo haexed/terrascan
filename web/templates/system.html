@@ -262,6 +262,8 @@
         </div>
     </div>
 
+
+
     <!-- Recent Task Runs -->
     <div class="row mb-4">
         <div class="col-12">
@@ -435,5 +437,62 @@
             alert('🧹 Data cleanup feature will be implemented in a future update.');
         }
     }
+
+    async function checkConfiguration() {
+        const statusDiv = document.getElementById('config-status');
+
+        try {
+            statusDiv.innerHTML = '<div class="text-muted"><i class="fas fa-spinner fa-spin"></i> Checking configuration...</div>';
+
+            const response = await fetch('/api/check-config');
+            const result = await response.json();
+
+            if (result.success) {
+                let html = '';
+
+                // Overall status
+                if (result.all_configured) {
+                    html += '<div class="alert alert-success mb-3"><i class="fas fa-check-circle"></i> All API keys configured!</div>';
+                } else {
+                    html += `<div class="alert alert-warning mb-3"><i class="fas fa-exclamation-triangle"></i> ${result.missing_count} API key(s) missing</div>`;
+                }
+
+                // Configured keys
+                if (result.configured_keys.length > 0) {
+                    html += '<h6 class="text-success mb-2"><i class="fas fa-check"></i> Configured:</h6>';
+                    html += '<ul class="list-unstyled mb-3">';
+                    result.configured_keys.forEach(key => {
+                        html += `<li class="text-success"><i class="fas fa-check-circle me-2"></i>${key.key} - ${key.description}</li>`;
+                    });
+                    html += '</ul>';
+                }
+
+                // Missing keys
+                if (result.missing_keys.length > 0) {
+                    html += '<h6 class="text-warning mb-2"><i class="fas fa-exclamation-triangle"></i> Missing:</h6>';
+                    html += '<ul class="list-unstyled mb-3">';
+                    result.missing_keys.forEach(key => {
+                        html += `<li class="text-warning"><i class="fas fa-times-circle me-2"></i>${key.key} - ${key.description} <small class="text-muted">(<a href="${key.url}" target="_blank">Get API key</a>)</small></li>`;
+                    });
+                    html += '</ul>';
+
+                    html += '<div class="alert alert-info"><strong>Instructions:</strong><br>';
+                    html += '• Railway: Set environment variables in Railway dashboard under Variables tab<br>';
+                    html += '• Local: Create .env file or export environment variables</div>';
+                }
+
+                statusDiv.innerHTML = html;
+            } else {
+                statusDiv.innerHTML = `<div class="alert alert-danger">Error checking configuration: ${result.error}</div>`;
+            }
+        } catch (error) {
+            statusDiv.innerHTML = `<div class="alert alert-danger">Error: ${error.message}</div>`;
+        }
+    }
+
+    // Load configuration on page load
+    document.addEventListener('DOMContentLoaded', function () {
+        checkConfiguration();
+    });
 </script>
 {% endblock %}
