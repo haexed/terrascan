@@ -735,8 +735,8 @@ def create_app():
             task_updates = [
                 ('nasa_fires_global', 'tasks.fetch_nasa_fires.fetch_nasa_fires', '{"region": "WORLD", "days": 7}'),
                 ('openaq_latest', 'tasks.fetch_openaq_latest.fetch_openaq_latest', '{}'),
-                ('noaa_ocean_water_level', 'tasks.fetch_noaa_ocean.fetch_water_level_data', '{}'),
-                ('noaa_ocean_temperature', 'tasks.fetch_noaa_ocean.fetch_water_temperature_data', '{}'),
+                ('noaa_ocean_water_level', 'tasks.fetch_noaa_ocean.fetch_noaa_ocean_data', '{"product": "water_level"}'),
+                ('noaa_ocean_temperature', 'tasks.fetch_noaa_ocean.fetch_noaa_ocean_data', '{"product": "water_temperature"}'),
                 ('openweather_current', 'tasks.fetch_weather.fetch_weather_data', '{"product": "current"}'),
                 ('gbif_species_observations', 'tasks.fetch_biodiversity.fetch_biodiversity_data', '{"product": "species_observations"}'),
             ]
