@@ -132,6 +132,15 @@ def _get_default_stations() -> List[str]:
 
 
 
+# Convenience functions for specific data products
+def fetch_water_level_data(**kwargs) -> Dict[str, Any]:
+    """Fetch water level data from NOAA stations"""
+    return fetch_noaa_ocean_data(product='water_level', **kwargs)
+
+def fetch_water_temperature_data(**kwargs) -> Dict[str, Any]:
+    """Fetch water temperature data from NOAA stations"""
+    return fetch_noaa_ocean_data(product='water_temperature', **kwargs)
+
 if __name__ == "__main__":
     # Test the function
     result = fetch_noaa_ocean_data()
