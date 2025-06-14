@@ -717,6 +717,56 @@ def create_app():
                 'timestamp': datetime.utcnow().isoformat()
             }), 500
 
+    @app.route('/api/fix-tasks')
+    @no_cache
+    def api_fix_tasks():
+        """API endpoint to fix task commands in production database"""
+        try:
+            # Check if we're in production
+            database_url = os.environ.get('DATABASE_URL')
+            if not database_url:
+                return jsonify({
+                    'success': False,
+                    'error': 'Not in production environment',
+                    'timestamp': datetime.utcnow().isoformat()
+                }), 400
+            
+            # Update task commands to match actual function names
+            task_updates = [
+                ('nasa_fires_global', 'tasks.fetch_nasa_fires.fetch_nasa_fires', '{"region": "WORLD", "days": 7}'),
+                ('openaq_latest', 'tasks.fetch_openaq_latest.fetch_openaq_latest', '{}'),
+                ('noaa_ocean_water_level', 'tasks.fetch_noaa_ocean.fetch_water_level_data', '{}'),
+                ('noaa_ocean_temperature', 'tasks.fetch_noaa_ocean.fetch_water_temperature_data', '{}'),
+                ('openweather_current', 'tasks.fetch_weather.fetch_weather_data', '{"product": "current"}'),
+                ('gbif_species_observations', 'tasks.fetch_biodiversity.fetch_biodiversity_data', '{"product": "species_observations"}'),
+            ]
+            
+            updated_count = 0
+            for task_name, command, parameters in task_updates:
+                try:
+                    result = execute_query("""
+                        UPDATE task 
+                        SET command = %s, parameters = %s, updated_date = CURRENT_TIMESTAMP
+                        WHERE name = %s
+                    """, (command, parameters, task_name))
+                    updated_count += 1
+                except Exception as e:
+                    print(f"Failed to update task {task_name}: {e}")
+            
+            return jsonify({
+                'success': True,
+                'message': f'Updated {updated_count} task commands',
+                'updated_tasks': updated_count,
+                'timestamp': datetime.utcnow().isoformat()
+            })
+            
+        except Exception as e:
+            return jsonify({
+                'success': False,
+                'error': str(e),
+                'timestamp': datetime.utcnow().isoformat()
+            }), 500
+
     @app.route('/health')
     def health_check():
         """Simple health check endpoint"""

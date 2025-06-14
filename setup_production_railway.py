@@ -190,48 +190,32 @@ def setup_railway_production():
         tasks = [
             # NASA FIRMS Fire Monitoring
             ('nasa_fires_global', 'Collect global active fires from NASA FIRMS', 'fetch_data', 
-             'tasks.fetch_fires', '0 */2 * * *', 'nasa_firms', 'fires', 
-             '{"product": "MODIS_NRT", "confidence": 75}'),
-            
-            ('nasa_fires_viirs', 'Collect VIIRS fire data from NASA FIRMS', 'fetch_data',
-             'tasks.fetch_fires', '30 */2 * * *', 'nasa_firms', 'fires',
-             '{"product": "VIIRS_SNPP_NRT", "confidence": 75}'),
+             'tasks.fetch_nasa_fires.fetch_nasa_fires', '0 */2 * * *', 'nasa_firms', 'fires', 
+             '{"region": "WORLD", "days": 7}'),
             
             # OpenAQ Air Quality
             ('openaq_latest', 'Get latest air quality measurements', 'fetch_data',
-             'tasks.fetch_air_quality', '0 * * * *', 'openaq', 'air_quality',
-             '{"parameter": "pm25", "limit": 100}'),
-            
-            ('openaq_cities', 'Get air quality for major cities', 'fetch_data',
-             'tasks.fetch_air_quality', '15 */2 * * *', 'openaq', 'air_quality',
-             '{"cities": "major", "parameter": "pm25"}'),
+             'tasks.fetch_openaq_latest.fetch_openaq_latest', '0 * * * *', 'openaq', 'air_quality',
+             '{}'),
             
             # NOAA Ocean Data
             ('noaa_ocean_water_level', 'Fetch water level data from NOAA Ocean Service', 'fetch_data',
-             'tasks.fetch_ocean', '0 */3 * * *', 'noaa_ocean', 'ocean',
-             '{"product": "water_level", "stations": "coastal"}'),
+             'tasks.fetch_noaa_ocean.fetch_water_level_data', '0 */3 * * *', 'noaa_ocean', 'ocean',
+             '{}'),
             
             ('noaa_ocean_temperature', 'Fetch ocean temperature data from NOAA', 'fetch_data',
-             'tasks.fetch_ocean', '30 */3 * * *', 'noaa_ocean', 'ocean',
-             '{"product": "water_temperature", "stations": "coastal"}'),
+             'tasks.fetch_noaa_ocean.fetch_water_temperature_data', '30 */3 * * *', 'noaa_ocean', 'ocean',
+             '{}'),
             
             # OpenWeatherMap Weather Data
             ('openweather_current', 'Collect current weather data from major cities', 'fetch_data',
-             'tasks.fetch_weather', '0 */2 * * *', 'openweather', 'weather',
-             '{"product": "current", "cities": "global"}'),
-            
-            ('openweather_alerts', 'Collect weather alerts and warnings', 'fetch_data',
-             'tasks.fetch_weather', '0 * * * *', 'openweather', 'weather',
-             '{"product": "alerts", "cities": "global"}'),
+             'tasks.fetch_weather.fetch_weather_data', '0 */2 * * *', 'openweather', 'weather',
+             '{"product": "current"}'),
             
             # GBIF Biodiversity Data
             ('gbif_species_observations', 'Collect species observations from GBIF hotspots', 'fetch_data',
-             'tasks.fetch_biodiversity', '0 */6 * * *', 'gbif', 'biodiversity',
+             'tasks.fetch_biodiversity.fetch_biodiversity_data', '0 */6 * * *', 'gbif', 'biodiversity',
              '{"product": "species_observations"}'),
-            
-            ('gbif_comprehensive', 'Collect comprehensive biodiversity data', 'fetch_data',
-             'tasks.fetch_biodiversity', '0 */12 * * *', 'gbif', 'biodiversity',
-             '{"product": "all"}'),
         ]
         
         for name, description, task_type, command, cron_schedule, provider, dataset, parameters in tasks:
