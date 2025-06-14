@@ -450,6 +450,33 @@ def create_app():
     def api_collect_biodiversity():
         """API endpoint to manually trigger biodiversity data collection"""
         try:
+            # Check if we need to initialize production database first
+            database_url = os.environ.get('DATABASE_URL')
+            if database_url:
+                # We're in production, check if tables exist
+                try:
+                    existing_tables = execute_query("SELECT COUNT(*) as count FROM information_schema.tables WHERE table_schema = 'public'")
+                    table_count = existing_tables[0]['count'] if existing_tables else 0
+                    
+                    if table_count < 3:  # If we don't have the main tables
+                        # Initialize production database
+                        from setup_production_railway import setup_railway_production
+                        setup_success = setup_railway_production()
+                        
+                        if not setup_success:
+                            return jsonify({
+                                'success': False,
+                                'error': 'Failed to initialize production database',
+                                'timestamp': datetime.utcnow().isoformat()
+                            }), 500
+                except Exception as e:
+                    # If we can't check tables, try to initialize anyway
+                    try:
+                        from setup_production_railway import setup_railway_production
+                        setup_railway_production()
+                    except:
+                        pass  # Continue with biodiversity collection
+            
             from tasks.fetch_biodiversity import fetch_biodiversity_data
             
             # Run biodiversity data collection
