@@ -196,10 +196,15 @@ def create_app():
         try:
             # Get system statistics (safely handle empty results)
             total_records_result = execute_query("SELECT COUNT(*) as count FROM metric_data")
-            total_records = total_records_result[0]['count'] if total_records_result else 0
+            total_records = total_records_result[0]['count'] if total_records_result and total_records_result[0]['count'] is not None else 0
             
-            active_tasks_result = execute_query("SELECT COUNT(*) as count FROM task WHERE active = 1")
-            active_tasks = active_tasks_result[0]['count'] if active_tasks_result else 0
+            if IS_PRODUCTION:
+                active_tasks_query = "SELECT COUNT(*) as count FROM task WHERE active = true"
+            else:
+                active_tasks_query = "SELECT COUNT(*) as count FROM task WHERE active = 1"
+            
+            active_tasks_result = execute_query(active_tasks_query)
+            active_tasks = active_tasks_result[0]['count'] if active_tasks_result and active_tasks_result[0]['count'] is not None else 0
             
             if IS_PRODUCTION:
                 recent_runs_query = "SELECT COUNT(*) as count FROM task_log WHERE started_at > NOW() - INTERVAL '24 hours'"
@@ -207,7 +212,7 @@ def create_app():
                 recent_runs_query = "SELECT COUNT(*) as count FROM task_log WHERE started_at > datetime('now', '-24 hours')"
             
             recent_runs_result = execute_query(recent_runs_query)
-            recent_runs_count = recent_runs_result[0]['count'] if recent_runs_result else 0
+            recent_runs_count = recent_runs_result[0]['count'] if recent_runs_result and recent_runs_result[0]['count'] is not None else 0
             
             system_status = {
                 'total_records': total_records,
@@ -338,53 +343,108 @@ def create_app():
         """API endpoint to get environmental data for map visualization"""
         try:
             # Get fire data with coordinates
-            fires = execute_query("""
-                SELECT location_lat as latitude, location_lng as longitude,
-                       value as brightness, 
-                       CAST(SUBSTR(metadata, INSTR(metadata, '"confidence":') + 13, 2) AS INTEGER) as confidence,
-                       DATE(timestamp) as acq_date
-                FROM metric_data 
-                WHERE provider_key = 'nasa_firms' 
-                AND timestamp > datetime('now', '-24 hours')
-                AND location_lat IS NOT NULL 
-                AND location_lng IS NOT NULL
-                AND value > 300
-                ORDER BY timestamp DESC
-                LIMIT 500
-            """)
+            if IS_PRODUCTION:
+                fires_query = """
+                    SELECT location_lat as latitude, location_lng as longitude,
+                           value as brightness, 
+                           75 as confidence,
+                           DATE(timestamp) as acq_date
+                    FROM metric_data 
+                    WHERE provider_key = 'nasa_firms' 
+                    AND timestamp > NOW() - INTERVAL '24 hours'
+                    AND location_lat IS NOT NULL 
+                    AND location_lng IS NOT NULL
+                    AND value > 300
+                    ORDER BY timestamp DESC
+                    LIMIT 500
+                """
+            else:
+                fires_query = """
+                    SELECT location_lat as latitude, location_lng as longitude,
+                           value as brightness, 
+                           75 as confidence,
+                           DATE(timestamp) as acq_date
+                    FROM metric_data 
+                    WHERE provider_key = 'nasa_firms' 
+                    AND timestamp > datetime('now', '-24 hours')
+                    AND location_lat IS NOT NULL 
+                    AND location_lng IS NOT NULL
+                    AND value > 300
+                    ORDER BY timestamp DESC
+                    LIMIT 500
+                """
+            
+            fires = execute_query(fires_query)
             
             # Get air quality data with coordinates
-            air_quality = execute_query("""
-                SELECT location_lat as latitude, location_lng as longitude,
-                       AVG(value) as value,
-                       metadata,
-                       MAX(timestamp) as last_updated
-                FROM metric_data 
-                WHERE provider_key = 'openaq' 
-                AND metric_name = 'air_quality_pm25'
-                AND timestamp > datetime('now', '-7 days')
-                AND location_lat IS NOT NULL 
-                AND location_lng IS NOT NULL
-                GROUP BY location_lat, location_lng
-                ORDER BY value DESC
-                LIMIT 200
-            """)
+            if IS_PRODUCTION:
+                air_query = """
+                    SELECT location_lat as latitude, location_lng as longitude,
+                           AVG(value) as value,
+                           metadata,
+                           MAX(timestamp) as last_updated
+                    FROM metric_data 
+                    WHERE provider_key = 'openaq' 
+                    AND metric_name = 'air_quality_pm25'
+                    AND timestamp > NOW() - INTERVAL '7 days'
+                    AND location_lat IS NOT NULL 
+                    AND location_lng IS NOT NULL
+                    GROUP BY location_lat, location_lng
+                    ORDER BY value DESC
+                    LIMIT 200
+                """
+            else:
+                air_query = """
+                    SELECT location_lat as latitude, location_lng as longitude,
+                           AVG(value) as value,
+                           metadata,
+                           MAX(timestamp) as last_updated
+                    FROM metric_data 
+                    WHERE provider_key = 'openaq' 
+                    AND metric_name = 'air_quality_pm25'
+                    AND timestamp > datetime('now', '-7 days')
+                    AND location_lat IS NOT NULL 
+                    AND location_lng IS NOT NULL
+                    GROUP BY location_lat, location_lng
+                    ORDER BY value DESC
+                    LIMIT 200
+                """
+            
+            air_quality = execute_query(air_query)
             
             # Get ocean data with coordinates
-            ocean_stations = execute_query("""
-                SELECT location_lat as latitude, location_lng as longitude,
-                       AVG(CASE WHEN metric_name = 'water_temperature' THEN value END) as temperature,
-                       AVG(CASE WHEN metric_name = 'water_level' THEN value END) as water_level,
-                       metadata,
-                       MAX(timestamp) as last_updated
+            if IS_PRODUCTION:
+                ocean_query = """
+                    SELECT location_lat as latitude, location_lng as longitude,
+                           AVG(CASE WHEN metric_name = 'water_temperature' THEN value END) as temperature,
+                           AVG(CASE WHEN metric_name = 'water_level' THEN value END) as water_level,
+                           metadata,
+                           MAX(timestamp) as last_updated
                     FROM metric_data 
-                WHERE provider_key = 'noaa_ocean' 
-                AND date(timestamp) > date('now', '-7 days')
-                AND location_lat IS NOT NULL 
-                AND location_lng IS NOT NULL
-                GROUP BY location_lat, location_lng
-                LIMIT 20
-            """)
+                    WHERE provider_key = 'noaa_ocean' 
+                    AND DATE(timestamp) > CURRENT_DATE - INTERVAL '7 days'
+                    AND location_lat IS NOT NULL 
+                    AND location_lng IS NOT NULL
+                    GROUP BY location_lat, location_lng
+                    LIMIT 20
+                """
+            else:
+                ocean_query = """
+                    SELECT location_lat as latitude, location_lng as longitude,
+                           AVG(CASE WHEN metric_name = 'water_temperature' THEN value END) as temperature,
+                           AVG(CASE WHEN metric_name = 'water_level' THEN value END) as water_level,
+                           metadata,
+                           MAX(timestamp) as last_updated
+                    FROM metric_data 
+                    WHERE provider_key = 'noaa_ocean' 
+                    AND date(timestamp) > date('now', '-7 days')
+                    AND location_lat IS NOT NULL 
+                    AND location_lng IS NOT NULL
+                    GROUP BY location_lat, location_lng
+                    LIMIT 20
+                """
+            
+            ocean_stations = execute_query(ocean_query)
             
             # Process data for map
             fire_data = []
