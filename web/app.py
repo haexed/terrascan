@@ -19,7 +19,7 @@ load_dotenv()
 # Add parent directory to path for imports
 sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 
-from database.db import init_database, execute_query
+from database.db import init_database, execute_query, IS_PRODUCTION
 from tasks.runner import TaskRunner
 from version import get_version
 
@@ -484,16 +484,30 @@ def create_app():
             
             if result['success']:
                 # Get updated biodiversity stats
-                biodiversity_stats = execute_query("""
-                    SELECT 
-                        COUNT(*) as total_records,
-                        AVG(CASE WHEN metric_name = 'species_observations' THEN value END) as avg_observations,
-                        AVG(CASE WHEN metric_name = 'species_diversity' THEN value END) as avg_diversity,
-                        COUNT(DISTINCT CASE WHEN metric_name = 'species_observations' THEN location_lat || ',' || location_lng END) as region_count
-                    FROM metric_data 
-                    WHERE provider_key = 'gbif'
-                    AND timestamp >= datetime('now', '-24 hours')
-                """)
+                if IS_PRODUCTION:
+                    stats_query = """
+                        SELECT 
+                            COUNT(*) as total_records,
+                            AVG(CASE WHEN metric_name = 'species_observations' THEN value END) as avg_observations,
+                            AVG(CASE WHEN metric_name = 'species_diversity' THEN value END) as avg_diversity,
+                            COUNT(DISTINCT CASE WHEN metric_name = 'species_observations' THEN CONCAT(location_lat, ',', location_lng) END) as region_count
+                        FROM metric_data 
+                        WHERE provider_key = 'gbif'
+                        AND timestamp >= NOW() - INTERVAL '24 hours'
+                    """
+                else:
+                    stats_query = """
+                        SELECT 
+                            COUNT(*) as total_records,
+                            AVG(CASE WHEN metric_name = 'species_observations' THEN value END) as avg_observations,
+                            AVG(CASE WHEN metric_name = 'species_diversity' THEN value END) as avg_diversity,
+                            COUNT(DISTINCT CASE WHEN metric_name = 'species_observations' THEN location_lat || ',' || location_lng END) as region_count
+                        FROM metric_data 
+                        WHERE provider_key = 'gbif'
+                        AND timestamp >= datetime('now', '-24 hours')
+                    """
+                
+                biodiversity_stats = execute_query(stats_query)
                 
                 stats = biodiversity_stats[0] if biodiversity_stats else {}
                 
@@ -618,56 +632,114 @@ def get_environmental_health_data():
     """Get current environmental health data from database"""
     try:
         # Get recent fire data (last 7 days) - using existing metric_data table
-        fire_data = execute_query("""
-            SELECT COUNT(*) as fire_count, AVG(value) as avg_brightness
-            FROM metric_data 
-            WHERE provider_key = 'nasa_firms' 
-            AND timestamp >= datetime('now', '-7 days')
-        """)
+        if IS_PRODUCTION:
+            fire_query = """
+                SELECT COUNT(*) as fire_count, AVG(value) as avg_brightness
+                FROM metric_data 
+                WHERE provider_key = 'nasa_firms' 
+                AND timestamp >= NOW() - INTERVAL '7 days'
+            """
+        else:
+            fire_query = """
+                SELECT COUNT(*) as fire_count, AVG(value) as avg_brightness
+                FROM metric_data 
+                WHERE provider_key = 'nasa_firms' 
+                AND timestamp >= datetime('now', '-7 days')
+            """
+        fire_data = execute_query(fire_query)
         
         # Get recent air quality data (last 7 days)
-        air_data = execute_query("""
-            SELECT AVG(value) as avg_pm25, COUNT(*) as station_count
-            FROM metric_data 
-            WHERE provider_key = 'openaq' 
-            AND metric_name = 'air_quality_pm25'
-            AND timestamp >= datetime('now', '-7 days')
-        """)
+        if IS_PRODUCTION:
+            air_query = """
+                SELECT AVG(value) as avg_pm25, COUNT(*) as station_count
+                FROM metric_data 
+                WHERE provider_key = 'openaq' 
+                AND metric_name = 'air_quality_pm25'
+                AND timestamp >= NOW() - INTERVAL '7 days'
+            """
+        else:
+            air_query = """
+                SELECT AVG(value) as avg_pm25, COUNT(*) as station_count
+                FROM metric_data 
+                WHERE provider_key = 'openaq' 
+                AND metric_name = 'air_quality_pm25'
+                AND timestamp >= datetime('now', '-7 days')
+            """
+        air_data = execute_query(air_query)
         
         # Get recent ocean temperature data (last 7 days)  
-        ocean_data = execute_query("""
-            SELECT AVG(value) as avg_temp, COUNT(*) as station_count
-            FROM metric_data
-            WHERE provider_key = 'noaa_ocean'
-            AND metric_name = 'water_temperature'
-            AND timestamp >= datetime('now', '-7 days')
-        """)
+        if IS_PRODUCTION:
+            ocean_query = """
+                SELECT AVG(value) as avg_temp, COUNT(*) as station_count
+                FROM metric_data
+                WHERE provider_key = 'noaa_ocean'
+                AND metric_name = 'water_temperature'
+                AND timestamp >= NOW() - INTERVAL '7 days'
+            """
+        else:
+            ocean_query = """
+                SELECT AVG(value) as avg_temp, COUNT(*) as station_count
+                FROM metric_data
+                WHERE provider_key = 'noaa_ocean'
+                AND metric_name = 'water_temperature'
+                AND timestamp >= datetime('now', '-7 days')
+            """
+        ocean_data = execute_query(ocean_query)
         
         # Get recent weather data (last 24 hours)
-        weather_data = execute_query("""
-            SELECT 
-                AVG(CASE WHEN metric_name = 'temperature' THEN value END) as avg_temp,
-                AVG(CASE WHEN metric_name = 'humidity' THEN value END) as avg_humidity,
-                AVG(CASE WHEN metric_name = 'wind_speed' THEN value END) as avg_wind_speed,
-                AVG(CASE WHEN metric_name = 'atmospheric_pressure' THEN value END) as avg_pressure,
-                COUNT(CASE WHEN metric_name = 'weather_alert' THEN 1 END) as alert_count,
-                COUNT(DISTINCT CASE WHEN metric_name = 'temperature' THEN location_lat || ',' || location_lng END) as city_count
-            FROM metric_data
-            WHERE provider_key = 'openweather'
-            AND timestamp >= datetime('now', '-24 hours')
-        """)
+        if IS_PRODUCTION:
+            weather_query = """
+                SELECT 
+                    AVG(CASE WHEN metric_name = 'temperature' THEN value END) as avg_temp,
+                    AVG(CASE WHEN metric_name = 'humidity' THEN value END) as avg_humidity,
+                    AVG(CASE WHEN metric_name = 'wind_speed' THEN value END) as avg_wind_speed,
+                    AVG(CASE WHEN metric_name = 'atmospheric_pressure' THEN value END) as avg_pressure,
+                    COUNT(CASE WHEN metric_name = 'weather_alert' THEN 1 END) as alert_count,
+                    COUNT(DISTINCT CASE WHEN metric_name = 'temperature' THEN CONCAT(location_lat, ',', location_lng) END) as city_count
+                FROM metric_data
+                WHERE provider_key = 'openweather'
+                AND timestamp >= NOW() - INTERVAL '24 hours'
+            """
+        else:
+            weather_query = """
+                SELECT 
+                    AVG(CASE WHEN metric_name = 'temperature' THEN value END) as avg_temp,
+                    AVG(CASE WHEN metric_name = 'humidity' THEN value END) as avg_humidity,
+                    AVG(CASE WHEN metric_name = 'wind_speed' THEN value END) as avg_wind_speed,
+                    AVG(CASE WHEN metric_name = 'atmospheric_pressure' THEN value END) as avg_pressure,
+                    COUNT(CASE WHEN metric_name = 'weather_alert' THEN 1 END) as alert_count,
+                    COUNT(DISTINCT CASE WHEN metric_name = 'temperature' THEN location_lat || ',' || location_lng END) as city_count
+                FROM metric_data
+                WHERE provider_key = 'openweather'
+                AND timestamp >= datetime('now', '-24 hours')
+            """
+        weather_data = execute_query(weather_query)
         
         # Get recent biodiversity data (last 7 days)
-        biodiversity_data = execute_query("""
-            SELECT 
-                AVG(CASE WHEN metric_name = 'species_observations' THEN value END) as avg_observations,
-                AVG(CASE WHEN metric_name = 'species_diversity' THEN value END) as avg_diversity,
-                COUNT(DISTINCT CASE WHEN metric_name = 'species_observations' THEN location_lat || ',' || location_lng END) as region_count,
-                SUM(CASE WHEN metric_name = 'species_observations' THEN value ELSE 0 END) as total_observations
-            FROM metric_data
-            WHERE provider_key = 'gbif'
-            AND timestamp >= datetime('now', '-7 days')
-        """)
+        if IS_PRODUCTION:
+            biodiversity_query = """
+                SELECT 
+                    AVG(CASE WHEN metric_name = 'species_observations' THEN value END) as avg_observations,
+                    AVG(CASE WHEN metric_name = 'species_diversity' THEN value END) as avg_diversity,
+                    COUNT(DISTINCT CASE WHEN metric_name = 'species_observations' THEN CONCAT(location_lat, ',', location_lng) END) as region_count,
+                    SUM(CASE WHEN metric_name = 'species_observations' THEN value ELSE 0 END) as total_observations
+                FROM metric_data
+                WHERE provider_key = 'gbif'
+                AND timestamp >= NOW() - INTERVAL '7 days'
+            """
+        else:
+            biodiversity_query = """
+                SELECT 
+                    AVG(CASE WHEN metric_name = 'species_observations' THEN value END) as avg_observations,
+                    AVG(CASE WHEN metric_name = 'species_diversity' THEN value END) as avg_diversity,
+                    COUNT(DISTINCT CASE WHEN metric_name = 'species_observations' THEN location_lat || ',' || location_lng END) as region_count,
+                    SUM(CASE WHEN metric_name = 'species_observations' THEN value ELSE 0 END) as total_observations
+                FROM metric_data
+                WHERE provider_key = 'gbif'
+                AND timestamp >= datetime('now', '-7 days')
+            """
+        
+        biodiversity_data = execute_query(biodiversity_query)
         
         return {
             'fires': {
