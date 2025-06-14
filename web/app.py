@@ -196,7 +196,7 @@ def create_app():
             # Get all tasks from database
             all_tasks = execute_query("""
                 SELECT id, name, description, command, active, cron_schedule, 
-                       created_at, updated_at, parameters
+                       created_date, updated_date, parameters
                 FROM task 
                 ORDER BY name
             """)
@@ -957,7 +957,7 @@ def create_app():
             # Get all tasks
             tasks = execute_query("""
                 SELECT id, name, description, command, active, cron_schedule, 
-                       created_at, updated_at, parameters
+                       created_date, updated_date, parameters
                 FROM task 
                 ORDER BY name
             """)
@@ -1083,13 +1083,13 @@ def create_app():
             if IS_PRODUCTION:
                 execute_query("""
                     UPDATE task 
-                    SET active = %s, updated_at = NOW() 
+                    SET active = %s, updated_date = NOW() 
                     WHERE name = %s
                 """, (new_status, task_name))
             else:
                 execute_query("""
                     UPDATE task 
-                    SET active = ?, updated_at = datetime('now') 
+                    SET active = ?, updated_date = datetime('now') 
                     WHERE name = ?
                 """, (new_status, task_name))
             
