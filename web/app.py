@@ -63,6 +63,7 @@ def create_app():
             
             # Prepare template data with individual data sections
             fire_data = {
+                'active_fires': health_data['fires']['count'],
                 'count': health_data['fires']['count'],
                 'avg_brightness': health_data['fires']['avg_brightness'],
                 'last_update': health_data['last_updated']
