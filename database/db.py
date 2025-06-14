@@ -66,6 +66,11 @@ def execute_insert(query: str, params: tuple = None) -> bool:
         conn = get_db_connection()
         cursor = conn.cursor()
         
+        # Convert SQLite syntax to PostgreSQL if needed
+        if IS_PRODUCTION and '?' in query:
+            # Replace ? placeholders with %s for PostgreSQL
+            query = query.replace('?', '%s')
+        
         cursor.execute(query, params or ())
         conn.commit()
         
