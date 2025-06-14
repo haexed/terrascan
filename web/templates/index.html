@@ -213,11 +213,6 @@
 
                 <div class="last-update mt-3 text-center">
                     Last update: {{ ocean_data.last_update }}
-                    <br>
-                    <button class="btn btn-sm btn-warning mt-2" onclick="forceOceanRefresh()"
-                        title="If showing 0°C, click to force refresh ocean data">
-                        🌊 Force Ocean Refresh
-                    </button>
                 </div>
             </div>
         </div>
@@ -512,44 +507,8 @@
         }
     }
 
-    // Nuclear ocean refresh function
-    function forceOceanRefresh() {
-        console.log('🔥 NUCLEAR OCEAN REFRESH INITIATED');
+    // Ocean refresh function removed - underlying SQL issues fixed
 
-        // Clear all possible caches
-        if ('caches' in window) {
-            caches.keys().then(names => {
-                names.forEach(name => {
-                    caches.delete(name);
-                });
-            });
-        }
-
-        // Force reload with multiple cache busting parameters
-        const timestamp = new Date().getTime();
-        const random = Math.random().toString(36).substring(7);
-        window.location.href = window.location.href.split('?')[0] +
-            '?ocean_cache_bust=' + timestamp +
-            '&random=' + random +
-            '&force_ocean=true' +
-            '&v=' + timestamp;
-    }
-
-    // Debug ocean data on page load
-    document.addEventListener('DOMContentLoaded', function () {
-        const oceanTemp = document.querySelector('[data-temp]');
-        if (oceanTemp) {
-            console.log('Ocean temp element found:', oceanTemp.getAttribute('data-temp'));
-            console.log('Ocean status:', oceanTemp.getAttribute('data-status'));
-            console.log('Ocean display text:', oceanTemp.textContent);
-
-            // If showing 0°C, highlight the element
-            if (oceanTemp.textContent.includes('0°C')) {
-                oceanTemp.style.border = '3px solid orange';
-                oceanTemp.title = 'CACHE ISSUE DETECTED - This should show ' + oceanTemp.getAttribute('data-temp') + '°C';
-                console.warn('CACHE ISSUE: Showing 0°C but data-temp is', oceanTemp.getAttribute('data-temp'));
-            }
-        }
-    });
+    // Debug ocean functionality removed - data display issues resolved
 </script>
 {% endblock %}
