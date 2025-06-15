@@ -298,7 +298,7 @@
                                     <small>{{ run.started_at }}</small>
                                 </td>
                                 <td>
-                                    <small>{{ "%.1f"|format(run.duration_seconds) }}s</small>
+                                    <small>{{ "%.1f"|format(run.duration_seconds or 0) }}s</small>
                                 </td>
                                 <td>
                                     <span class="text-success">{{ run.records_processed }}</span>
@@ -334,12 +334,7 @@
                 <h5 class="mb-3">🔧 System Configuration</h5>
                 <div class="small">
                     <strong>Version:</strong> {{ version }}<br>
-                    <strong>Database:</strong>
-                    {% if database_size == "PostgreSQL (Railway)" %}
-                    PostgreSQL (Railway Production)
-                    {% else %}
-                    SQLite ({{ database_size }})
-                    {% endif %}<br>
+                    <strong>Database:</strong> PostgreSQL<br>
                     <strong>Data Sources:</strong> NASA FIRMS, OpenAQ, NOAA<br>
                     <strong>Auto-refresh:</strong> Every 15 minutes<br>
                     <strong>Data Retention:</strong> 30 days<br>

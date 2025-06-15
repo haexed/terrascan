@@ -9,15 +9,15 @@ import json
 from datetime import datetime
 from typing import List, Dict, Any, Optional
 
-# PostgreSQL connection
+# PostgreSQL connection (required for both development and production)
 DATABASE_URL = os.environ.get('DATABASE_URL')
 if not DATABASE_URL:
-    raise ValueError("❌ DATABASE_URL environment variable is required. TERRASCAN uses PostgreSQL.")
+    raise ValueError("❌ DATABASE_URL environment variable is required. TERRASCAN uses PostgreSQL for both development and production. See DEVELOPMENT.md for setup instructions.")
 
 import psycopg2
 import psycopg2.extras
 
-print("🚀 TERRASCAN - PostgreSQL Production Platform")
+print("🚀 TERRASCAN - PostgreSQL Platform")
 
 def get_db_connection():
     """Get PostgreSQL database connection"""
@@ -78,7 +78,7 @@ def execute_many(query: str, params_list: List[tuple]) -> bool:
 
 def init_database():
     """Initialize PostgreSQL database - use setup_production_railway.py for schema setup"""
-    print("🚀 Production PostgreSQL database - use setup_production_railway.py for initialization")
+    print("🚀 PostgreSQL database - use setup_production_railway.py for initialization")
     return True
 
 def get_database_stats():
@@ -109,7 +109,6 @@ def get_database_stats():
         
         # Database info
         stats['database_type'] = 'PostgreSQL'
-        stats['is_production'] = True
         
         return stats
         
@@ -120,7 +119,6 @@ def get_database_stats():
             'by_provider': {},
             'recent_records': 0,
             'database_type': 'PostgreSQL',
-            'is_production': True,
             'error': str(e)
         }
 
@@ -366,13 +364,29 @@ def batch_store_metric_data(data_batch: List[Dict[str, Any]]) -> Dict[str, Any]:
         print(f"❌ Error in batch store: {e}")
         return {'success': False, 'error': str(e), 'processed': 0}
 
-def get_db_path():
-    """Get database connection info"""
-    return "PostgreSQL (Railway Production)"
+def get_database_info():
+    """Get database connection information"""
+    try:
+        # Parse DATABASE_URL to show connection details (without password)
+        from urllib.parse import urlparse
+        parsed = urlparse(DATABASE_URL)
+        
+        info = {
+            'type': 'PostgreSQL',
+            'host': parsed.hostname or 'localhost',
+            'port': parsed.port or 5432,
+            'database': parsed.path.lstrip('/') if parsed.path else 'unknown',
+            'username': parsed.username or 'unknown'
+        }
+        
+        return f"PostgreSQL: {info['username']}@{info['host']}:{info['port']}/{info['database']}"
+        
+    except Exception as e:
+        return f"PostgreSQL (connection parse error: {e})"
 
 if __name__ == "__main__":
     print("🔧 TERRASCAN Database Module")
-    print("🚀 PostgreSQL Production Platform")
+    print("🚀 PostgreSQL Platform")
     
     if init_database():
         print("✅ Database module loaded successfully")

@@ -374,13 +374,18 @@ def create_app():
             from database.config_manager import get_system_config
             simulation_mode = get_system_config('simulation_mode', True)
             
+            # Get version info
+            from utils import get_version
+            version = get_version()
+            
             return render_template('system.html',
                                  system_status=system_status,
                                  providers=providers,
                                  recent_runs=recent_runs,
                                  data_breakdown=data_breakdown,
                                  database_size=database_size,
-                                 simulation_mode=simulation_mode)
+                                 simulation_mode=simulation_mode,
+                                 version=version)
                                  
         except Exception as e:
             return f"TERRASCAN System Error: {e}", 500

@@ -2,6 +2,26 @@
 
 All notable changes to TERRASCAN will be documented in this file.
 
+## [3.1.1] - 2025-06-15
+
+### Improved
+- **Complete SQLite removal**: Cleaned all remaining SQLite references from documentation and codebase
+- **PostgreSQL-only development**: Updated DEVELOPMENT.md to focus exclusively on PostgreSQL setup
+- **Simplified database module**: Removed production/development flags and error messages  
+- **Enhanced system page**: Added version display and improved database information formatting
+- **Better error handling**: Fixed duration display bug in system task logs (null safety)
+
+### Changed
+- **DEVELOPMENT.md**: Streamlined PostgreSQL setup guide, removed SQLite quick start section
+- **Database error messages**: Clearer PostgreSQL requirement messaging with setup guidance
+- **Function rename**: `get_db_path()` → `get_database_info()` for better clarity
+- **System template**: Simplified database display to show "PostgreSQL" uniformly
+
+### Technical Cleanup
+- **Removed 30+ lines** of SQLite-related documentation and dual-database setup complexity
+- **Standardized database info**: Consistent PostgreSQL connection information display
+- **Fixed template bugs**: Null-safe duration formatting in task execution logs
+
 ## [3.1.0] - 2025-06-14
 
 ### 🚀 MAJOR DATA EFFICIENCY UPGRADE - Smart Deduplication System

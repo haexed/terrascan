@@ -1,28 +1,33 @@
 # 🔧 TERRASCAN Development Guide
 
-This guide helps you set up TERRASCAN for local development with either SQLite (quick start) or PostgreSQL (production-like environment).
+This guide helps you set up TERRASCAN for local development using PostgreSQL.
 
-## 🚀 Quick Start (SQLite)
-
-For the fastest development setup:
+## 🚀 Quick Start
 
 ```bash
-# Clone and install
+# 1. Clone and install
 git clone https://github.com/haexed/terrascan.git
 cd terrascan
 pip install -r requirements.txt
 
-# Configure environment
-cp .env.example .env
-# Edit .env with your API keys
+# 2. Set up PostgreSQL (see detailed setup below)
+# Create database: terrascan_dev
+# Create user: terrascan_user
 
-# Run (automatically creates SQLite database)
+# 3. Configure environment
+cp .env.example .env
+export DATABASE_URL="postgresql://terrascan_user:your_password@localhost/terrascan_dev"
+
+# 4. Initialize database schema
+python3 setup_production_railway.py
+
+# 5. Start development server
 python3 run.py
 ```
 
-## 🗄️ Local PostgreSQL Setup (Recommended)
+## 🗄️ Detailed PostgreSQL Setup
 
-For a production-like development environment:
+TERRASCAN uses PostgreSQL for both development and production environments.
 
 ### 1. Install PostgreSQL
 
@@ -82,14 +87,9 @@ python3 setup_production_railway.py
 python3 run.py
 ```
 
-## 🔄 Database Switching
+## 🔄 Database Configuration
 
-The application automatically detects your database configuration:
-
-- **SQLite**: Used when `DATABASE_URL` is not set
-- **PostgreSQL**: Used when `DATABASE_URL` is set
-
-You can switch between them by simply setting or unsetting the `DATABASE_URL` environment variable.
+TERRASCAN requires PostgreSQL for both development and production. The `DATABASE_URL` environment variable must be set to connect to your PostgreSQL database.
 
 ## 🧪 Testing API Integrations
 
@@ -122,9 +122,8 @@ Access the task management interface at: http://localhost:5000/tasks
 ```
 terrascan/
 ├── database/              # Database connection and schema
-│   ├── db.py             # Main database module (dual SQLite/PostgreSQL)
-│   ├── config_manager.py # Configuration management
-│   └── terrascan.db      # SQLite database (auto-created)
+│   ├── db.py             # PostgreSQL database module
+│   └── config_manager.py # Configuration management
 ├── tasks/                # Data collection tasks
 │   ├── fetch_nasa_fires.py
 │   ├── fetch_openaq_latest.py
@@ -137,7 +136,7 @@ terrascan/
 │   ├── app.py           # Main application
 │   ├── static/          # CSS, JS, images
 │   └── templates/       # HTML templates
-├── setup_production_railway.py  # Production database setup
+├── setup_production_railway.py  # Database schema setup
 ├── requirements.txt      # Python dependencies
 └── run.py               # Application entry point
 ```
@@ -148,14 +147,8 @@ terrascan/
 
 **View current database:**
 ```bash
-# Check which database is being used
-python3 -c "from database.db import get_db_path; print(get_db_path())"
-```
-
-**Reset SQLite database:**
-```bash
-rm database/terrascan.db
-python3 run.py  # Will recreate automatically
+# Check database connection details
+python3 -c "from database.db import get_database_info; print(get_database_info())"
 ```
 
 **Reset PostgreSQL database:**
@@ -163,6 +156,7 @@ python3 run.py  # Will recreate automatically
 # Drop and recreate database
 sudo -u postgres psql -c "DROP DATABASE IF EXISTS terrascan_dev;"
 sudo -u postgres psql -c "CREATE DATABASE terrascan_dev;"
+sudo -u postgres psql -c "GRANT ALL PRIVILEGES ON DATABASE terrascan_dev TO terrascan_user;"
 python3 setup_production_railway.py
 ```
 
@@ -228,7 +222,7 @@ sudo -u postgres psql -c "GRANT ALL PRIVILEGES ON DATABASE terrascan_dev TO terr
 
 To test your changes work in a production-like environment:
 
-1. **Use PostgreSQL locally** (follow setup above)
+1. **Set up PostgreSQL locally** (follow setup above)
 2. **Test with real API keys** (not simulation mode)
 3. **Run all tasks** via web interface
 4. **Check system status** at `/system`
@@ -236,7 +230,7 @@ To test your changes work in a production-like environment:
 
 ## 🤝 Contributing
 
-1. **Setup development environment** (preferably with PostgreSQL)
+1. **Setup development environment** with PostgreSQL
 2. **Create feature branch** from `main`
 3. **Test thoroughly** with real API integrations
 4. **Update documentation** if needed
