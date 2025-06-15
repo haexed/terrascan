@@ -52,7 +52,8 @@ h6,
 .eco-card h3,
 .eco-card h4,
 .eco-card h5,
-.eco-card h6 {
+.eco-card h6,
+.eco-card .lead {
     color: var(--infp-forest);
 }
 
