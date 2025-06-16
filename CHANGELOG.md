@@ -2,118 +2,107 @@
 
 All notable changes to TERRASCAN will be documented in this file.
 
-## [3.1.1] - 2025-06-15
-
-### Improved
-- **Complete SQLite removal**: Cleaned all remaining SQLite references from documentation and codebase
-- **PostgreSQL-only development**: Updated DEVELOPMENT.md to focus exclusively on PostgreSQL setup
-- **Simplified database module**: Removed production/development flags and error messages  
-- **Enhanced system page**: Added version display and improved database information formatting
-- **Better error handling**: Fixed duration display bug in system task logs (null safety)
+## [3.1.2] - 2025-06-16
 
 ### Changed
-- **DEVELOPMENT.md**: Streamlined PostgreSQL setup guide, removed SQLite quick start section
-- **Database error messages**: Clearer PostgreSQL requirement messaging with setup guidance
-- **Function rename**: `get_db_path()` → `get_database_info()` for better clarity
-- **System template**: Simplified database display to show "PostgreSQL" uniformly
+- Rewrote web/app.py from 1,293 to 618 lines (52% reduction)
+- Consolidated duplicate data preparation between routes
+- Simplified cache busting with single decorator
 
-### Technical Cleanup
-- **Removed 30+ lines** of SQLite-related documentation and dual-database setup complexity
-- **Standardized database info**: Consistent PostgreSQL connection information display
-- **Fixed template bugs**: Null-safe duration formatting in task execution logs
+### Removed
+- Debug endpoints: /api/collect-biodiversity, /api/setup-production, /api/fix-tasks, /api/debug-task
+- Redundant imports and duplicate code paths
+- Ultra-aggressive cache headers throughout application
+
+### Improved
+- Clean Flask architecture with single-responsibility functions
+- Consistent error handling across all endpoints
+- Maintainable helper functions for data formatting
+
+## [3.1.1] - 2025-06-15
+
+### Removed
+- All remaining SQLite references from documentation and codebase
+- SQLite quick start section from DEVELOPMENT.md
+- Production/development flags from database module
+
+### Changed
+- Function rename: get_db_path() → get_database_info()
+- DEVELOPMENT.md to focus exclusively on PostgreSQL setup
+- System template to show "PostgreSQL" uniformly
+
+### Fixed
+- Duration display bug in system task logs (null safety)
+- Database error messages with clearer PostgreSQL guidance
 
 ## [3.1.0] - 2025-06-14
 
-### 🚀 MAJOR DATA EFFICIENCY UPGRADE - Smart Deduplication System
-
 ### Added
-- **Intelligent deduplication**: PostgreSQL UPSERT prevents duplicate environmental data
-- **Incremental data fetching**: Only fetches new data since last collection
-- **Batch processing**: High-performance bulk data storage with transaction safety
-- **Automatic duplicate cleanup**: Migration script removes existing duplicates
-- **Smart fire timestamps**: NASA FIRMS now uses actual fire detection times (not fetch time)
-- **Database constraints**: Composite unique keys prevent duplicate storage
-- **Coverage statistics**: Data efficiency reporting and duplicate detection
+- PostgreSQL UPSERT prevents duplicate environmental data
+- Incremental data fetching - only fetches new data since last collection
+- Batch processing with transaction safety
+- Automatic duplicate cleanup migration script
+- Database constraints with composite unique keys
+- New functions: get_latest_timestamp(), batch_store_metric_data(), get_data_coverage_stats()
 
 ### Changed
-- **NASA FIRMS fetcher**: Fixed major bug using actual fire timestamps instead of current time
-- **Database schema**: Added unique constraints on (provider, metric, timestamp, location)
-- **Storage efficiency**: 5-10x reduction in duplicate data storage
-- **Query performance**: Faster queries with deduplicated dataset
-- **Data integrity**: UPSERT updates existing records instead of creating duplicates
+- NASA FIRMS fetcher to use actual fire detection times instead of current time
+- Database schema with unique constraints on (provider, metric, timestamp, location)
+- store_metric_data() enhanced with UPSERT and conflict resolution
 
-### Technical Improvements
-- **database/add_deduplication.py**: Complete migration system with duplicate analysis
-- **Enhanced store_metric_data()**: UPSERT with conflict resolution 
-- **New functions**: `get_latest_timestamp()`, `batch_store_metric_data()`, `get_data_coverage_stats()`
-- **Railway deployment**: Automatic deduplication migration on deploy
-- **Fallback compatibility**: Graceful handling during migration transition
+### Fixed
+- Major NASA FIRMS timestamp bug
+- Data integrity with UPSERT updates instead of creating duplicates
 
-### Performance Impact
-- **Storage reduction**: Up to 90% reduction in duplicate environmental records
-- **Faster queries**: Elimination of redundant data improves query performance  
-- **Cost efficiency**: Reduced database storage costs on Railway
-- **API efficiency**: Fetchers skip re-downloading existing data
+### Improved
+- 5-10x reduction in duplicate data storage
+- Faster queries with deduplicated dataset
+- Reduced database storage costs
 
 ## [3.0.1] - 2025-06-14
 
-### Improved
-- **Enhanced datetime formatting**: Centralized ISO 8601 compliant system with timezone display
-- **PostgreSQL compatibility**: Fixed datetime subscriptable errors in task templates
-- **Ultra-aggressive cache busting**: Railway deployment cache clearing with multiple strategies  
-- **Consolidated CSS architecture**: Merged tasks.css into style.css for cleaner codebase
-- **Streamlined UI**: Removed verbose admin notices and redundant text for professional interface
-- **Better accessibility**: Removed all text-muted classes (16 instances) for improved readability
-
 ### Added
-- **utils/datetime_utils.py**: Centralized datetime formatting with template filters
-- **Template filters**: `format_dt`, `time_ago`, `format_iso` for consistent datetime display
-- **Enhanced cache headers**: CDN and proxy cache busting for Railway deployments
-- **Version consolidation**: Moved version.py into utils package for better organization
+- utils/datetime_utils.py with centralized datetime formatting
+- Template filters: format_dt, time_ago, format_iso
+- Enhanced cache headers for Railway deployments
+
+### Changed
+- Merged tasks.css into style.css for cleaner codebase
+- Moved version.py into utils package
+- Centralized ISO 8601 compliant datetime system with timezone display
 
 ### Fixed
-- **PostgreSQL datetime errors**: Tasks page template datetime formatting issues resolved
-- **Template cache disabled**: Flask template caching disabled for production consistency
-- **Railway cache issues**: Build and nixpacks cache disabling for fresh deployments
+- PostgreSQL datetime errors in task templates
+- Template cache disabled for production consistency
+- Railway cache issues with build and nixpacks
 
-### Removed  
-- **Redundant admin notices**: Cleaned verbose task control explanations
-- **text-muted classes**: Enhanced contrast and accessibility across all templates
-- **Duplicate CSS files**: Consolidated styling into single style.css file
+### Removed
+- Verbose admin notices and redundant text
+- All text-muted classes (16 instances) for better readability
+- Duplicate CSS files
 
 ## [3.0.0] - 2025-06-14
-
-### 🚀 MAJOR ARCHITECTURAL CHANGE - Python/PostgreSQL Platform
 
 **BREAKING CHANGE**: TERRASCAN now requires PostgreSQL (DATABASE_URL environment variable)
 
 ### Removed
-- **Complete SQLite support** - no more dual database complexity
-- **500+ lines of dual database code** across multiple modules  
-- **All IS_PRODUCTION conditionals** (47 instances removed)
-- **SQLite imports and dependencies** throughout codebase
-- **Local development SQLite database** support
+- Complete SQLite support and dual database complexity
+- 500+ lines of dual database code across multiple modules
+- All IS_PRODUCTION conditionals (47 instances)
+- SQLite imports and dependencies throughout codebase
+- Local development SQLite database support
 
 ### Changed
-- **Database module**: Complete rewrite - 509 → 200 lines (60% reduction)
-- **Web application**: Standardized to PostgreSQL SQL syntax
-- **Config manager**: Simplified to PostgreSQL queries  
-- **All SQL queries**: Converted to %s parameters (PostgreSQL standard)
-- **Architecture**: Now pure Python + PostgreSQL production stack
+- Database module: complete rewrite 509 → 200 lines (60% reduction)
+- Web application standardized to PostgreSQL SQL syntax
+- Config manager simplified to PostgreSQL queries
+- All SQL queries converted to %s parameters (PostgreSQL standard)
+- Architecture: now pure Python + PostgreSQL stack
 
-### Improved
-- **Massive code simplification** - single source of truth for database logic
-- **Eliminates parameter format confusion** (no more ? vs %s issues)
-- **Faster development** without dual database testing complexity
-- **Production-ready cloud-native architecture**
-- **No more database compatibility bugs**
-- **Clean, positive language** throughout codebase and documentation
-- **Professional documentation** without legacy reference clutter
-
-### Migration Guide
-- **Local development** now requires PostgreSQL or Railway dev database
-- **Environment variable** DATABASE_URL is now required
-- **No backward compatibility** with SQLite databases
+### Migration
+- Local development now requires PostgreSQL or Railway dev database
+- DATABASE_URL environment variable is now required
+- No backward compatibility with SQLite databases
 
 ## [2.5.3] - 2025-06-14
 
