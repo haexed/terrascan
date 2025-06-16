@@ -11,6 +11,6 @@
         "restartPolicyMaxRetries": 2
     },
     "watchPatterns": [
-        "**"
+        "/**"
     ]
 }
