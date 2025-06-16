@@ -657,8 +657,7 @@ def create_app():
                 
                 if result['success']:
                     # Get updated biodiversity stats
-                    if IS_PRODUCTION:
-                        stats_query = """
+                    stats_query = """
                             SELECT 
                                 COUNT(*) as total_records,
                                 AVG(CASE WHEN metric_name = 'species_observations' THEN value END) as avg_observations,
@@ -668,20 +667,8 @@ def create_app():
                             WHERE provider_key = 'gbif'
                             AND timestamp >= NOW() - INTERVAL '24 hours'
                         """
-                    else:
-                        stats_query = """
-                            SELECT 
-                                COUNT(*) as total_records,
-                                AVG(CASE WHEN metric_name = 'species_observations' THEN value END) as avg_observations,
-                                AVG(CASE WHEN metric_name = 'species_diversity' THEN value END) as avg_diversity,
-                                COUNT(DISTINCT CASE WHEN metric_name = 'species_observations' THEN location_lat || ',' || location_lng END) as region_count
-                            FROM metric_data 
-                            WHERE provider_key = 'gbif'
-                            AND timestamp >= datetime('now', '-24 hours')
-                        """
-                    
                     biodiversity_stats = execute_query(stats_query)
-                    
+
                     stats = biodiversity_stats[0] if biodiversity_stats else {}
                     
                     return jsonify({
