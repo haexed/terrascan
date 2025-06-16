@@ -1,0 +1,434 @@
+{% extends "base.html" %}
+
+{% block title %}🗄️ TERRASCAN - Database Schema{% endblock %}
+
+{% block content %}
+<!-- Main Content -->
+<div class="container-fluid mt-5 pt-4">
+
+    <!-- Database Info Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="eco-card text-center p-4">
+                <h2 class="mb-3">🗄️ DATABASE SCHEMA DOCUMENTATION</h2>
+                <div class="row">
+                    <div class="col-md-3">
+                        <div class="metric-value text-primary">{{ schema.database_info.database }}</div>
+                        <div class="small">Database Name</div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="metric-value text-info">{{ schema.tables|length }}</div>
+                        <div class="small">Tables</div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="metric-value text-success">{{ schema.indexes|length }}</div>
+                        <div class="small">Indexes</div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="metric-value text-warning">{{ schema.database_info.size }}</div>
+                        <div class="small">Database Size</div>
+                    </div>
+                </div>
+                <div class="mt-3">
+                    <small class="text-muted">
+                        🐘 {{ schema.database_info.version.split()[0] if schema.database_info.version else 'PostgreSQL'
+                        }} |
+                        📅 Generated: {{ schema.generated_at | format_dt }} |
+                        🔧 Version: {{ version }}
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Navigation Pills for Sections -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="eco-card p-3">
+                <ul class="nav nav-pills nav-fill" id="schema-nav" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="tables-tab" data-bs-toggle="pill" data-bs-target="#tables"
+                            type="button" role="tab">
+                            📊 Tables & Columns
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="constraints-tab" data-bs-toggle="pill"
+                            data-bs-target="#constraints" type="button" role="tab">
+                            🛡️ Constraints
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="indexes-tab" data-bs-toggle="pill" data-bs-target="#indexes"
+                            type="button" role="tab">
+                            🔗 Indexes
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="stats-tab" data-bs-toggle="pill" data-bs-target="#stats"
+                            type="button" role="tab">
+                            📈 Statistics
+                        </button>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tab Content -->
+    <div class="tab-content" id="schema-content">
+
+        <!-- Tables Tab -->
+        <div class="tab-pane fade show active" id="tables" role="tabpanel">
+            {% for table in schema.tables %}
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="eco-card p-4">
+                        <!-- Table Header -->
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <div>
+                                <h4 class="mb-1">📋 {{ table.table_name }}</h4>
+                                {% if table.purpose %}
+                                <div class="data-source">{{ table.purpose }}</div>
+                                {% endif %}
+                            </div>
+                            <div class="text-end">
+                                <span class="badge bg-primary me-1">{{ table.columns|length }} columns</span>
+                                {% if table.live_tuples %}
+                                <span class="badge bg-success">{{ "{:,}".format(table.live_tuples) }} records</span>
+                                {% endif %}
+                                {% if table.table_size %}
+                                <span class="badge bg-info">{{ table.table_size }}</span>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        {% if table.description %}
+                        <p class="mb-3">{{ table.description }}</p>
+                        {% endif %}
+
+                        <!-- Key Features and Data Sources -->
+                        {% if table.key_features or table.data_sources %}
+                        <div class="row mb-3">
+                            {% if table.key_features %}
+                            <div class="col-md-6">
+                                <h6>🔑 Key Features</h6>
+                                <ul class="list-unstyled">
+                                    {% for feature in table.key_features %}
+                                    <li class="small mb-1">✅ {{ feature }}</li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                            {% endif %}
+                            {% if table.data_sources %}
+                            <div class="col-md-6">
+                                <h6>🌍 Data Sources</h6>
+                                <ul class="list-unstyled">
+                                    {% for source in table.data_sources %}
+                                    <li class="small mb-1">📡 {{ source }}</li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                            {% endif %}
+                        </div>
+                        {% endif %}
+
+                        <!-- Columns Table -->
+                        <div class="table-responsive">
+                            <table class="table table-sm table-striped">
+                                <thead>
+                                    <tr class="table-dark">
+                                        <th>Column Name</th>
+                                        <th>Data Type</th>
+                                        <th>Nullable</th>
+                                        <th>Default Value</th>
+                                        <th>Description</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for column in table.columns %}
+                                    <tr>
+                                        <td><code>{{ column.column_name }}</code></td>
+                                        <td><span class="badge bg-secondary">{{ column.full_type }}</span></td>
+                                        <td>
+                                            {% if column.is_nullable == 'YES' %}
+                                            <span class="badge bg-warning text-dark">YES</span>
+                                            {% else %}
+                                            <span class="badge bg-danger">NO</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if column.column_default %}
+                                            <code class="small">{{ column.column_default }}</code>
+                                            {% else %}
+                                            <span class="text-muted">-</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if column.column_comment %}
+                                            {{ column.column_comment }}
+                                            {% else %}
+                                            <span class="text-muted">No description</span>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Constraints Tab -->
+        <div class="tab-pane fade" id="constraints" role="tabpanel">
+            {% set constraint_groups = schema.constraints | groupby('table_name') %}
+            {% for table_name, table_constraints in constraint_groups %}
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="eco-card p-4">
+                        <h4 class="mb-3">🛡️ {{ table_name }} Constraints</h4>
+                        <div class="row">
+                            {% for constraint in table_constraints %}
+                            <div class="col-md-6 mb-3">
+                                <div class="card h-100">
+                                    <div class="card-body">
+                                        <h6 class="card-title">
+                                            {% if constraint.constraint_type == 'PRIMARY KEY' %}
+                                            <span class="badge bg-primary">🔑 PRIMARY KEY</span>
+                                            {% elif constraint.constraint_type == 'FOREIGN KEY' %}
+                                            <span class="badge bg-success">🔗 FOREIGN KEY</span>
+                                            {% elif constraint.constraint_type == 'UNIQUE' %}
+                                            <span class="badge bg-warning text-dark">⚡ UNIQUE</span>
+                                            {% else %}
+                                            <span class="badge bg-info">{{ constraint.constraint_type }}</span>
+                                            {% endif %}
+                                        </h6>
+                                        <p class="card-text small mb-1"><strong>Name:</strong> {{
+                                            constraint.constraint_name }}</p>
+                                        {% if constraint.column_name %}
+                                        <p class="card-text small mb-1"><strong>Column:</strong>
+                                            <code>{{ constraint.column_name }}</code>
+                                        </p>
+                                        {% endif %}
+                                        {% if constraint.foreign_table_name %}
+                                        <p class="card-text small mb-0">
+                                            <strong>References:</strong>
+                                            <code>{{ constraint.foreign_table_name }}.{{ constraint.foreign_column_name }}</code>
+                                        </p>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Indexes Tab -->
+        <div class="tab-pane fade" id="indexes" role="tabpanel">
+            {% set index_groups = schema.indexes | groupby('tablename') %}
+            {% for table_name, table_indexes in index_groups %}
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="eco-card p-4">
+                        <h4 class="mb-3">🔗 {{ table_name }} Indexes</h4>
+                        {% for index in table_indexes %}
+                        <div class="card mb-3">
+                            <div class="card-body">
+                                <div class="row align-items-center">
+                                    <div class="col-md-8">
+                                        <h6 class="card-title">📊 {{ index.indexname }}</h6>
+                                        <div class="bg-light p-3 rounded">
+                                            <code class="small">{{ index.indexdef }}</code>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4 text-end">
+                                        {% if index.index_size %}
+                                        <div class="metric-value text-info">{{ index.index_size }}</div>
+                                        <div class="small">Index Size</div>
+                                        {% endif %}
+                                        {% if index.idx_tup_read %}
+                                        <div class="metric-value text-success mt-2">{{ "{:,}".format(index.idx_tup_read)
+                                            }}</div>
+                                        <div class="small">Total Reads</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Statistics Tab -->
+        <div class="tab-pane fade" id="stats" role="tabpanel">
+            <!-- Table Statistics -->
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="eco-card p-4">
+                        <h4 class="mb-3">📊 Table Statistics</h4>
+                        <div class="row">
+                            {% for stat in schema.data_statistics.table_stats %}
+                            <div class="col-md-4 mb-3">
+                                <div class="text-center p-3 bg-light rounded">
+                                    <div class="metric-value text-primary">{{ "{:,}".format(stat.total_records) }}</div>
+                                    <div class="small mb-2"><strong>{{ stat.table_name }}</strong> records</div>
+                                    {% if stat.unique_providers %}
+                                    <div class="badge bg-info">{{ stat.unique_providers }} providers</div>
+                                    {% endif %}
+                                    {% if stat.active_tasks %}
+                                    <div class="badge bg-success">{{ stat.active_tasks }} active</div>
+                                    {% endif %}
+                                    {% if stat.completed_runs %}
+                                    <div class="badge bg-warning text-dark">{{ stat.completed_runs }} completed</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Provider Statistics -->
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="eco-card p-4">
+                        <h4 class="mb-3">🌍 Data Provider Statistics</h4>
+                        <div class="table-responsive">
+                            <table class="table table-striped">
+                                <thead class="table-dark">
+                                    <tr>
+                                        <th>Provider</th>
+                                        <th>Records</th>
+                                        <th>Metric Types</th>
+                                        <th>First Data</th>
+                                        <th>Last Data</th>
+                                        <th>Active Days</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for provider in schema.data_statistics.provider_stats %}
+                                    <tr>
+                                        <td>
+                                            <strong>{{ provider.provider_key }}</strong>
+                                            {% if provider.provider_key == 'nasa_firms' %}🔥
+                                            {% elif provider.provider_key == 'openaq' %}🌬️
+                                            {% elif provider.provider_key == 'noaa_ocean' %}🌊
+                                            {% elif provider.provider_key == 'openweather' %}⛈️
+                                            {% elif provider.provider_key == 'gbif' %}🦋
+                                            {% endif %}
+                                        </td>
+                                        <td><span class="badge bg-primary">{{ "{:,}".format(provider.record_count)
+                                                }}</span></td>
+                                        <td><span class="badge bg-info">{{ provider.metric_types }}</span></td>
+                                        <td class="small">{{ provider.first_data | format_dt if provider.first_data else
+                                            '-' }}</td>
+                                        <td class="small">{{ provider.last_data | format_dt if provider.last_data else
+                                            '-' }}</td>
+                                        <td><span class="badge bg-success">{{ provider.active_days }}</span></td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Activity -->
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="eco-card p-4">
+                        <h4 class="mb-3">📈 Recent Activity (Last 7 Days)</h4>
+                        <div class="table-responsive">
+                            <table class="table table-striped">
+                                <thead class="table-dark">
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Records Collected</th>
+                                        <th>Active Providers</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for activity in schema.data_statistics.recent_activity %}
+                                    <tr>
+                                        <td><strong>{{ activity.date }}</strong></td>
+                                        <td><span class="badge bg-success">{{ "{:,}".format(activity.records) }}</span>
+                                        </td>
+                                        <td><span class="badge bg-info">{{ activity.active_providers }}</span></td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="eco-card p-4 text-center">
+                <h5 class="mb-3">🚀 Schema Tools</h5>
+                <button class="btn btn-primary me-2" onclick="window.location.reload()">
+                    <i class="fas fa-sync-alt"></i> Refresh Schema
+                </button>
+                <button class="btn btn-info me-2" onclick="window.location.href='/system'">
+                    <i class="fas fa-arrow-left"></i> Back to System
+                </button>
+                <button class="btn btn-success" onclick="exportSchema()">
+                    <i class="fas fa-download"></i> Export Schema JSON
+                </button>
+            </div>
+        </div>
+    </div>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Tab functionality
+    document.addEventListener('DOMContentLoaded', function () {
+        // Initialize Bootstrap tabs/pills
+        const triggerTabList = [].slice.call(document.querySelectorAll('#schema-nav button'))
+        triggerTabList.forEach(function (triggerEl) {
+            const tabTrigger = new bootstrap.Tab(triggerEl)
+
+            triggerEl.addEventListener('click', function (event) {
+                event.preventDefault()
+                tabTrigger.show()
+            })
+        })
+    });
+
+    function exportSchema() {
+        // Create a downloadable JSON file with the schema data
+        const schemaData = {{ schema | tojson | safe
+    }};
+    const blob = new Blob([JSON.stringify(schemaData, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `terrascan-schema-${new Date().toISOString().split('T')[0]}.json`;
+    a.click();
+
+    URL.revokeObjectURL(url);
+
+    alert('📄 Schema exported as JSON file!');
+}
+</script>
+{% endblock %}

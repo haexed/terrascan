@@ -115,20 +115,26 @@
                                 </div>
 
                                 <!-- Last Run Info -->
-                                {% if task.last_run %}
+                                {% if task.last_run_time %}
                                 <div class="small">
-                                    <div><strong>Last run:</strong> {{ task.last_run.started_at | format_dt }}</div>
-                                    {% if task.last_run.status == 'completed' %}
+                                    <div><strong>Last run:</strong> {{ task.last_run_time | format_dt }}</div>
+                                    {% if task.last_status == 'completed' %}
                                     <div class="text-success">
                                         <i class="fas fa-check-circle"></i>
-                                        Success ({{ task.last_run.records_processed or 0 }} records)
+                                        Success ({{ task.last_records_processed or 0 }} records)
+                                        {% if task.last_duration %}
+                                        - {{ "%.1f"|format(task.last_duration) }}s
+                                        {% endif %}
                                     </div>
-                                    {% elif task.last_run.status == 'failed' %}
+                                    {% elif task.last_status == 'failed' %}
                                     <div class="text-danger">
                                         <i class="fas fa-exclamation-circle"></i>
                                         Failed
+                                        {% if task.last_duration %}
+                                        - {{ "%.1f"|format(task.last_duration) }}s
+                                        {% endif %}
                                     </div>
-                                    {% elif task.last_run.status == 'running' %}
+                                    {% elif task.last_status == 'running' %}
                                     <div class="text-warning">
                                         <i class="fas fa-spinner fa-spin"></i>
                                         Running

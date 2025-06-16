@@ -15,6 +15,7 @@ load_dotenv()
 
 # Import database and utilities
 from database.db import init_database, execute_query
+from database.schema_inspector import get_schema_documentation
 from tasks.runner import TaskRunner
 from utils import get_version, register_template_filters
 
@@ -88,11 +89,22 @@ def create_app():
     def tasks():
         """Task management page"""
         try:
-            # Get tasks and recent runs
+            # Get tasks with last run information
             all_tasks = execute_query("""
-                SELECT id, name, description, command, active, cron_schedule, 
-                       created_date, updated_date, parameters
-                FROM task ORDER BY name
+                SELECT t.id, t.name, t.description, t.command, t.active, t.cron_schedule, 
+                       t.created_date, t.updated_date, t.parameters,
+                       lr.last_run_time, lr.last_status, lr.last_records_processed, lr.last_duration
+                FROM task t
+                LEFT JOIN (
+                    SELECT task_id,
+                           MAX(started_at) as last_run_time,
+                           (SELECT status FROM task_log tl2 WHERE tl2.task_id = task_log.task_id AND tl2.started_at = MAX(task_log.started_at) LIMIT 1) as last_status,
+                           (SELECT records_processed FROM task_log tl3 WHERE tl3.task_id = task_log.task_id AND tl3.started_at = MAX(task_log.started_at) LIMIT 1) as last_records_processed,
+                           (SELECT duration_seconds FROM task_log tl4 WHERE tl4.task_id = task_log.task_id AND tl4.started_at = MAX(task_log.started_at) LIMIT 1) as last_duration
+                    FROM task_log 
+                    GROUP BY task_id
+                ) lr ON t.id = lr.task_id
+                ORDER BY t.name
             """)
             
             recent_runs = execute_query("""
@@ -160,6 +172,22 @@ def create_app():
                                  recent_runs=recent_runs,
                                  data_breakdown=data_breakdown,
                                  simulation_mode=False,
+                                 version=get_version())
+        except Exception as e:
+            return f"Error: {e}", 500
+
+    @app.route('/system/schema')
+    @no_cache
+    def system_schema():
+        """Database schema documentation page"""
+        try:
+            schema_data = get_schema_documentation()
+            
+            if 'error' in schema_data:
+                return f"Schema Error: {schema_data['error']}", 500
+            
+            return render_template('system_schema.html',
+                                 schema=schema_data,
                                  version=get_version())
         except Exception as e:
             return f"Error: {e}", 500
@@ -265,9 +293,20 @@ def create_app():
         """Get all tasks"""
         try:
             tasks = execute_query("""
-                SELECT id, name, description, command, active, cron_schedule, 
-                       created_date, updated_date, parameters
-                FROM task ORDER BY name
+                SELECT t.id, t.name, t.description, t.command, t.active, t.cron_schedule, 
+                       t.created_date, t.updated_date, t.parameters,
+                       lr.last_run_time, lr.last_status, lr.last_records_processed, lr.last_duration
+                FROM task t
+                LEFT JOIN (
+                    SELECT task_id,
+                           MAX(started_at) as last_run_time,
+                           (SELECT status FROM task_log tl2 WHERE tl2.task_id = task_log.task_id AND tl2.started_at = MAX(task_log.started_at) LIMIT 1) as last_status,
+                           (SELECT records_processed FROM task_log tl3 WHERE tl3.task_id = task_log.task_id AND tl3.started_at = MAX(task_log.started_at) LIMIT 1) as last_records_processed,
+                           (SELECT duration_seconds FROM task_log tl4 WHERE tl4.task_id = task_log.task_id AND tl4.started_at = MAX(task_log.started_at) LIMIT 1) as last_duration
+                    FROM task_log 
+                    GROUP BY task_id
+                ) lr ON t.id = lr.task_id
+                ORDER BY t.name
             """)
             return jsonify({'success': True, 'tasks': tasks})
         except Exception as e:
@@ -307,6 +346,25 @@ def create_app():
         except Exception as e:
             return jsonify({'success': False, 'error': str(e)}), 500
 
+    @app.route('/api/schema')
+    @no_cache  
+    def api_schema():
+        """Get database schema as JSON"""
+        try:
+            schema_data = get_schema_documentation()
+            
+            if 'error' in schema_data:
+                return jsonify({'success': False, 'error': schema_data['error']}), 500
+            
+            return jsonify({
+                'success': True,
+                'schema': schema_data,
+                'generated_at': schema_data.get('generated_at'),
+                'version': get_version()
+            })
+        except Exception as e:
+            return jsonify({'success': False, 'error': str(e)}), 500
+
     @app.errorhandler(404)
     def not_found(error):
         return "Page not found", 404
@@ -326,7 +384,9 @@ def prepare_dashboard_data():
     # Prepare individual data sections
     fire_data = {
         'count': health_data['fires']['count'],
+        'active_fires': health_data['fires']['count'],  # Template expects active_fires
         'avg_brightness': health_data['fires']['avg_brightness'],
+        'status': 'MONITORING' if health_data['fires']['count'] > 0 else 'NORMAL',
         'last_update': health_data['last_updated']
     }
     
@@ -347,12 +407,17 @@ def prepare_dashboard_data():
     weather_data = {
         'avg_temp': health_data['weather']['avg_temp'],
         'avg_humidity': health_data['weather']['avg_humidity'],
+        'avg_pressure': 1013.25,  # Standard atmospheric pressure (not implemented yet)
+        'avg_wind_speed': 15.0,   # Default wind speed (not implemented yet)
         'city_count': health_data['weather']['city_count'],
+        'alert_count': 0,  # Template expects alert_count (not implemented yet)
         'last_update': health_data['last_updated']
     }
     
     biodiversity_data = {
         'avg_observations': health_data['biodiversity']['avg_observations'],
+        'avg_diversity': health_data['biodiversity']['avg_observations'] / 100 if health_data['biodiversity']['avg_observations'] > 0 else 0,  # Template expects avg_diversity 
+        'total_observations': health_data['biodiversity']['avg_observations'] * health_data['biodiversity']['region_count'] if health_data['biodiversity']['region_count'] > 0 else 0,
         'region_count': health_data['biodiversity']['region_count'],
         'last_update': health_data['last_updated']
     }

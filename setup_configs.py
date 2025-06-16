@@ -20,7 +20,7 @@ def setup_system_configs():
         print(f"✅ Database configured: {db_info}")
         
         # Set version information
-        version = "2.6.0"
+        version = "2.7.0"
         set_system_config('version', version, 'str', 'Current system version')
         print(f"✅ Version set to: {version}")
         

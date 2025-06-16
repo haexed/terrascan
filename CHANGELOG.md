@@ -2,6 +2,18 @@
 
 All notable changes to TERRASCAN will be documented in this file.
 
+## [2.7.0] - 2025-06-16
+
+### Fixed
+- Task status display showing "Never run" for tasks that had executed
+- Tasks page now shows proper last run timestamps, status, and duration
+- API endpoint `/api/tasks` includes complete task execution history
+
+### Improved
+- Task monitoring with accurate execution status (Success/Failed/Running)
+- Performance metrics display (duration, records processed)
+- Real-time task status updates in web interface
+
 ## [3.1.2] - 2025-06-16
 
 ### Changed
