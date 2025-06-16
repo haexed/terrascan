@@ -370,7 +370,7 @@ def prepare_dashboard_data():
 def get_count(query):
     """Get a count from database safely"""
     result = execute_query(query)
-    return result[0]['count'] if result and result[0]['count'] is not None else 0
+    return result[0]['count'] if result and len(result) > 0 and result[0]['count'] is not None else 0
 
 def get_provider_stats():
     """Get simplified provider statistics"""
@@ -383,11 +383,17 @@ def get_provider_stats():
             FROM metric_data WHERE provider_key = %s
         """, (key,))
         
-        if stats:
+        if stats and len(stats) > 0:
             providers[key] = {
                 'total_records': stats[0]['total_records'] or 0,
                 'last_run': stats[0]['last_run'] or 'Never',
                 'status': 'operational' if (stats[0]['total_records'] or 0) > 0 else 'no_data'
+            }
+        else:
+            providers[key] = {
+                'total_records': 0,
+                'last_run': 'Never',
+                'status': 'no_data'
             }
     
     return providers
@@ -496,25 +502,25 @@ def get_environmental_health_data():
         
         return {
             'fires': {
-                'count': fire_data[0]['fire_count'] if fire_data else 0,
-                'avg_brightness': round(fire_data[0]['avg_brightness'] or 0, 1) if fire_data else 0
+                'count': fire_data[0]['fire_count'] if fire_data and len(fire_data) > 0 else 0,
+                'avg_brightness': round(fire_data[0]['avg_brightness'] or 0, 1) if fire_data and len(fire_data) > 0 else 0
             },
             'air_quality': {
-                'avg_pm25': round(air_data[0]['avg_pm25'] or 0, 1) if air_data else 0,
-                'station_count': air_data[0]['station_count'] if air_data else 0
+                'avg_pm25': round(air_data[0]['avg_pm25'] or 0, 1) if air_data and len(air_data) > 0 else 0,
+                'station_count': air_data[0]['station_count'] if air_data and len(air_data) > 0 else 0
             },
             'ocean_temperature': {
-                'avg_temp': round(ocean_data[0]['avg_temp'] or 0, 1) if ocean_data else 0,
-                'station_count': ocean_data[0]['station_count'] if ocean_data else 0
+                'avg_temp': round(ocean_data[0]['avg_temp'] or 0, 1) if ocean_data and len(ocean_data) > 0 else 0,
+                'station_count': ocean_data[0]['station_count'] if ocean_data and len(ocean_data) > 0 else 0
             },
             'weather': {
-                'avg_temp': round(weather_data[0]['avg_temp'] or 0, 1) if weather_data else 0,
-                'avg_humidity': round(weather_data[0]['avg_humidity'] or 0, 1) if weather_data else 0,
-                'city_count': weather_data[0]['city_count'] if weather_data else 0
+                'avg_temp': round(weather_data[0]['avg_temp'] or 0, 1) if weather_data and len(weather_data) > 0 else 0,
+                'avg_humidity': round(weather_data[0]['avg_humidity'] or 0, 1) if weather_data and len(weather_data) > 0 else 0,
+                'city_count': weather_data[0]['city_count'] if weather_data and len(weather_data) > 0 else 0
             },
             'biodiversity': {
-                'avg_observations': round(biodiversity_data[0]['avg_observations'] or 0, 1) if biodiversity_data else 0,
-                'region_count': biodiversity_data[0]['region_count'] if biodiversity_data else 0
+                'avg_observations': round(biodiversity_data[0]['avg_observations'] or 0, 1) if biodiversity_data and len(biodiversity_data) > 0 else 0,
+                'region_count': biodiversity_data[0]['region_count'] if biodiversity_data and len(biodiversity_data) > 0 else 0
             },
             'last_updated': datetime.utcnow().isoformat()
         }
