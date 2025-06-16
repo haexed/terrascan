@@ -10,10 +10,10 @@
         <div class="col-12">
             <div class="eco-card text-center p-4">
                 <h2 class="mb-3">🌍 PLANETARY HEALTH STATUS</h2>
-                <div class="health-score status-{{ health_score.status.split()[1].lower() }}">
+                <div class="health-score status-{{ health_score.status.lower() }}">
                     {{ health_score.score }}/100
                 </div>
-                <h3 class="mt-2 status-{{ health_score.status.split()[1].lower() }}">
+                <h3 class="mt-2 status-{{ health_score.status.lower() }}">
                     {{ health_score.status }}
                 </h3>
                 <p class="mt-3">

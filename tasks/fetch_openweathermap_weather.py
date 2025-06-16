@@ -8,7 +8,7 @@ import requests
 import json
 import time
 from datetime import datetime, timedelta
-from database.db import execute_query, execute_insert
+from database.db import execute_query, store_metric_data
 from database.config_manager import get_provider_config
 
 def fetch_weather_data(product='current', **kwargs):
@@ -100,19 +100,16 @@ def fetch_weather_data(product='current', **kwargs):
                     current = data['current']
                     
                     # Store current temperature
-                    execute_insert("""
-                        INSERT INTO metric_data 
-                        (provider_key, metric_name, value, unit, timestamp, location_lat, location_lng, metadata)
-                        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-                    """, (
-                        'openweather',
-                        'temperature',
-                        current['temp'],
-                        'celsius',
-                        datetime.fromtimestamp(current['dt']).isoformat(),
-                        city['lat'],
-                        city['lon'],
-                        json.dumps({
+                    store_metric_data(
+                        timestamp=datetime.fromtimestamp(current['dt']).isoformat(),
+                        provider_key='openweather',
+                        dataset='weather',
+                        metric_name='temperature',
+                        value=current['temp'],
+                        unit='celsius',
+                        location_lat=city['lat'],
+                        location_lng=city['lon'],
+                        metadata={
                             'city': city['name'],
                             'country': city['country'],
                             'feels_like': current.get('feels_like'),
@@ -124,91 +121,79 @@ def fetch_weather_data(product='current', **kwargs):
                             'clouds': current.get('clouds'),
                             'uvi': current.get('uvi'),
                             'visibility': current.get('visibility')
-                        })
-                    ))
+                        }
+                    )
                     
                     # Store humidity
                     if 'humidity' in current:
-                        execute_insert("""
-                            INSERT INTO metric_data 
-                            (provider_key, metric_name, value, unit, timestamp, location_lat, location_lng, metadata)
-                            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-                        """, (
-                            'openweather',
-                            'humidity',
-                            current['humidity'],
-                            'percent',
-                            datetime.fromtimestamp(current['dt']).isoformat(),
-                            city['lat'],
-                            city['lon'],
-                            json.dumps({
+                        store_metric_data(
+                            timestamp=datetime.fromtimestamp(current['dt']).isoformat(),
+                            provider_key='openweather',
+                            dataset='weather',
+                            metric_name='humidity',
+                            value=current['humidity'],
+                            unit='percent',
+                            location_lat=city['lat'],
+                            location_lng=city['lon'],
+                            metadata={
                                 'city': city['name'],
                                 'country': city['country'],
                                 'temperature': current.get('temp')
-                            })
-                        ))
+                            }
+                        )
                     
                     # Store wind speed
                     if 'wind_speed' in current:
-                        execute_insert("""
-                            INSERT INTO metric_data 
-                            (provider_key, metric_name, value, unit, timestamp, location_lat, location_lng, metadata)
-                            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-                        """, (
-                            'openweather',
-                            'wind_speed',
-                            current['wind_speed'],
-                            'meters_per_second',
-                            datetime.fromtimestamp(current['dt']).isoformat(),
-                            city['lat'],
-                            city['lon'],
-                            json.dumps({
+                        store_metric_data(
+                            timestamp=datetime.fromtimestamp(current['dt']).isoformat(),
+                            provider_key='openweather',
+                            dataset='weather',
+                            metric_name='wind_speed',
+                            value=current['wind_speed'],
+                            unit='meters_per_second',
+                            location_lat=city['lat'],
+                            location_lng=city['lon'],
+                            metadata={
                                 'city': city['name'],
                                 'country': city['country'],
                                 'wind_direction': current.get('wind_deg'),
                                 'wind_gust': current.get('wind_gust')
-                            })
-                        ))
+                            }
+                        )
                     
                     # Store atmospheric pressure
                     if 'pressure' in current:
-                        execute_insert("""
-                            INSERT INTO metric_data 
-                            (provider_key, metric_name, value, unit, timestamp, location_lat, location_lng, metadata)
-                            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-                        """, (
-                            'openweather',
-                            'atmospheric_pressure',
-                            current['pressure'],
-                            'hpa',
-                            datetime.fromtimestamp(current['dt']).isoformat(),
-                            city['lat'],
-                            city['lon'],
-                            json.dumps({
+                        store_metric_data(
+                            timestamp=datetime.fromtimestamp(current['dt']).isoformat(),
+                            provider_key='openweather',
+                            dataset='weather',
+                            metric_name='atmospheric_pressure',
+                            value=current['pressure'],
+                            unit='hpa',
+                            location_lat=city['lat'],
+                            location_lng=city['lon'],
+                            metadata={
                                 'city': city['name'],
                                 'country': city['country'],
                                 'sea_level': True
-                            })
-                        ))
+                            }
+                        )
                     
                     records_processed += 4  # temp, humidity, wind, pressure
                 
                 # Process weather alerts
                 if 'alerts' in data and product in ['alerts', 'all']:
                     for alert in data['alerts']:
-                        execute_insert("""
-                            INSERT INTO metric_data 
-                            (provider_key, metric_name, value, unit, timestamp, location_lat, location_lng, metadata)
-                            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-                        """, (
-                            'openweather',
-                            'weather_alert',
-                            1,  # Alert present
-                            'boolean',
-                            datetime.fromtimestamp(alert['start']).isoformat(),
-                            city['lat'],
-                            city['lon'],
-                            json.dumps({
+                        store_metric_data(
+                            timestamp=datetime.fromtimestamp(alert['start']).isoformat(),
+                            provider_key='openweather',
+                            dataset='weather',
+                            metric_name='weather_alert',
+                            value=1,  # Alert present
+                            unit='boolean',
+                            location_lat=city['lat'],
+                            location_lng=city['lon'],
+                            metadata={
                                 'city': city['name'],
                                 'country': city['country'],
                                 'event': alert.get('event'),
@@ -217,8 +202,8 @@ def fetch_weather_data(product='current', **kwargs):
                                 'start': alert.get('start'),
                                 'end': alert.get('end'),
                                 'tags': alert.get('tags', [])
-                            })
-                        ))
+                            }
+                        )
                         records_processed += 1
                 
                 # Small delay to respect API rate limits
