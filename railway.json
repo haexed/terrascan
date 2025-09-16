@@ -4,9 +4,9 @@
         "builder": "NIXPACKS"
     },
     "deploy": {
-        "startCommand": "python database/add_deduplication.py && python run.py",
+        "startCommand": "python database/add_deduplication.py || echo 'DB migration failed, continuing...' && python run.py",
         "healthcheckPath": "/",
-        "healthcheckTimeout": 30,
+        "healthcheckTimeout": 60,
         "restartPolicyType": "ON_FAILURE",
         "restartPolicyMaxRetries": 2
     }

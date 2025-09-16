@@ -8,6 +8,7 @@ import os
 import json
 from datetime import datetime
 from typing import List, Dict, Any, Optional
+from contextlib import contextmanager
 
 # PostgreSQL connection (required for both development and production)
 DATABASE_URL = os.environ.get('DATABASE_URL')
@@ -16,26 +17,89 @@ if not DATABASE_URL:
 
 import psycopg2
 import psycopg2.extras
+from psycopg2 import OperationalError, DatabaseError
+from psycopg2 import pool
 
 print("🚀 TERRASCAN - PostgreSQL Platform")
 
+# Connection pool for better resource management
+_connection_pool = None
+
+def get_connection_pool():
+    """Get or create connection pool"""
+    global _connection_pool
+    if _connection_pool is None:
+        try:
+            _connection_pool = psycopg2.pool.ThreadedConnectionPool(
+                minconn=1,
+                maxconn=20,  # Reasonable for a hobby project
+                dsn=DATABASE_URL
+            )
+            print("🏈 Connection pool initialized (1-20 connections)")
+        except Exception as e:
+            print(f"⚠️ Connection pool creation failed: {e}")
+            _connection_pool = None
+    return _connection_pool
+
 def get_db_connection():
-    """Get PostgreSQL database connection"""
+    """Get PostgreSQL database connection from pool or direct"""
+    connection_pool = get_connection_pool()
+    if connection_pool:
+        try:
+            return connection_pool.getconn()
+        except Exception as e:
+            print(f"⚠️ Pool connection failed, using direct: {e}")
+
+    # Fallback to direct connection
     return psycopg2.connect(DATABASE_URL)
+
+def return_db_connection(conn):
+    """Return connection to pool or close if direct"""
+    connection_pool = get_connection_pool()
+    if connection_pool:
+        try:
+            connection_pool.putconn(conn)
+            return
+        except Exception as e:
+            print(f"⚠️ Pool return failed: {e}")
+
+    # Fallback: close direct connection
+    if conn:
+        conn.close()
+
+@contextmanager
+def get_db_transaction():
+    """Context manager for database transactions with automatic rollback on errors"""
+    conn = None
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        yield conn, cursor
+        conn.commit()
+    except Exception as e:
+        if conn:
+            conn.rollback()
+        raise e
+    finally:
+        if conn:
+            return_db_connection(conn)
 
 def execute_query(query: str, params: tuple = None) -> List[Dict[str, Any]]:
     """Execute a SELECT query and return results as list of dictionaries"""
     try:
-        conn = get_db_connection()
-        cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-        cursor.execute(query, params or ())
-        results = [dict(row) for row in cursor.fetchall()]
-        cursor.close()
-        conn.close()
-        return results
-        
+        with get_db_transaction() as (conn, cursor):
+            cursor.execute(query, params or ())
+            results = [dict(row) for row in cursor.fetchall()]
+            return results
+
+    except (OperationalError, DatabaseError) as e:
+        print(f"❌ Database connection/query error: {e}")
+        print(f"Query: {query}")
+        if params:
+            print(f"Params: {params}")
+        return []
     except Exception as e:
-        print(f"❌ Database query error: {e}")
+        print(f"❌ Unexpected database error: {e}")
         print(f"Query: {query}")
         if params:
             print(f"Params: {params}")
@@ -44,16 +108,18 @@ def execute_query(query: str, params: tuple = None) -> List[Dict[str, Any]]:
 def execute_insert(query: str, params: tuple = None) -> bool:
     """Execute an INSERT/UPDATE/DELETE query with proper transaction handling"""
     try:
-        conn = get_db_connection()
-        cursor = conn.cursor()
-        cursor.execute(query, params or ())
-        conn.commit()
-        cursor.close()
-        conn.close()
-        return True
-        
+        with get_db_transaction() as (conn, cursor):
+            cursor.execute(query, params or ())
+            return True
+
+    except (OperationalError, DatabaseError) as e:
+        print(f"❌ Database connection/insert error: {e}")
+        print(f"Query: {query}")
+        if params:
+            print(f"Params: {params}")
+        return False
     except Exception as e:
-        print(f"❌ Database insert error: {e}")
+        print(f"❌ Unexpected database error: {e}")
         print(f"Query: {query}")
         if params:
             print(f"Params: {params}")
@@ -62,16 +128,17 @@ def execute_insert(query: str, params: tuple = None) -> bool:
 def execute_many(query: str, params_list: List[tuple]) -> bool:
     """Execute multiple INSERT queries in a single transaction"""
     try:
-        conn = get_db_connection()
-        cursor = conn.cursor()
-        psycopg2.extras.execute_batch(cursor, query, params_list)
-        conn.commit()
-        cursor.close()
-        conn.close()
-        return True
-        
+        with get_db_transaction() as (conn, cursor):
+            psycopg2.extras.execute_batch(cursor, query, params_list)
+            return True
+
+    except (OperationalError, DatabaseError) as e:
+        print(f"❌ Database connection/batch error: {e}")
+        print(f"Query: {query}")
+        print(f"Batch size: {len(params_list)}")
+        return False
     except Exception as e:
-        print(f"❌ Database batch insert error: {e}")
+        print(f"❌ Unexpected database error: {e}")
         print(f"Query: {query}")
         print(f"Batch size: {len(params_list)}")
         return False
@@ -187,27 +254,26 @@ def get_task_by_name(name: str) -> Optional[Dict[str, Any]]:
         print(f"❌ Error getting task by name: {e}")
         return None
 
-def start_task_run(task_id: int, triggered_by: str = 'manual', 
+def start_task_run(task_id: int, triggered_by: str = 'manual',
                    trigger_parameters: dict = None) -> Optional[int]:
     """Create a new task run record in 'running' status"""
     try:
         params_json = json.dumps(trigger_parameters) if trigger_parameters else None
-        
+
         query = """
-            INSERT INTO task_log (task_id, status, started_at, triggered_by, trigger_parameters) 
+            INSERT INTO task_log (task_id, status, started_at, triggered_by, trigger_parameters)
             VALUES (%s, %s, NOW(), %s, %s) RETURNING id
         """
-        conn = get_db_connection()
-        cursor = conn.cursor()
-        cursor.execute(query, (task_id, 'running', triggered_by, params_json))
-        result = cursor.fetchone()
-        conn.commit()
-        cursor.close()
-        conn.close()
-        return result[0] if result else None
-            
+        with get_db_transaction() as (conn, cursor):
+            cursor.execute(query, (task_id, 'running', triggered_by, params_json))
+            result = cursor.fetchone()
+            return result[0] if result else None
+
+    except (OperationalError, DatabaseError) as e:
+        print(f"❌ Database error starting task run: {e}")
+        return None
     except Exception as e:
-        print(f"❌ Error starting task run: {e}")
+        print(f"❌ Unexpected error starting task run: {e}")
         return None
 
 def complete_task_run(run_id: int, exit_code: int, stdout: str = None, 
