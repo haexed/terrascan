@@ -10,27 +10,36 @@ from datetime import datetime
 
 def add_deduplication_constraints():
     """Add unique constraints to prevent duplicate metric data"""
-    
+
+    print("📋 TERRASCAN Database Deduplication Migration - starting")
+
     database_url = os.environ.get('DATABASE_URL')
     if not database_url:
         print("❌ DATABASE_URL not found - cannot run migration")
         return False
-    
+
+    print("🔌 Connecting to database...")
     try:
         print("🔧 Adding deduplication constraints to metric_data table...")
         conn = psycopg2.connect(database_url)
+        print("✅ Database connection established")
         cursor = conn.cursor()
+        print("📋 Database cursor created")
         
         # Check if constraint already exists
+        print("🔍 Checking existing constraints...")
         cursor.execute("""
-            SELECT constraint_name 
-            FROM information_schema.table_constraints 
-            WHERE table_name = 'metric_data' 
+            SELECT constraint_name
+            FROM information_schema.table_constraints
+            WHERE table_name = 'metric_data'
             AND constraint_type = 'UNIQUE'
             AND constraint_name = 'unique_metric_measurement'
         """)
+        print("📋 Constraint check query executed")
         
-        if cursor.fetchone():
+        result = cursor.fetchone()
+        print(f"📊 Constraint check result: {result}")
+        if result:
             print("✅ Deduplication constraint already exists")
             cursor.close()
             conn.close()
@@ -39,33 +48,46 @@ def add_deduplication_constraints():
         # Add composite unique constraint for deduplication
         print("📊 Creating unique constraint for metric deduplication...")
         cursor.execute("""
-            ALTER TABLE metric_data 
-            ADD CONSTRAINT unique_metric_measurement 
+            ALTER TABLE metric_data
+            ADD CONSTRAINT unique_metric_measurement
             UNIQUE (provider_key, metric_name, timestamp, location_lat, location_lng)
         """)
+        print("✅ Unique constraint created")
         
         # Add index for faster deduplication queries
         print("🚀 Creating performance index for deduplication...")
         cursor.execute("""
-            CREATE INDEX IF NOT EXISTS idx_metric_dedup 
+            CREATE INDEX IF NOT EXISTS idx_metric_dedup
             ON metric_data (provider_key, metric_name, timestamp, location_lat, location_lng)
         """)
+        print("✅ Performance index created")
         
+        print("💾 Committing changes...")
         conn.commit()
+        print("✅ Changes committed")
         cursor.close()
         conn.close()
-        
+        print("🔒 Database connection closed")
+
         print("✅ Deduplication constraints added successfully!")
         print("🎯 TERRASCAN now prevents duplicate environmental data")
         return True
         
     except psycopg2.errors.UniqueViolation as e:
+        print(f"⚠️ UniqueViolation caught: {e}")
         print("⚠️ Existing duplicate data found - cleaning required first")
         print("💡 Run cleanup_duplicates() before adding constraints")
         return False
-        
+
+    except psycopg2.OperationalError as e:
+        print(f"❌ Database connection error: {e}")
+        return False
+
     except Exception as e:
-        print(f"❌ Migration failed: {e}")
+        print(f"❌ Unexpected migration error: {e}")
+        print(f"🔎 Exception type: {type(e).__name__}")
+        import traceback
+        print(f"📜 Stack trace: {traceback.format_exc()}")
         return False
 
 def cleanup_existing_duplicates():
@@ -180,9 +202,12 @@ def get_duplicate_stats():
 if __name__ == "__main__":
     print("🚀 TERRASCAN Database Deduplication Migration")
     print("=" * 50)
-    
+    print("📋 Migration script starting...")
+
     # Get current duplicate statistics
+    print("🔍 Getting database statistics...")
     stats = get_duplicate_stats()
+    print(f"📊 Statistics result: {stats is not None}")
     if stats:
         print("📊 Current Database Statistics:")
         print(f"   Total records: {stats['total_records']:,}")
@@ -191,16 +216,22 @@ if __name__ == "__main__":
         print(f"   Duplicate groups: {stats['duplicate_groups']:,}")
         print(f"   Storage efficiency: {stats['efficiency']}")
         print()
+        print("🔍 Proceeding with migration logic...")
         
         if stats['duplicate_records'] > 0:
             print("🧹 Step 1: Clean up existing duplicates...")
+            print("🔍 Calling cleanup function...")
             if cleanup_existing_duplicates():
                 print("\n🔧 Step 2: Add deduplication constraints...")
+                print("🔍 Calling constraint function...")
                 add_deduplication_constraints()
             else:
                 print("❌ Cannot proceed - cleanup failed")
         else:
             print("🔧 Adding deduplication constraints...")
-            add_deduplication_constraints()
+            print("🔍 Calling constraint function directly...")
+            result = add_deduplication_constraints()
+            print(f"📊 Constraint function result: {result}")
     else:
-        print("❌ Cannot connect to database") 
+        print("❌ Cannot connect to database - stats is None")
+        print("🔍 Migration script ending with database connection failure") 
