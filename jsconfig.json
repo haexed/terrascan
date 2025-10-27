@@ -1,0 +1,23 @@
+{
+  "compilerOptions": {
+    "target": "ES6",
+    "module": "ESNext",
+    "checkJs": true,
+    "allowSyntheticDefaultImports": true,
+    "baseUrl": ".",
+    "paths": {
+      "*": ["web/static/js/*"]
+    }
+  },
+  "include": [
+    "web/static/js/**/*.js"
+  ],
+  "exclude": [
+    "node_modules",
+    "**/node_modules/*"
+  ],
+  "typeAcquisition": {
+    "enable": true,
+    "include": ["leaflet"]
+  }
+}

@@ -20,11 +20,11 @@
         <div class="col-12">
             <div class="eco-card text-center p-4">
                 <h2 class="mb-3">🌍 PLANETARY HEALTH STATUS</h2>
-                <div class="health-score status-{{ health_score.status.lower() }}">
-                    {{ health_score.score }}/100
+                <div class="health-score status-{{ health_score.status.lower().replace('_', '-') }}">
+                    {% if health_score.score is not none %}{{ health_score.score }}/100{% else %}🤷 NO DATA{% endif %}
                 </div>
-                <h3 class="mt-2 status-{{ health_score.status.lower() }}">
-                    {{ health_score.status }}
+                <h3 class="mt-2 status-{{ health_score.status.lower().replace('_', '-') }}">
+                    {{ health_score.status.replace('_', ' ') }}
                 </h3>
                 <p class="mt-3">
                     Based on current fire activity, air quality, and ocean conditions
@@ -47,22 +47,20 @@
                 </div>
 
                 <div class="text-center">
-                    <div
-                        class="metric-value {% if fire_data.active_fires > 50 %}text-danger{% elif fire_data.active_fires > 10 %}text-warning{% else %}text-success{% endif %}">
+                    <div class="metric-value {{ fire_data.active_fires.css_class }}">
                         {{ fire_data.active_fires }}
                     </div>
                     <div class="mb-2">Active Fires (24h)</div>
 
-                    {% if fire_data.avg_brightness > 0 %}
+                    {% if fire_data.avg_brightness %}
                     <div class="small">
-                        Avg Brightness: {{ fire_data.avg_brightness }}K
+                        Avg Brightness: {{ fire_data.avg_brightness }}
                     </div>
                     {% endif %}
 
                     <div class="mt-3">
-                        <span
-                            class="badge {% if 'ACTIVE' in fire_data.status %}bg-danger{% elif 'MONITORING' in fire_data.status %}bg-warning{% else %}bg-success{% endif %} pulse">
-                            {{ fire_data.status }}
+                        <span class="badge {{ fire_data.active_fires.badge_class }} pulse">
+                            {{ fire_data.active_fires.status|upper }}
                         </span>
                     </div>
                 </div>
@@ -101,22 +99,20 @@
                 </div>
 
                 <div class="text-center">
-                    <div
-                        class="metric-value {% if air_data.avg_pm25 > 35 %}text-danger{% elif air_data.avg_pm25 > 12 %}text-warning{% else %}text-success{% endif %}">
+                    <div class="metric-value {{ air_data.avg_pm25.css_class }}">
                         {{ air_data.avg_pm25 }}
                     </div>
-                    <div class="mb-2">PM2.5 μg/m³ (Global Avg)</div>
+                    <div class="mb-2">PM2.5 (Global Avg)</div>
 
-                    {% if air_data.measurements > 0 %}
+                    {% if air_data.measurements %}
                     <div class="small">
                         {{ air_data.measurements }} measurements
                     </div>
                     {% endif %}
 
                     <div class="mt-3">
-                        <span
-                            class="badge {% if 'GOOD' in air_data.status %}bg-success{% elif 'MODERATE' in air_data.status %}bg-warning{% elif 'UNHEALTHY' in air_data.status %}bg-danger{% else %}bg-secondary{% endif %}">
-                            {{ air_data.status }}
+                        <span class="badge {{ air_data.avg_pm25.badge_class }}">
+                            {{ air_data.avg_pm25.status|upper }}
                         </span>
                     </div>
                 </div>
@@ -127,7 +123,7 @@
             </div>
         </div>
 
-        <!-- Ocean Temperature -->
+        <!-- Ocean Health -->
         <div class="col-lg-4">
             <div class="eco-card p-4">
                 <div class="d-flex align-items-center mb-3">
@@ -139,75 +135,21 @@
                 </div>
 
                 <div class="text-center">
-                    <!-- DEBUG: Backend says temp={{ ocean_data.avg_temp }}, status={{ ocean_data.status }} -->
-                    <div class="metric-value {% if ocean_data.avg_temp > 26 %}text-warning{% elif ocean_data.avg_temp > 28 %}text-danger{% else %}text-info{% endif %}"
-                        data-temp="{{ ocean_data.avg_temp }}" data-status="{{ ocean_data.status }}"
-                        data-timestamp="{{ range(1000000) | random }}" id="ocean-temp-display">
-                        <span class="temp-value">{{ ocean_data.avg_temp }}</span>°C
-                        <!-- EXTREME DEBUG: Template rendered with {{ ocean_data.avg_temp }} -->
-                        <script>
-                            // EXTREME DEBUG + NUCLEAR CACHE BUSTER
-                            (function () {
-                                const tempElement = document.getElementById('ocean-temp-display');
-                                const correctTemp = '{{ ocean_data.avg_temp }}';
-                                const correctStatus = '{{ ocean_data.status }}';
-
-                                console.log('🔍 TEMPLATE DEBUG:');
-                                console.log('  correctTemp from template:', correctTemp);
-                                console.log('  correctStatus from template:', correctStatus);
-                                console.log('  tempElement found:', !!tempElement);
-
-                                if (tempElement) {
-                                    const tempSpan = tempElement.querySelector('.temp-value');
-                                    console.log('  tempSpan found:', !!tempSpan);
-                                    console.log('  tempSpan.textContent:', tempSpan ? tempSpan.textContent : 'N/A');
-                                    console.log('  data-temp attribute:', tempElement.getAttribute('data-temp'));
-
-                                    // Force update the display immediately
-                                    if (correctTemp !== '0' && tempSpan) {
-                                        if (tempSpan.textContent === '0') {
-                                            console.warn('🔥 NUCLEAR CACHE BUST: Forcing correct temperature display');
-                                            tempSpan.textContent = correctTemp;
-                                            tempElement.style.border = '3px solid lime';
-                                            tempElement.title = 'CACHE BUSTED! Showing correct temperature: ' + correctTemp + '°C';
-                                        } else {
-                                            console.log('✅ Temperature display is correct:', tempSpan.textContent);
-                                        }
-                                    }
-                                }
-                            })();
-                        </script>
+                    <div class="metric-value {{ ocean_data.avg_temp.css_class }}" id="ocean-temp-display">
+                        {{ ocean_data.avg_temp }}
                     </div>
-                    <div class="mb-2">Average Water Temperature</div>
+                    <div class="mb-2">{{ ocean_data.metric_name }}</div>
 
-                    {% if ocean_data.measurements > 0 %}
+                    {% if ocean_data.measurements %}
                     <div class="small">
-                        {{ ocean_data.measurements }} measurements (12 stations)
+                        {{ ocean_data.measurements }} measurements
                     </div>
                     {% endif %}
 
                     <div class="mt-3">
-                        <span id="ocean-status-badge"
-                            class="badge {% if 'NORMAL' in ocean_data.status %}bg-info{% elif 'WARM' in ocean_data.status %}bg-warning{% elif 'COOL' in ocean_data.status %}bg-primary{% else %}bg-secondary{% endif %}">
-                            <span class="status-text">{{ ocean_data.status }}</span>
+                        <span class="badge {{ ocean_data.avg_temp.badge_class }}">
+                            {{ ocean_data.avg_temp.status|upper }}
                         </span>
-                        <script>
-                            // NUCLEAR STATUS BUSTER
-                            (function () {
-                                const statusBadge = document.getElementById('ocean-status-badge');
-                                const correctStatus = '{{ ocean_data.status }}';
-
-                                if (statusBadge && correctStatus !== '📊 NO DATA') {
-                                    const statusSpan = statusBadge.querySelector('.status-text');
-                                    if (statusSpan && statusSpan.textContent.includes('NO DATA')) {
-                                        console.warn('🔥 NUCLEAR STATUS BUST: Forcing correct status display');
-                                        statusSpan.textContent = correctStatus;
-                                        statusBadge.className = 'badge bg-info';
-                                        statusBadge.style.border = '2px solid lime';
-                                    }
-                                }
-                            })();
-                        </script>
                     </div>
                 </div>
 
@@ -233,27 +175,27 @@
 
                 <div class="row text-center">
                     <div class="col-6">
-                        <div class="metric-value text-primary">{{ weather_data.avg_temp }}°C</div>
+                        <div class="metric-value text-primary">{{ weather_data.avg_temp }}</div>
                         <div class="small">Average Temperature</div>
                     </div>
                     <div class="col-6">
-                        <div class="metric-value text-info">{{ weather_data.avg_humidity }}%</div>
+                        <div class="metric-value text-info">{{ weather_data.avg_humidity }}</div>
                         <div class="small">Average Humidity</div>
                     </div>
                 </div>
 
                 <div class="row text-center mt-3">
                     <div class="col-6">
-                        <div class="metric-value text-secondary">{{ weather_data.avg_wind_speed }} m/s</div>
+                        <div class="metric-value text-secondary">{{ weather_data.avg_wind_speed }}</div>
                         <div class="small">Average Wind Speed</div>
                     </div>
                     <div class="col-6">
-                        <div class="metric-value text-dark">{{ weather_data.avg_pressure }} hPa</div>
+                        <div class="metric-value text-dark">{{ weather_data.avg_pressure }}</div>
                         <div class="small">Average Pressure</div>
                     </div>
                 </div>
 
-                {% if weather_data.city_count > 0 %}
+                {% if weather_data.city_count and weather_data.city_count > 0 %}
                 <div class="text-center mt-3">
                     <div class="small">
                         {{ weather_data.city_count }} cities monitored
@@ -280,22 +222,22 @@
 
                 <div class="text-center">
                     <div
-                        class="metric-value {% if weather_data.alert_count > 5 %}text-danger{% elif weather_data.alert_count > 2 %}text-warning{% elif weather_data.alert_count > 0 %}text-info{% else %}text-success{% endif %}">
+                        class="metric-value {{ weather_data.alert_count.css_class }}">
                         {{ weather_data.alert_count }}
                     </div>
                     <div class="mb-2">Active Weather Alerts</div>
 
                     <div class="mt-3">
                         <span
-                            class="badge {% if weather_data.alert_count > 5 %}bg-danger{% elif weather_data.alert_count > 2 %}bg-warning{% elif weather_data.alert_count > 0 %}bg-info{% else %}bg-success{% endif %}">
-                            {% if weather_data.alert_count == 0 %}
+                            class="badge {{ weather_data.alert_count.badge_class }}">
+                            {% if weather_data.alert_count.value == 0 %}
                             ALL CLEAR
-                            {% elif weather_data.alert_count <= 2 %} LOW RISK {% elif weather_data.alert_count <=5 %}
+                            {% elif weather_data.alert_count.value and weather_data.alert_count.value <= 2 %} LOW RISK {% elif weather_data.alert_count.value and weather_data.alert_count.value <= 5 %}
                                 MODERATE RISK {% else %} HIGH RISK {% endif %} </span>
                     </div>
                 </div>
 
-                {% if weather_data.alert_count > 0 %}
+                {% if weather_data.alert_count and weather_data.alert_count > 0 %}
                 <div class="text-center mt-3">
                     <div class="small">
                         Includes severe weather warnings, heat advisories, storm alerts, and other government-issued
@@ -344,12 +286,12 @@
 
                 <div class="text-center mt-3">
                     <span
-                        class="badge {% if biodiversity_data.avg_diversity > 15 %}bg-success{% elif biodiversity_data.avg_diversity > 10 %}bg-info{% elif biodiversity_data.avg_diversity > 5 %}bg-warning{% else %}bg-danger{% endif %}">
-                        {% if biodiversity_data.avg_diversity > 15 %}
+                        class="badge {{ biodiversity_data.avg_diversity.badge_class }}">
+                        {% if biodiversity_data.avg_diversity.value and biodiversity_data.avg_diversity.value > 15 %}
                         HIGH DIVERSITY
-                        {% elif biodiversity_data.avg_diversity > 10 %}
+                        {% elif biodiversity_data.avg_diversity.value and biodiversity_data.avg_diversity.value > 10 %}
                         GOOD DIVERSITY
-                        {% elif biodiversity_data.avg_diversity > 5 %}
+                        {% elif biodiversity_data.avg_diversity.value and biodiversity_data.avg_diversity.value > 5 %}
                         MODERATE DIVERSITY
                         {% else %}
                         LOW DIVERSITY
@@ -376,19 +318,19 @@
 
                 <div class="text-center">
                     <div
-                        class="metric-value {% if biodiversity_data.avg_observations > 1000 %}text-success{% elif biodiversity_data.avg_observations > 500 %}text-info{% elif biodiversity_data.avg_observations > 100 %}text-warning{% else %}text-danger{% endif %}">
+                        class="metric-value {{ biodiversity_data.avg_observations.css_class }}">
                         {{ biodiversity_data.avg_observations }}
                     </div>
                     <div class="mb-2">Average Observations per Region</div>
 
                     <div class="mt-3">
                         <span
-                            class="badge {% if biodiversity_data.avg_observations > 1000 %}bg-success{% elif biodiversity_data.avg_observations > 500 %}bg-info{% elif biodiversity_data.avg_observations > 100 %}bg-warning{% else %}bg-danger{% endif %}">
-                            {% if biodiversity_data.avg_observations > 1000 %}
+                            class="badge {{ biodiversity_data.avg_observations.badge_class }}">
+                            {% if biodiversity_data.avg_observations.value and biodiversity_data.avg_observations.value > 1000 %}
                             THRIVING ECOSYSTEMS
-                            {% elif biodiversity_data.avg_observations > 500 %}
+                            {% elif biodiversity_data.avg_observations.value and biodiversity_data.avg_observations.value > 500 %}
                             HEALTHY ECOSYSTEMS
-                            {% elif biodiversity_data.avg_observations > 100 %}
+                            {% elif biodiversity_data.avg_observations.value and biodiversity_data.avg_observations.value > 100 %}
                             MODERATE ACTIVITY
                             {% else %}
                             LOW ACTIVITY
@@ -411,59 +353,7 @@
         </div>
     </div>
 
-    <!-- Hero Map Section -->
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="hero-map-container">
-                <div class="hero-map-header">
-                    <h3 class="mb-2">🗺️ <strong>Live Environmental Map</strong></h3>
-                    <p class="mb-3">Interactive view of global environmental conditions</p>
-                    <div class="hero-map-controls">
-                        <div class="btn-group" role="group">
-                            <input type="checkbox" class="btn-check" id="hero-fire-layer" checked>
-                            <label class="btn btn-outline-danger btn-sm" for="hero-fire-layer">
-                                🔥 Fires
-                            </label>
-
-                            <input type="checkbox" class="btn-check" id="hero-air-layer" checked>
-                            <label class="btn btn-outline-warning btn-sm" for="hero-air-layer">
-                                🌬️ Air Quality
-                            </label>
-
-                            <input type="checkbox" class="btn-check" id="hero-ocean-layer" checked>
-                            <label class="btn btn-outline-info btn-sm" for="hero-ocean-layer">
-                                🌊 Ocean
-                            </label>
-                        </div>
-                        <a href="/map" class="btn btn-success btn-sm ms-3">
-                            <i class="fas fa-expand"></i> Full Screen Map
-                        </a>
-                    </div>
-                </div>
-
-                <!-- Hero Map -->
-                <div id="hero-map"></div>
-
-                <div class="hero-map-footer">
-                    <div class="row">
-                        <div class="col-md-8">
-                            <small>
-                                <strong>Data Sources:</strong>
-                                <a href="https://firms.modaps.eosdis.nasa.gov/" target="_blank">NASA FIRMS</a> •
-                                <a href="https://openaq.org/" target="_blank">OpenAQ</a> •
-                                <a href="https://tidesandcurrents.noaa.gov/" target="_blank">NOAA Ocean Service</a>
-                            </small>
-                        </div>
-                        <div class="col-md-4 text-end">
-                            <button class="btn btn-outline-secondary btn-sm" onclick="refreshHeroMap()">
-                                <i class="fas fa-sync-alt" id="hero-refresh-icon"></i> Refresh
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
+    <!-- Map section removed from status page - use /map for full map view -->
 
     <!-- Call to Action -->
     <div class="row mb-4">
@@ -491,12 +381,7 @@
 </div>
 {% endblock %}
 
-{% block leaflet_js %}
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-{% endblock %}
-
 {% block extra_js %}
-<script src="{{ url_for('static', filename='js/hero-map.js') }}"></script>
 <script>
     // Force refresh function for cache issues
     function forceRefresh() {
@@ -506,9 +391,5 @@
             window.location.href = window.location.href.split('?')[0] + '?cache_bust=' + timestamp;
         }
     }
-
-    // Ocean refresh function removed - underlying SQL issues fixed
-
-    // Debug ocean functionality removed - data display issues resolved
 </script>
 {% endblock %}

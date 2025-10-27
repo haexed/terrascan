@@ -1,9 +1,41 @@
 // === TERRASCAN MAP FUNCTIONALITY ===
 
+/**
+ * @typedef {Object} FireData
+ * @property {number} lat - Latitude
+ * @property {number} lng - Longitude
+ * @property {number} brightness - Brightness temperature in Kelvin
+ * @property {number} confidence - Detection confidence percentage
+ * @property {string} acq_date - Acquisition date
+ */
+
+/**
+ * @typedef {Object} AirQualityData
+ * @property {number} lat - Latitude
+ * @property {number} lng - Longitude
+ * @property {number} pm25 - PM2.5 concentration in μg/m³
+ * @property {string} location - Location name
+ */
+
+/**
+ * @typedef {Object} OceanData
+ * @property {number} latitude - Latitude
+ * @property {number} longitude - Longitude
+ * @property {number|null} temperature - Water temperature in Celsius
+ * @property {number|null} water_level - Water level in meters
+ * @property {string} last_updated - Last update timestamp
+ * @property {string} name - Station name
+ */
+
 // Global variables
 let map;
 let fireLayer, airLayer, oceanLayer;
-let fireData = [], airData = [], oceanData = [];
+/** @type {FireData[]} */
+let fireData = [];
+/** @type {AirQualityData[]} */
+let airData = [];
+/** @type {OceanData[]} */
+let oceanData = [];
 let osmLayer, satelliteLayer;
 
 // Initialize map when page loads
@@ -16,10 +48,19 @@ document.addEventListener('DOMContentLoaded', function () {
 
 // Initialize map
 function initMap() {
+    // Define world bounds to prevent panning outside
+    const worldBounds = [
+        [-85, -180],  // Southwest corner
+        [85, 180]     // Northeast corner
+    ];
+
     // Create map centered on world view
     map = L.map('map', {
         center: [20, 0],
         zoom: 2,
+        minZoom: 2,
+        maxBounds: worldBounds,
+        maxBoundsViscosity: 1.0,
         zoomControl: false,
         attributionControl: false
     });
@@ -32,12 +73,12 @@ function initMap() {
     // Default tile layer (OpenStreetMap)
     osmLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '© OpenStreetMap contributors'
-    }).addTo(map);
+    });
 
-    // Satellite layer (Esri World Imagery)
+    // Satellite layer (Esri World Imagery) - DEFAULT VIEW
     satelliteLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
         attribution: '© Esri, Maxar, Earthstar Geographics'
-    });
+    }).addTo(map);
 
     // Initialize data layers
     fireLayer = L.layerGroup().addTo(map);
@@ -95,16 +136,20 @@ function setupLayerToggles() {
     });
 }
 
-// Load environmental data from API
+/**
+ * Load environmental data from API
+ * @returns {Promise<void>}
+ */
 async function loadEnvironmentalData() {
     try {
         const response = await fetch('/api/map-data');
         const data = await response.json();
 
         if (data.success) {
-            fireData = data.fires || [];
-            airData = data.air_quality || [];
-            oceanData = data.ocean || [];
+            // Validate and sanitize data
+            fireData = validateFireData(data.fires || []);
+            airData = validateAirData(data.air_quality || []);
+            oceanData = validateOceanData(data.ocean || []);
 
             updateFireLayer();
             updateAirLayer();
@@ -115,14 +160,107 @@ async function loadEnvironmentalData() {
     }
 }
 
-// Update fire layer with markers
+/**
+ * Validate and sanitize fire data
+ * @param {any[]} fires - Raw fire data from API
+ * @returns {FireData[]} - Validated fire data
+ */
+function validateFireData(fires) {
+    return fires.filter(fire => {
+        if (!fire || typeof fire !== 'object') {
+            console.warn('Invalid fire data object:', fire);
+            return false;
+        }
+
+        const lat = parseFloat(fire.lat);
+        const lng = parseFloat(fire.lng);
+        const brightness = parseFloat(fire.brightness);
+
+        if (isNaN(lat) || isNaN(lng) || isNaN(brightness)) {
+            console.warn('Invalid fire coordinates or brightness:', fire);
+            return false;
+        }
+
+        // Ensure numeric types
+        fire.lat = lat;
+        fire.lng = lng;
+        fire.brightness = brightness;
+        fire.confidence = parseFloat(fire.confidence) || 0;
+
+        return true;
+    });
+}
+
+/**
+ * Validate and sanitize air quality data
+ * @param {any[]} stations - Raw air quality data from API
+ * @returns {AirQualityData[]} - Validated air quality data
+ */
+function validateAirData(stations) {
+    return stations.filter(station => {
+        if (!station || typeof station !== 'object') {
+            console.warn('Invalid air quality data object:', station);
+            return false;
+        }
+
+        const lat = parseFloat(station.lat);
+        const lng = parseFloat(station.lng);
+        const pm25 = parseFloat(station.pm25);
+
+        if (isNaN(lat) || isNaN(lng) || isNaN(pm25)) {
+            console.warn('Invalid air quality coordinates or PM2.5:', station);
+            return false;
+        }
+
+        // Ensure numeric types
+        station.lat = lat;
+        station.lng = lng;
+        station.pm25 = pm25;
+
+        return true;
+    });
+}
+
+/**
+ * Validate and sanitize ocean data
+ * @param {any[]} stations - Raw ocean data from API
+ * @returns {OceanData[]} - Validated ocean data
+ */
+function validateOceanData(stations) {
+    return stations.filter(station => {
+        if (!station || typeof station !== 'object') {
+            console.warn('Invalid ocean data object:', station);
+            return false;
+        }
+
+        const lat = parseFloat(station.latitude);
+        const lng = parseFloat(station.longitude);
+
+        if (isNaN(lat) || isNaN(lng)) {
+            console.warn('Invalid ocean coordinates:', station);
+            return false;
+        }
+
+        // Ensure numeric types
+        station.latitude = lat;
+        station.longitude = lng;
+        station.temperature = station.temperature != null ? parseFloat(station.temperature) : null;
+        station.water_level = station.water_level != null ? parseFloat(station.water_level) : null;
+
+        return true;
+    });
+}
+
+/**
+ * Update fire layer with markers
+ * @returns {void}
+ */
 function updateFireLayer() {
     fireLayer.clearLayers();
 
     fireData.forEach(fire => {
-        // Check if coordinates are valid
-        if (!fire.lat || !fire.lng || isNaN(fire.lat) || isNaN(fire.lng)) {
-            console.warn('Invalid fire coordinates:', fire);
+        // Data is already validated, but double-check to be safe
+        if (!fire.lat || !fire.lng) {
             return;
         }
 
@@ -159,14 +297,16 @@ function updateFireLayer() {
     });
 }
 
-// Update air quality layer with markers
+/**
+ * Update air quality layer with markers
+ * @returns {void}
+ */
 function updateAirLayer() {
     airLayer.clearLayers();
 
     airData.forEach(station => {
-        // Check if coordinates are valid
-        if (!station.lat || !station.lng || isNaN(station.lat) || isNaN(station.lng)) {
-            console.warn('Invalid air quality coordinates:', station);
+        // Data is already validated
+        if (!station.lat || !station.lng) {
             return;
         }
 
@@ -201,11 +341,19 @@ function updateAirLayer() {
     });
 }
 
-// Update ocean layer with markers
+/**
+ * Update ocean layer with markers
+ * @returns {void}
+ */
 function updateOceanLayer() {
     oceanLayer.clearLayers();
 
     oceanData.forEach(station => {
+        // Data is already validated
+        if (!station.latitude || !station.longitude) {
+            return;
+        }
+
         const color = getOceanColor(station.temperature);
 
         const marker = L.circleMarker([station.latitude, station.longitude], {
@@ -216,11 +364,15 @@ function updateOceanLayer() {
             weight: 2
         });
 
+        // Format values safely
+        const tempDisplay = station.temperature != null ? `${station.temperature.toFixed(1)}°C` : 'N/A';
+        const waterLevelDisplay = station.water_level != null ? `${station.water_level.toFixed(2)}m` : 'N/A';
+
         marker.bindPopup(`
             <strong>🌊 Ocean Monitoring Station</strong><br>
             <strong>Location:</strong> ${station.name}<br>
-            <strong>Temperature:</strong> ${station.temperature}°C<br>
-            <strong>Water Level:</strong> ${station.water_level}m<br>
+            <strong>Temperature:</strong> ${tempDisplay}<br>
+            <strong>Water Level:</strong> ${waterLevelDisplay}<br>
             <strong>Updated:</strong> ${station.last_updated}<br>
             <em>Source: NOAA</em>
         `);
@@ -228,8 +380,8 @@ function updateOceanLayer() {
         marker.on('click', function () {
             showInfoPopup('🌊 Ocean Station', `
                 <strong>Location:</strong> ${station.name}<br>
-                <strong>Temperature:</strong> ${station.temperature}°C<br>
-                <strong>Water Level:</strong> ${station.water_level}m<br>
+                <strong>Temperature:</strong> ${tempDisplay}<br>
+                <strong>Water Level:</strong> ${waterLevelDisplay}<br>
                 <strong>Updated:</strong> ${station.last_updated}
             `);
         });

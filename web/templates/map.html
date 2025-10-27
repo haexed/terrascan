@@ -13,6 +13,36 @@
 
 
 {% block content %}
+<!-- Aggregate Stats Banner -->
+<div class="stats-banner">
+    <div class="stats-banner-content">
+        <div class="stat-item">
+            <span class="stat-icon">🔥</span>
+            <span class="stat-value" id="banner-fires">{{ health_data.fires.count if health_data.fires.count else '—' }}</span>
+            <span class="stat-label">Active Fires</span>
+        </div>
+        <div class="stat-item">
+            <span class="stat-icon">🌬️</span>
+            <span class="stat-value" id="banner-air">{{ health_data.air_quality.avg_pm25 if health_data.air_quality.avg_pm25 else '—' }}{{ ' μg/m³' if health_data.air_quality.avg_pm25 else '' }}</span>
+            <span class="stat-label">Global AQI</span>
+        </div>
+        <div class="stat-item">
+            <span class="stat-icon">🌊</span>
+            <span class="stat-value" id="banner-ocean">{{ health_data.ocean_temperature.avg_temp if health_data.ocean_temperature.avg_temp else '—' }}{{ '°C' if health_data.ocean_temperature.avg_temp else '' }}</span>
+            <span class="stat-label">Ocean Temp</span>
+        </div>
+        <div class="stat-item">
+            <span class="stat-icon">🌍</span>
+            <span class="stat-value" id="banner-health">{{ health_score.score if health_score.score else '—' }}/100</span>
+            <span class="stat-label">Health Score</span>
+        </div>
+        <div class="stat-item scan-status" id="scan-status-banner" style="display: none;">
+            <span class="stat-icon">🔍</span>
+            <span class="stat-value">Scanning...</span>
+        </div>
+    </div>
+</div>
+
 <!-- Main Map Container -->
 <div id="map"></div>
 
@@ -55,7 +85,7 @@
 
     <!-- Map Style Toggle -->
     <div class="layer-toggle">
-        <input type="checkbox" id="satellite-view">
+        <input type="checkbox" id="satellite-view" checked>
         <span class="layer-icon">🛰️</span>
         <div>
             <strong>Satellite View</strong>

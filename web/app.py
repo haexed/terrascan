@@ -7,7 +7,7 @@ Clean, maintainable Flask application
 import os
 import json
 from datetime import datetime
-from flask import Flask, render_template, jsonify, make_response
+from flask import Flask, render_template, jsonify, make_response, request
 from dotenv import load_dotenv
 
 # Load environment variables
@@ -18,6 +18,9 @@ from database.db import init_database, execute_query
 from database.schema_inspector import get_schema_documentation
 from tasks.runner import TaskRunner
 from utils import get_version, register_template_filters
+from utils.metric_value import create_metric_value
+from utils.regional_scanner import get_scanner
+from utils.regional_fetcher import get_regional_fetcher
 
 def create_app():
     """Create and configure the Flask application"""
@@ -49,7 +52,20 @@ def create_app():
     @app.route('/')
     @no_cache
     def index():
-        """Homepage with environmental dashboard"""
+        """Homepage - Interactive map (main experience)"""
+        try:
+            health_data = get_environmental_health_data()
+            health_score = calculate_environmental_health_score(health_data)
+            return render_template('map.html',
+                                 health_data=health_data,
+                                 health_score=health_score)
+        except Exception as e:
+            return f"Error: {e}", 500
+
+    @app.route('/status')
+    @no_cache
+    def status_dashboard():
+        """Status dashboard - System overview with all metrics"""
         try:
             data = prepare_dashboard_data()
             return render_template('index.html', **data)
@@ -57,9 +73,9 @@ def create_app():
             return f"Error: {e}", 500
 
     @app.route('/dashboard')
-    @no_cache  
+    @no_cache
     def dashboard():
-        """Dashboard page (same as index)"""
+        """Dashboard page (legacy redirect to status)"""
         try:
             data = prepare_dashboard_data()
             return render_template('dashboard.html', **data)
@@ -69,11 +85,11 @@ def create_app():
     @app.route('/map')
     @no_cache
     def map_view():
-        """Interactive map page"""
+        """Map page (legacy redirect to home)"""
         try:
             health_data = get_environmental_health_data()
             health_score = calculate_environmental_health_score(health_data)
-            return render_template('map.html', 
+            return render_template('map.html',
                                  health_data=health_data,
                                  health_score=health_score)
         except Exception as e:
@@ -227,9 +243,11 @@ def create_app():
             ocean_stations = execute_query("""
                 SELECT location_lat as latitude, location_lng as longitude,
                        AVG(CASE WHEN metric_name = 'water_temperature' THEN value END) as temperature,
+                       AVG(CASE WHEN metric_name = 'water_level' THEN value END) as water_level,
+                       MAX(timestamp) as last_updated,
                        MAX(metadata) as metadata
-                FROM metric_data 
-                WHERE provider_key = 'noaa_ocean' 
+                FROM metric_data
+                WHERE provider_key = 'noaa_ocean'
                 AND timestamp > NOW() - INTERVAL '7 days'
                 AND location_lat IS NOT NULL AND location_lng IS NOT NULL
                 GROUP BY location_lat, location_lng LIMIT 20
@@ -365,6 +383,107 @@ def create_app():
         except Exception as e:
             return jsonify({'success': False, 'error': str(e)}), 500
 
+    @app.route('/api/scan')
+    @no_cache
+    def api_scan_region():
+        """
+        Smart regional scanning endpoint - the heart of 'scan as you go'
+
+        Query params:
+            bbox: Bounding box as "south,west,north,east"
+            zoom: Map zoom level
+            layers: Comma-separated list (fires,air,ocean)
+        """
+        try:
+            # Parse parameters
+            bbox_str = request.args.get('bbox', '')
+            zoom = int(request.args.get('zoom', 10))
+            layers_str = request.args.get('layers', 'fires,air,ocean')
+
+            if not bbox_str:
+                return jsonify({'success': False, 'error': 'bbox parameter required'}), 400
+
+            # Parse bbox: "south,west,north,east"
+            try:
+                parts = [float(x.strip()) for x in bbox_str.split(',')]
+                if len(parts) != 4:
+                    raise ValueError("bbox must have 4 coordinates")
+                bbox = {
+                    'south': parts[0],
+                    'west': parts[1],
+                    'north': parts[2],
+                    'east': parts[3]
+                }
+            except (ValueError, IndexError) as e:
+                return jsonify({'success': False, 'error': f'Invalid bbox format: {e}'}), 400
+
+            layers = [l.strip() for l in layers_str.split(',') if l.strip()]
+
+            # Get scanner instance
+            scanner = get_scanner()
+
+            # Check if region is cached
+            cache_status = scanner.check_region_cached(bbox, zoom, layers)
+
+            # If fully cached, return cached data
+            if cache_status['cached']:
+                data = scanner.get_cached_data(bbox, layers)
+                return jsonify({
+                    'success': True,
+                    'cached': True,
+                    'data': data,
+                    'cache_status': cache_status,
+                    'message': 'Data loaded from cache'
+                })
+
+            # Otherwise, we need to fetch fresh data for missing layers
+            layers_to_fetch = cache_status['layers_needed']
+
+            if layers_to_fetch:
+                # Fetch fresh data from APIs
+                fetcher = get_regional_fetcher()
+                fetch_results = fetcher.fetch_region(bbox, layers_to_fetch)
+
+                # Record this scan in the database
+                total_records = fetch_results.get('total_records', 0)
+                if total_records > 0:
+                    scan_id = scanner.record_scan(
+                        bbox, zoom, layers_to_fetch,
+                        total_records, triggered_by='user_zoom'
+                    )
+
+            # Get all data (cached + newly fetched)
+            data = scanner.get_cached_data(bbox, layers)
+
+            return jsonify({
+                'success': True,
+                'cached': False,
+                'partial_cache': len(cache_status['layers_available']) > 0,
+                'data': data,
+                'cache_status': cache_status,
+                'fetch_results': fetch_results if layers_to_fetch else {},
+                'message': f"Fetched fresh data for: {layers_to_fetch}. Total records: {fetch_results.get('total_records', 0) if layers_to_fetch else 0}"
+            })
+
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            return jsonify({'success': False, 'error': str(e)}), 500
+
+    @app.route('/api/regions/stats')
+    @no_cache
+    def api_region_stats():
+        """Get scanning statistics"""
+        try:
+            scanner = get_scanner()
+            stats = scanner.get_scan_statistics()
+            return jsonify({
+                'success': True,
+                'stats': stats
+            })
+        except Exception as e:
+            return jsonify({'success': False, 'error': str(e)}), 500
+
     @app.errorhandler(404)
     def not_found(error):
         return "Page not found", 404
@@ -381,44 +500,54 @@ def prepare_dashboard_data():
     health_data = get_environmental_health_data()
     health_score = calculate_environmental_health_score(health_data)
     
-    # Prepare individual data sections
+    # Create smart metric values that handle display logic internally
     fire_data = {
-        'count': health_data['fires']['count'],
-        'active_fires': health_data['fires']['count'],  # Template expects active_fires
-        'avg_brightness': health_data['fires']['avg_brightness'],
-        'status': 'MONITORING' if health_data['fires']['count'] > 0 else 'NORMAL',
+        'count': create_metric_value(health_data['fires']['count'], 'fire_count'),
+        'active_fires': create_metric_value(health_data['fires']['count'], 'fire_count'),  # Template expects active_fires
+        'avg_brightness': create_metric_value(health_data['fires']['avg_brightness'], unit='K', decimal_places=1),
+        'measurements': create_metric_value(health_data['fires']['count'], 'count'),
         'last_update': health_data['last_updated']
     }
-    
+
     air_data = {
-        'avg_pm25': health_data['air_quality']['avg_pm25'],
-        'measurements': health_data['air_quality']['station_count'],
-        'status': get_air_quality_status(health_data['air_quality']['avg_pm25']),
+        'avg_pm25': create_metric_value(health_data['air_quality']['avg_pm25'], 'air_quality'),
+        'measurements': create_metric_value(health_data['air_quality']['station_count'], 'count'),
         'last_update': health_data['last_updated']
     }
-    
+
+    # Use temperature if available, otherwise use water level as a metric
+    ocean_temp = health_data['ocean_temperature']['avg_temp']
+    ocean_water_level = health_data['ocean_temperature'].get('avg_water_level')
+
     ocean_data = {
-        'avg_temp': health_data['ocean_temperature']['avg_temp'],
-        'measurements': health_data['ocean_temperature']['station_count'],
-        'status': get_ocean_status(health_data['ocean_temperature']['avg_temp']),
-        'last_update': health_data['last_updated']
+        'avg_temp': create_metric_value(ocean_temp, 'ocean_temp') if ocean_temp else create_metric_value(ocean_water_level, unit='m', decimal_places=2),
+        'measurements': create_metric_value(health_data['ocean_temperature']['station_count'], 'count'),
+        'last_update': health_data['last_updated'],
+        'has_temperature': ocean_temp is not None,
+        'metric_name': 'Water Temperature' if ocean_temp else 'Water Level'
     }
-    
+
     weather_data = {
-        'avg_temp': health_data['weather']['avg_temp'],
-        'avg_humidity': health_data['weather']['avg_humidity'],
-        'avg_pressure': 1013.25,  # Standard atmospheric pressure (not implemented yet)
-        'avg_wind_speed': 15.0,   # Default wind speed (not implemented yet)
-        'city_count': health_data['weather']['city_count'],
-        'alert_count': 0,  # Template expects alert_count (not implemented yet)
+        'avg_temp': create_metric_value(health_data['weather']['avg_temp'], 'temperature'),
+        'avg_humidity': create_metric_value(health_data['weather']['avg_humidity'], unit='%', decimal_places=0),
+        'avg_pressure': create_metric_value(None, unit=' hPa', decimal_places=1),  # Not implemented
+        'avg_wind_speed': create_metric_value(None, unit=' km/h', decimal_places=1),  # Not implemented
+        'city_count': create_metric_value(health_data['weather']['city_count'], 'count'),
+        'alert_count': create_metric_value(None, 'count'),  # Not implemented
         'last_update': health_data['last_updated']
     }
-    
+
     biodiversity_data = {
-        'avg_observations': health_data['biodiversity']['avg_observations'],
-        'avg_diversity': health_data['biodiversity']['avg_observations'] / 100 if health_data['biodiversity']['avg_observations'] > 0 else 0,  # Template expects avg_diversity 
-        'total_observations': health_data['biodiversity']['avg_observations'] * health_data['biodiversity']['region_count'] if health_data['biodiversity']['region_count'] > 0 else 0,
-        'region_count': health_data['biodiversity']['region_count'],
+        'avg_observations': create_metric_value(health_data['biodiversity']['avg_observations'], 'count'),
+        'avg_diversity': create_metric_value(
+            (health_data['biodiversity']['avg_observations'] / 100) if (health_data['biodiversity']['avg_observations'] is not None and health_data['biodiversity']['avg_observations'] > 0) else None,
+            unit='', decimal_places=1
+        ),
+        'total_observations': create_metric_value(
+            (health_data['biodiversity']['avg_observations'] * health_data['biodiversity']['region_count']) if (health_data['biodiversity']['avg_observations'] is not None and health_data['biodiversity']['region_count'] is not None and health_data['biodiversity']['region_count'] > 0) else None,
+            'count'
+        ),
+        'region_count': create_metric_value(health_data['biodiversity']['region_count'], 'count'),
         'last_update': health_data['last_updated']
     }
     
@@ -464,17 +593,44 @@ def get_provider_stats():
     return providers
 
 def format_fire_data(fires):
-    """Format fire data for map"""
-    return [{
-        'latitude': fire['latitude'],
-        'longitude': fire['longitude'],
-        'brightness': fire['brightness'],
-        'confidence': 75,  # Default confidence
-        'acq_date': fire['acq_date']
-    } for fire in fires]
+    """
+    Format fire data for map display
+
+    Args:
+        fires: List of fire records from database
+
+    Returns:
+        List[Dict]: Formatted fire data with numeric coordinates
+    """
+    from decimal import Decimal
+
+    formatted = []
+    for fire in fires:
+        try:
+            formatted.append({
+                'lat': float(fire['latitude']) if fire['latitude'] is not None else None,
+                'lng': float(fire['longitude']) if fire['longitude'] is not None else None,
+                'brightness': int(round(float(fire['brightness']))) if fire['brightness'] is not None else 0,
+                'confidence': 75,  # Default confidence
+                'acq_date': str(fire['acq_date'])
+            })
+        except (ValueError, TypeError) as e:
+            print(f"⚠️ Error formatting fire data: {e}, fire={fire}")
+            continue
+    return formatted
 
 def format_air_data(stations):
-    """Format air quality data for map"""
+    """
+    Format air quality data for map display
+
+    Args:
+        stations: List of air quality station records from database
+
+    Returns:
+        List[Dict]: Formatted air quality data with numeric coordinates and values
+    """
+    from decimal import Decimal
+
     formatted = []
     for station in stations:
         location = "Unknown Location"
@@ -484,18 +640,33 @@ def format_air_data(stations):
                 location = metadata.get('location', location)
         except:
             pass
-        
-        formatted.append({
-            'latitude': station['latitude'],
-            'longitude': station['longitude'],
-            'value': round(station['value'], 1),
-            'location': location
-        })
-    
+
+        try:
+            formatted.append({
+                'lat': float(station['latitude']) if station['latitude'] is not None else None,
+                'lng': float(station['longitude']) if station['longitude'] is not None else None,
+                'pm25': round(float(station['value']), 1) if station['value'] is not None else None,
+                'location': location
+            })
+        except (ValueError, TypeError) as e:
+            print(f"⚠️ Error formatting air quality data: {e}, station={station}")
+            continue
+
     return formatted
 
 def format_ocean_data(stations):
-    """Format ocean data for map"""
+    """
+    Format ocean data for map display
+
+    Args:
+        stations: List of ocean station records from database
+
+    Returns:
+        List[Dict]: Formatted ocean data with numeric coordinates and values
+    """
+    from decimal import Decimal
+    from datetime import datetime
+
     formatted = []
     for station in stations:
         name = "Ocean Station"
@@ -505,14 +676,31 @@ def format_ocean_data(stations):
                 name = metadata.get('station_name', name)
         except:
             pass
-        
-        formatted.append({
-            'latitude': station['latitude'],
-            'longitude': station['longitude'],
-            'temperature': round(station['temperature'], 1) if station['temperature'] else 20.0,
-            'name': name
-        })
-    
+
+        # Format timestamp
+        last_updated = "Unknown"
+        if station.get('last_updated'):
+            try:
+                if isinstance(station['last_updated'], str):
+                    last_updated = station['last_updated']
+                else:
+                    last_updated = station['last_updated'].strftime('%Y-%m-%d %H:%M UTC')
+            except:
+                pass
+
+        try:
+            formatted.append({
+                'latitude': float(station['latitude']) if station['latitude'] is not None else None,
+                'longitude': float(station['longitude']) if station['longitude'] is not None else None,
+                'temperature': round(float(station['temperature']), 1) if station.get('temperature') is not None else None,
+                'water_level': round(float(station['water_level']), 2) if station.get('water_level') is not None else None,
+                'last_updated': last_updated,
+                'name': name
+            })
+        except (ValueError, TypeError) as e:
+            print(f"⚠️ Error formatting ocean data: {e}, station={station}")
+            continue
+
     return formatted
 
 def get_environmental_health_data():
@@ -535,12 +723,15 @@ def get_environmental_health_data():
             AND timestamp >= NOW() - INTERVAL '7 days'
         """)
         
-        # Ocean data
+        # Ocean data - try temperature first, fall back to water level
         ocean_data = execute_query("""
-            SELECT AVG(value) as avg_temp, COUNT(*) as station_count
+            SELECT
+                AVG(CASE WHEN metric_name = 'water_temperature' THEN value END) as avg_temp,
+                AVG(CASE WHEN metric_name = 'water_level' THEN value END) as avg_water_level,
+                COUNT(DISTINCT CASE WHEN metric_name = 'water_temperature' THEN CONCAT(location_lat, ',', location_lng) END) as temp_station_count,
+                COUNT(DISTINCT CASE WHEN metric_name = 'water_level' THEN CONCAT(location_lat, ',', location_lng) END) as water_level_station_count
             FROM metric_data
             WHERE provider_key = 'noaa_ocean'
-            AND metric_name = 'water_temperature'
             AND timestamp >= NOW() - INTERVAL '7 days'
         """)
         
@@ -567,104 +758,128 @@ def get_environmental_health_data():
         
         return {
             'fires': {
-                'count': fire_data[0]['fire_count'] if fire_data and len(fire_data) > 0 else 0,
-                'avg_brightness': round(fire_data[0]['avg_brightness'] or 0, 1) if fire_data and len(fire_data) > 0 else 0
+                'count': get_nullable_count(fire_data, 'fire_count'),
+                'avg_brightness': format_nullable_value(fire_data[0]['avg_brightness'] if fire_data and len(fire_data) > 0 else None, 1)
             },
             'air_quality': {
-                'avg_pm25': round(air_data[0]['avg_pm25'] or 0, 1) if air_data and len(air_data) > 0 else 0,
-                'station_count': air_data[0]['station_count'] if air_data and len(air_data) > 0 else 0
+                'avg_pm25': format_nullable_value(air_data[0]['avg_pm25'] if air_data and len(air_data) > 0 else None, 2),
+                'station_count': get_nullable_count(air_data, 'station_count')
             },
             'ocean_temperature': {
-                'avg_temp': round(ocean_data[0]['avg_temp'] or 0, 1) if ocean_data and len(ocean_data) > 0 else 0,
-                'station_count': ocean_data[0]['station_count'] if ocean_data and len(ocean_data) > 0 else 0
+                'avg_temp': format_nullable_value(ocean_data[0]['avg_temp'] if ocean_data and len(ocean_data) > 0 else None, 1),
+                'avg_water_level': format_nullable_value(ocean_data[0]['avg_water_level'] if ocean_data and len(ocean_data) > 0 else None, 2),
+                'station_count': get_nullable_count(ocean_data, 'temp_station_count') or get_nullable_count(ocean_data, 'water_level_station_count')
             },
             'weather': {
-                'avg_temp': round(weather_data[0]['avg_temp'] or 0, 1) if weather_data and len(weather_data) > 0 else 0,
-                'avg_humidity': round(weather_data[0]['avg_humidity'] or 0, 1) if weather_data and len(weather_data) > 0 else 0,
-                'city_count': weather_data[0]['city_count'] if weather_data and len(weather_data) > 0 else 0
+                'avg_temp': format_nullable_value(weather_data[0]['avg_temp'] if weather_data and len(weather_data) > 0 else None, 1),
+                'avg_humidity': format_nullable_value(weather_data[0]['avg_humidity'] if weather_data and len(weather_data) > 0 else None, 1),
+                'city_count': get_nullable_count(weather_data, 'city_count')
             },
             'biodiversity': {
-                'avg_observations': round(biodiversity_data[0]['avg_observations'] or 0, 1) if biodiversity_data and len(biodiversity_data) > 0 else 0,
-                'region_count': biodiversity_data[0]['region_count'] if biodiversity_data and len(biodiversity_data) > 0 else 0
+                'avg_observations': format_nullable_value(biodiversity_data[0]['avg_observations'] if biodiversity_data and len(biodiversity_data) > 0 else None, 1),
+                'region_count': get_nullable_count(biodiversity_data, 'region_count')
             },
             'last_updated': datetime.utcnow().isoformat()
         }
     except Exception as e:
-        # Return empty data on error
+        # Return NULL data on error - no fake zeros
         return {
-            'fires': {'count': 0, 'avg_brightness': 0},
-            'air_quality': {'avg_pm25': 0, 'station_count': 0},
-            'ocean_temperature': {'avg_temp': 0, 'station_count': 0},
-            'weather': {'avg_temp': 0, 'avg_humidity': 0, 'city_count': 0},
-            'biodiversity': {'avg_observations': 0, 'region_count': 0},
+            'fires': {'count': None, 'avg_brightness': None},
+            'air_quality': {'avg_pm25': None, 'station_count': None},
+            'ocean_temperature': {'avg_temp': None, 'station_count': None},
+            'weather': {'avg_temp': None, 'avg_humidity': None, 'city_count': None},
+            'biodiversity': {'avg_observations': None, 'region_count': None},
             'last_updated': datetime.utcnow().isoformat(),
             'error': str(e)
         }
 
 def calculate_environmental_health_score(health_data):
-    """Calculate environmental health score (0-100)"""
-    score = 100  # Start with perfect score
-    
-    # Fire impact (up to -25 points)
+    """Calculate environmental health score (0-100) - returns None if insufficient data"""
+    # Check if we have enough data to calculate a meaningful score
     fire_count = health_data['fires']['count']
-    if fire_count > 1000:
-        score -= 25
-    elif fire_count > 500:
-        score -= 15
-    elif fire_count > 100:
-        score -= 8
-    
-    # Air quality impact (up to -30 points)  
     pm25 = health_data['air_quality']['avg_pm25']
-    if pm25 > 75:  # Hazardous
-        score -= 30
-    elif pm25 > 55:  # Very unhealthy
-        score -= 20
-    elif pm25 > 35:  # Unhealthy
-        score -= 12
-    elif pm25 > 15:  # Moderate
-        score -= 5
-    
-    # Ocean temperature impact (up to -15 points)
     ocean_temp = health_data['ocean_temperature']['avg_temp']
-    if ocean_temp > 25:  # Very warm
-        score -= 15
-    elif ocean_temp > 23:  # Warm
-        score -= 8
-    elif ocean_temp < 15:  # Very cold
-        score -= 10
-    elif ocean_temp < 18:  # Cold
-        score -= 5
-    
+
+    # If all critical metrics are NULL, we can't calculate a health score
+    data_points = [x for x in [fire_count, pm25, ocean_temp] if x is not None]
+    if len(data_points) == 0:
+        return {
+            'score': None,
+            'status': 'NO_DATA',
+            'color': '#6c757d'  # Gray for no data
+        }
+
+    score = 100  # Start with perfect score
+
+    # Fire impact (up to -25 points) - only if data available
+    if fire_count is not None:
+        if fire_count > 1000:
+            score -= 25
+        elif fire_count > 500:
+            score -= 15
+        elif fire_count > 100:
+            score -= 8
+
+    # Air quality impact (up to -30 points) - only if data available
+    if pm25 is not None:
+        if pm25 > 75:  # Hazardous
+            score -= 30
+        elif pm25 > 55:  # Very unhealthy
+            score -= 20
+        elif pm25 > 35:  # Unhealthy
+            score -= 12
+        elif pm25 > 15:  # Moderate
+            score -= 5
+
+    # Ocean temperature impact (up to -15 points) - only if data available
+    if ocean_temp is not None:
+        if ocean_temp > 25:  # Very warm
+            score -= 15
+        elif ocean_temp > 23:  # Warm
+            score -= 8
+        elif ocean_temp < 15:  # Very cold
+            score -= 10
+        elif ocean_temp < 18:  # Cold
+            score -= 5
+
     # Ensure score stays within bounds
     score = max(0, min(100, score))
-    
-    # Determine status
+
+    # Determine status - add "LIMITED_DATA" status if we're missing some metrics
+    data_coverage = len(data_points) / 3  # 3 critical metrics
+    if data_coverage < 0.67:  # Less than 2 out of 3 metrics
+        status_suffix = "_LIMITED_DATA"
+    else:
+        status_suffix = ""
+
     if score >= 80:
-        status = 'EXCELLENT'
+        status = 'EXCELLENT' + status_suffix
         color = '#28a745'
     elif score >= 60:
-        status = 'GOOD'
+        status = 'GOOD' + status_suffix
         color = '#33a474'
     elif score >= 40:
-        status = 'MODERATE'
+        status = 'MODERATE' + status_suffix
         color = '#ffc107'
     elif score >= 20:
-        status = 'POOR'
+        status = 'POOR' + status_suffix
         color = '#fd7e14'
     else:
-        status = 'CRITICAL'
+        status = 'CRITICAL' + status_suffix
         color = '#dc3545'
-    
+
     return {
         'score': score,
         'status': status,
-        'color': color
+        'color': color,
+        'data_coverage': round(data_coverage * 100, 0)
     }
 
 def get_air_quality_status(pm25):
     """Get air quality status based on PM2.5"""
-    if pm25 > 75:
+    if pm25 is None:
+        return 'NO_DATA'
+    elif pm25 > 75:
         return 'HAZARDOUS'
     elif pm25 > 55:
         return 'VERY UNHEALTHY'
@@ -677,12 +892,43 @@ def get_air_quality_status(pm25):
 
 def get_ocean_status(temp):
     """Get ocean status based on temperature"""
-    if temp > 25:
+    if temp is None:
+        return 'NO_DATA'
+    elif temp > 25:
         return 'WARM'
     elif temp < 15:
         return 'COOL'
     else:
         return 'NORMAL'
+
+# Data integrity helpers
+def format_nullable_value(value, decimal_places=None):
+    """
+    Properly handle nullable values for strict data display
+    Returns None for NULL/empty values, rounded numeric value for real data
+    """
+    from decimal import Decimal
+
+    if value is None:
+        return None
+    if isinstance(value, (int, float, Decimal)) and value == 0:
+        # Only return 0 if it's explicitly zero from database, not NULL
+        return 0
+    if isinstance(value, (int, float, Decimal)):
+        # Convert to float first to handle Decimal types from PostgreSQL
+        float_value = float(value)
+        if decimal_places is not None:
+            # Return a rounded float
+            return round(float_value, decimal_places)
+        return float_value
+    return value
+
+def get_nullable_count(query_result, field_name):
+    """Get count that properly handles NULL vs 0"""
+    if not query_result or len(query_result) == 0:
+        return None
+    value = query_result[0].get(field_name)
+    return value if value is not None else None
 
 if __name__ == '__main__':
     app = create_app()
