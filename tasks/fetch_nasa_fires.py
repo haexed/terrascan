@@ -10,32 +10,52 @@ from datetime import datetime, timedelta
 from typing import Dict, Any, List
 from database.db import batch_store_metric_data, get_latest_timestamp
 
-def fetch_nasa_fires(region: str = 'WORLD', days: int = 7) -> Dict[str, Any]:
+def fetch_nasa_fires(region: str = 'WORLD', days: int = 7, bbox: Dict[str, float] = None) -> Dict[str, Any]:
     """
     Fetch fire detection data from NASA FIRMS API
-    
+
     Args:
-        region: Geographic region code ('WORLD', 'NA', 'SA', etc.)
+        region: Geographic region code ('WORLD', 'NA', 'SA', etc.) - ignored if bbox provided
         days: Number of days to look back (1-10)
-    
+        bbox: Optional bounding box {'south': float, 'west': float, 'north': float, 'east': float}
+
     Returns:
         Dictionary with success status and message
     """
     api_key = os.getenv('NASA_FIRMS_API_KEY')
-    
+
     if not api_key:
         return {
             'success': False,
             'message': 'NASA FIRMS API key not configured. Set NASA_FIRMS_API_KEY environment variable.',
             'records_stored': 0
         }
-    
+
     # Validate days parameter
     if days < 1 or days > 10:
         days = 7
-    
-    # NASA FIRMS API endpoint for MODIS data
-    url = f"https://firms.modaps.eosdis.nasa.gov/api/active_fire/csv/{api_key}/MODIS_NRT/{region}/{days}"
+
+    # Build URL based on whether bbox is provided
+    # NASA FIRMS API only supports area endpoint (country endpoint deprecated)
+    # We need to use bbox for all queries
+    if bbox:
+        # Regional scan mode - use provided bbox
+        # Format: west,south,east,north (minX,minY,maxX,maxY)
+        bbox_str = f"{bbox['west']},{bbox['south']},{bbox['east']},{bbox['north']}"
+    else:
+        # Global/region mode - convert region to bbox
+        region_bboxes = {
+            'USA': '-125,25,-65,50',
+            'WORLD': '-180,-90,180,90',
+            'EUROPE': '-10,35,40,70',
+            'ASIA': '60,-10,150,60',
+            'AUSTRALIA': '110,-45,155,-10',
+            'SOUTH_AMERICA': '-82,-56,-34,13',
+            'AFRICA': '-18,-35,52,38'
+        }
+        bbox_str = region_bboxes.get(region, '-180,-90,180,90')  # Default to WORLD
+
+    url = f"https://firms.modaps.eosdis.nasa.gov/api/area/csv/{api_key}/VIIRS_SNPP_NRT/{bbox_str}/{days}"
     
     try:
         response = requests.get(url, timeout=30)
@@ -68,26 +88,41 @@ def fetch_nasa_fires(region: str = 'WORLD', days: int = 7) -> Dict[str, Any]:
         # Process each fire detection with actual timestamps
         fire_data_batch = []
         skipped_old = 0
-        
+        processed_count = 0
+
         for line in lines[1:]:
             if line.strip():
                 try:
                     values = line.split(',')
-                    if len(values) >= 15:
+                    if len(values) >= 14:  # VIIRS has 14 fields, not 15
                         # Extract key fields
                         lat = float(values[0])
                         lng = float(values[1])
                         brightness = float(values[2])
-                        confidence = float(values[9]) / 100.0 if values[9] else 0.5
+
+                        # Confidence in VIIRS is 'n' (nominal), 'l' (low), 'h' (high)
+                        conf_str = values[9].strip().lower()
+                        if conf_str == 'h':
+                            confidence = 0.9
+                        elif conf_str == 'n':
+                            confidence = 0.7
+                        elif conf_str == 'l':
+                            confidence = 0.4
+                        else:
+                            # Try numeric (for MODIS compatibility)
+                            try:
+                                confidence = float(values[9]) / 100.0
+                            except:
+                                confidence = 0.5
                         
                         # Build actual timestamp from fire detection time
                         acq_date = values[5]  # YYYY-MM-DD
-                        acq_time = values[6]  # HHMM
-                        
+                        acq_time = values[6].zfill(4)  # HHMM (zero-pad to 4 digits)
+
                         # Parse and format timestamp
                         hour = int(acq_time[:2]) if len(acq_time) >= 2 else 0
                         minute = int(acq_time[2:4]) if len(acq_time) >= 4 else 0
-                        
+
                         fire_timestamp = f"{acq_date}T{hour:02d}:{minute:02d}:00"
                         
                         # Skip if we already have newer data
@@ -109,7 +144,6 @@ def fetch_nasa_fires(region: str = 'WORLD', days: int = 7) -> Dict[str, Any]:
                                 'satellite': values[7],
                                 'instrument': values[8],
                                 'daynight': values[13],
-                                'type': values[14],
                                 'scan': values[3],
                                 'track': values[4],
                                 'frp': values[12],
@@ -117,11 +151,16 @@ def fetch_nasa_fires(region: str = 'WORLD', days: int = 7) -> Dict[str, Any]:
                                 'acq_time': acq_time
                             }
                         })
-                        
+                        processed_count += 1
+
                 except (ValueError, IndexError) as e:
+                    if processed_count < 5:  # Show first few errors
+                        print(f"⚠️ Skipping malformed fire record #{processed_count}: {e}")
+                    processed_count += 1
                     continue  # Skip malformed records
         
         # Store all fire data in batch with deduplication
+        print(f"📦 Prepared {len(fire_data_batch)} fire records for storage")
         if fire_data_batch:
             batch_result = batch_store_metric_data(fire_data_batch)
             records_stored = batch_result.get('processed', 0)

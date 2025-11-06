@@ -153,17 +153,65 @@ def current_utc_formatted(include_timezone: bool = True) -> str:
     return format_datetime_utc(current_utc()) if include_timezone else format_datetime(current_utc(), include_timezone=False)
 
 
+# Data display utilities
+def format_nullable_display(value, no_data_text="NO DATA", emoji="🤷"):
+    """
+    Format nullable values for display with consistent 'no data' indicators
+
+    Args:
+        value: The value to format (could be None, 0, or actual data)
+        no_data_text: Text to show when value is None
+        emoji: Emoji to show with no data text
+
+    Returns:
+        Formatted string for display
+    """
+    if value is None:
+        return f"{emoji} {no_data_text}"
+    return str(value)
+
+def format_metric_display(value, unit="", decimal_places=1, no_data_text="NO DATA", emoji="🤷"):
+    """
+    Format metric values with proper NULL handling and units
+
+    Args:
+        value: Numeric value or None
+        unit: Unit string (e.g., "°C", "μg/m³")
+        decimal_places: Number of decimal places for formatting
+        no_data_text: Text to show when value is None
+        emoji: Emoji to show with no data
+
+    Returns:
+        Formatted string with units or no-data indicator
+    """
+    if value is None:
+        return f"{emoji} {no_data_text}"
+
+    if isinstance(value, (int, float)):
+        if decimal_places == 0:
+            formatted_value = f"{int(value)}"
+        else:
+            formatted_value = f"{value:.{decimal_places}f}"
+        return f"{formatted_value}{unit}"
+
+    return f"{value}{unit}"
+
 # Template filters for Jinja2
 def register_template_filters(app):
     """
-    Register datetime filters for Flask/Jinja2 templates
+    Register datetime and data display filters for Flask/Jinja2 templates
     Usage in templates: {{ datetime_value | format_dt }}
     """
+    # Datetime filters
     app.jinja_env.filters['format_dt'] = format_datetime_utc
     app.jinja_env.filters['format_date'] = format_date_only
     app.jinja_env.filters['format_time'] = format_time_only
     app.jinja_env.filters['format_iso'] = format_iso
     app.jinja_env.filters['time_ago'] = time_ago
+
+    # Data display filters
+    app.jinja_env.filters['nullable'] = format_nullable_display
+    app.jinja_env.filters['metric'] = format_metric_display
 
 
 # Example usage and testing

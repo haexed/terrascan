@@ -10,11 +10,22 @@
 **TERRASCAN** gives you instant access to current environmental conditions across the globe:
 
 - 🔥 **Active Wildfires**: Live fire detection from NASA satellites
-- 🌬️ **Air Quality**: Real-time pollution levels from 200+ monitoring stations  
+- 🌬️ **Air Quality**: Real-time pollution levels from 200+ monitoring stations
 - 🌊 **Ocean Health**: Sea surface temperature and water level data from NOAA
 - 🌡️ **Global Weather**: Current conditions and alerts for 24+ major cities
 - 🦋 **Biodiversity**: Species observations from 18 global biodiversity hotspots
 - 📊 **Health Score**: Combined environmental health indicator (0-100)
+
+## 🎯 Data Integrity Promise
+
+**TERRASCAN follows a strict "real data or no data" policy:**
+
+- ✅ **Real Values**: Actual measurements from environmental monitoring stations
+- 🤷 **NO DATA**: Clearly displayed when data is unavailable or pending
+- ❌ **No Fake Zeros**: Never shows "0" when the real value is NULL/missing
+- 🔍 **Transparent Status**: All metrics show data availability and collection status
+
+*We believe environmental data should be trusted, not fabricated.*
 
 **🌐 Live Site**: [terrascan.io](https://terrascan.io)
 
@@ -57,11 +68,12 @@
 
 | Provider | API Key Required | Free Tier | Sign Up Link |
 |----------|------------------|-----------|--------------|
-| 🔥 NASA FIRMS | Yes | 1000/day | [NASA Earthdata](https://urs.earthdata.nasa.gov/) |
-| 🌬️ OpenAQ | Recommended | 10,000/month | [OpenAQ](https://openaq.org/) |
-| 🌊 NOAA | Yes | 1000/day | [NOAA API](https://www.ncdc.noaa.gov/cdo-web/token) |
-| 🌡️ OpenWeatherMap | Yes | 1000/day | [OpenWeatherMap](https://openweathermap.org/api) |
-| 🦋 GBIF | No | Unlimited | Free (no key required) |
+| 🔥 NASA FIRMS | **Required** | 1000/day | [NASA FIRMS](https://firms.modaps.eosdis.nasa.gov/api/) |
+| 🌬️ World AQI (Primary) | **Recommended** | 10,000/day | [AQICN](https://aqicn.org/api/) |
+| 🌬️ OpenAQ (Fallback) | Optional | Limited | [OpenAQ](https://openaq.org/) |
+| 🌊 NOAA | **Free** | Unlimited | No key needed |
+| 🌡️ OpenWeatherMap | Optional (DB config) | 1000/day | [OpenWeatherMap](https://openweathermap.org/api) |
+| 🦋 GBIF | **Free** | Unlimited | No key needed |
 
 ---
 
@@ -84,10 +96,15 @@ TERRASCAN is production-ready and deployed on Railway at [terrascan.io](https://
 
 3. **Set environment variables**
    ```bash
-   railway variables set NASA_API_KEY=your_key
-   railway variables set OPENAQ_API_KEY=your_key
-   railway variables set NOAA_API_KEY=your_key
-   railway variables set OPENWEATHERMAP_API_KEY=your_key
+   # Required for fire data
+   railway variables set NASA_FIRMS_API_KEY=your_nasa_firms_key
+
+   # Required for air quality (use at least one)
+   railway variables set WORLD_AQI_API_KEY=your_waqi_key
+   railway variables set OPENAQ_API_KEY=your_openaq_key
+
+   # Optional: OpenWeatherMap configured via database, not env vars
+   # NOAA and GBIF are completely free, no keys needed
    ```
 
 4. **Deploy**
@@ -160,6 +177,35 @@ CREATE TABLE system_config (...)  -- Application settings
 ```
 
 For complete schema details, see: [database/schema.sql](database/schema.sql)
+
+### Data Integrity Implementation
+
+**Strict NULL Handling:**
+```python
+# Backend: Never convert NULL to 0
+value = query_result[0]['metric_value']  # Could be None
+formatted_value = format_nullable_value(value, decimal_places=1)  # Returns None for NULL
+
+# Frontend: Clear NO DATA display
+{{ metric_value | metric(unit="°C") }}  # Shows "🤷 NO DATA" if None
+```
+
+**Status Indicators:**
+- `NO_DATA`: When essential data is unavailable
+- `LIMITED_DATA`: When partial data affects calculations
+- Standard status levels only with complete data sets
+
+### 🐛 Development Debugging Notes
+
+**For future Claude: Always verify server status before claiming it's running!**
+
+Common debugging steps when the server appears to start but doesn't respond:
+1. `ps aux | grep "python run.py"` - Check if process is actually running
+2. `curl -I http://localhost:5000` - Verify HTTP response (don't assume based on startup logs)
+3. If getting 500 errors, restart with `FLASK_ENV=development python run.py` for stack traces
+4. Check `BashOutput` for background processes to see actual error messages
+
+The server startup logs can be misleading - just because it prints "Running on localhost:5000" doesn't mean it's actually handling requests successfully.
 
 ---
 
