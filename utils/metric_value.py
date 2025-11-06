@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Smart Metric Value Type for TERRASCAN
+Smart Metric Value Type for Terrascan
 Handles NULL values, formatting, and status logic internally
 """
 
@@ -188,7 +188,7 @@ def create_metric_value(value, metric_type="default", **kwargs):
 
 # Example usage and testing
 if __name__ == "__main__":
-    print("🧪 TERRASCAN MetricValue Testing:")
+    print("🧪 Terrascan MetricValue Testing:")
 
     # Test with real values
     fire_count = create_metric_value(150, 'fire_count')

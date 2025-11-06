@@ -1,4 +1,4 @@
-# 🌍 TERRASCAN
+# 🌍 Terrascan
 
 **Monitor Earth's environmental health in real-time**
 
@@ -7,7 +7,7 @@
 ![License](https://img.shields.io/badge/license-MIT-blue)
 ![Status](https://img.shields.io/badge/status-production-green)
 
-**TERRASCAN** gives you instant access to current environmental conditions across the globe:
+**Terrascan** gives you instant access to current environmental conditions across the globe:
 
 - 🔥 **Active Wildfires**: Live fire detection from NASA satellites
 - 🌬️ **Air Quality**: Real-time pollution levels from 200+ monitoring stations
@@ -18,7 +18,7 @@
 
 ## 🎯 Data Integrity Promise
 
-**TERRASCAN follows a strict "real data or no data" policy:**
+**Terrascan follows a strict "real data or no data" policy:**
 
 - ✅ **Real Values**: Actual measurements from environmental monitoring stations
 - 🤷 **NO DATA**: Clearly displayed when data is unavailable or pending
@@ -62,7 +62,7 @@
    http://localhost:5000
    ```
 
-**🔑 API Keys Required**: TERRASCAN works with real environmental data from NASA, NOAA, and OpenAQ APIs.
+**🔑 API Keys Required**: Terrascan works with real environmental data from NASA, NOAA, and OpenAQ APIs.
 
 ### Get Your API Keys
 
@@ -79,7 +79,7 @@
 
 ## 🚀 Production Deployment
 
-TERRASCAN is production-ready and deployed on Railway at [terrascan.io](https://terrascan.io).
+Terrascan is production-ready and deployed on Railway at [terrascan.io](https://terrascan.io).
 
 ### Railway Deployment
 
@@ -141,7 +141,7 @@ TASK_ENABLED_BIODIVERSITY=true
 
 ### Database Architecture
 
-TERRASCAN is built on **PostgreSQL** for production deployment:
+Terrascan is built on **PostgreSQL** for production deployment:
 
 **PostgreSQL (Production & Development)**
 ```bash
@@ -269,7 +269,7 @@ For local PostgreSQL development, see: [DEVELOPMENT.md](DEVELOPMENT.md)
 
 ## 🌍 Environmental Impact
 
-**TERRASCAN** promotes environmental awareness by:
+**Terrascan** promotes environmental awareness by:
 
 - **🔥 Fire Monitoring**: Early wildfire detection and tracking
 - **🌬️ Air Quality**: Public health air pollution alerts  
@@ -333,7 +333,7 @@ git push origin feature/your-feature-name
 
 ## 🙏 Credits
 
-**TERRASCAN** is developed through collaborative human-AI partnership:
+**Terrascan** is developed through collaborative human-AI partnership:
 
 - **🎯 Project Management & Vision**: [Stig Grindland](https://hæx.com)
   - Strategic direction and system architecture decisions
@@ -351,7 +351,7 @@ This project demonstrates the power of human creativity and AI capability workin
 
 ## 📄 License
 
-**MIT License** - Use TERRASCAN however you want, spread environmental awareness!
+**MIT License** - Use Terrascan however you want, spread environmental awareness!
 
 See [LICENSE](LICENSE) for full details.
 

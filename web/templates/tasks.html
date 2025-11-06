@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}📊 TERRASCAN Tasks{% endblock %}
+{% block title %}📊 Terrascan Tasks{% endblock %}
 
 {% block extra_css %}
 
@@ -257,10 +257,10 @@
         const dataElement = document.getElementById('terrascan-tasks-data');
         if (dataElement) {
             try {
-                window.TERRASCAN_TASKS_DATA = JSON.parse(dataElement.textContent);
+                window.Terrascan_TASKS_DATA = JSON.parse(dataElement.textContent);
             } catch (e) {
                 console.error('Failed to parse tasks data:', e);
-                window.TERRASCAN_TASKS_DATA = { readOnlyMode: true };
+                window.Terrascan_TASKS_DATA = { readOnlyMode: true };
             }
         }
     });

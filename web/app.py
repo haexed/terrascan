@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-TERRASCAN - Environmental Health Dashboard
+Terrascan - Environmental Health Dashboard
 Clean, maintainable Flask application
 """
 

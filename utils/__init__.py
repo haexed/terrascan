@@ -1,5 +1,5 @@
 """
-TERRASCAN Utilities Package
+Terrascan Utilities Package
 Common utilities for the environmental monitoring platform
 """
 

@@ -29,7 +29,7 @@ ENV/
 *.db
 *.sqlite
 # Database files (using PostgreSQL)
-# *.sqlite3  # Removed - TERRASCAN uses PostgreSQL
+# *.sqlite3  # Removed - Terrascan uses PostgreSQL
 database/*.db
 database/*.sqlite
 

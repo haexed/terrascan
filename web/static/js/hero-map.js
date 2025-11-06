@@ -1,4 +1,4 @@
-// === TERRASCAN HERO MAP FUNCTIONALITY ===
+// === Terrascan HERO MAP FUNCTIONALITY ===
 
 // Global variables for hero map
 let heroMap;

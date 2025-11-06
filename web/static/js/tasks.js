@@ -20,9 +20,9 @@ document.addEventListener('DOMContentLoaded', function () {
  */
 function initializePage() {
     // Set initial data from global data
-    if (window.TERRASCAN_TASKS_DATA) {
-        runningTasksCount = window.TERRASCAN_TASKS_DATA.runningTasksCount || 0;
-        readOnlyMode = window.TERRASCAN_TASKS_DATA.readOnlyMode || false;
+    if (window.Terrascan_TASKS_DATA) {
+        runningTasksCount = window.Terrascan_TASKS_DATA.runningTasksCount || 0;
+        readOnlyMode = window.Terrascan_TASKS_DATA.readOnlyMode || false;
     } else {
         // Fallback: get from DOM
         const statsElement = document.querySelector('.stats-card .text-warning');

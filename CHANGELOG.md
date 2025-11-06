@@ -1,6 +1,6 @@
 # Changelog
 
-All notable changes to TERRASCAN will be documented in this file.
+All notable changes to Terrascan will be documented in this file.
 
 ## [2.7.0] - 2025-06-16
 
@@ -95,7 +95,7 @@ All notable changes to TERRASCAN will be documented in this file.
 
 ## [3.0.0] - 2025-06-14
 
-**BREAKING CHANGE**: TERRASCAN now requires PostgreSQL (DATABASE_URL environment variable)
+**BREAKING CHANGE**: Terrascan now requires PostgreSQL (DATABASE_URL environment variable)
 
 ### Removed
 - Complete SQLite support and dual database complexity

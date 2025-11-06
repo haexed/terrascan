@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-TERRASCAN Endpoint Testing Script
+Terrascan Endpoint Testing Script
 Tests all endpoints and validates syntax after app.py rewrite
 """
 
@@ -295,7 +295,7 @@ class EndpointTester:
 
     def run_all_tests(self):
         """Run all tests"""
-        print("🧪 TERRASCAN Endpoint Testing")
+        print("🧪 Terrascan Endpoint Testing")
         print("=" * 50)
         
         # Load environment variables

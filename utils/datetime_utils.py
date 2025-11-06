@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-TERRASCAN Datetime Utilities
+Terrascan Datetime Utilities
 Centralized datetime formatting with consistent ISO standards and timezone support
 """
 
@@ -8,7 +8,7 @@ from datetime import datetime, timezone
 from typing import Optional, Union
 
 
-# Standard TERRASCAN datetime formats (ISO 8601 compliant)
+# Standard Terrascan datetime formats (ISO 8601 compliant)
 DATETIME_FORMAT = "%Y-%m-%d %H:%M:%S"  # 2025-06-14 10:30:45
 DATETIME_FORMAT_TZ = "%Y-%m-%d %H:%M:%S %z"  # 2025-06-14 10:30:45 +0000
 DATE_FORMAT = "%Y-%m-%d"  # 2025-06-14
@@ -20,7 +20,7 @@ def format_datetime(dt: Union[datetime, str, None],
                    include_timezone: bool = True,
                    format_type: str = 'standard') -> str:
     """
-    Format datetime with consistent TERRASCAN styling
+    Format datetime with consistent Terrascan styling
     
     Args:
         dt: Datetime object, ISO string, or None
@@ -218,7 +218,7 @@ def register_template_filters(app):
 if __name__ == "__main__":
     # Test the formatting functions
     test_dt = datetime.now(timezone.utc)
-    print("🕐 TERRASCAN Datetime Formatting Examples:")
+    print("🕐 Terrascan Datetime Formatting Examples:")
     print(f"  Standard:      {format_datetime_utc(test_dt)}")
     print(f"  Date only:     {format_date_only(test_dt)}")
     print(f"  Time only:     {format_time_only(test_dt)}")

@@ -1,9 +1,9 @@
 #!/bin/bash
 
-# TERRASCAN Endpoint Testing Script
+# Terrascan Endpoint Testing Script
 # Tests all endpoints after the app.py rewrite
 
-echo "🧪 TERRASCAN Endpoint Testing"
+echo "🧪 Terrascan Endpoint Testing"
 echo "===================================="
 
 BASE_URL="http://localhost:5000"

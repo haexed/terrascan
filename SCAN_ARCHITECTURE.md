@@ -1,4 +1,4 @@
-# 🔍 TERRASCAN - "Scan As You Go" Architecture
+# 🔍 Terrascan - "Scan As You Go" Architecture
 
 ## Overview
 

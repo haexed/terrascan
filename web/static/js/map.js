@@ -1,4 +1,4 @@
-// === TERRASCAN MAP FUNCTIONALITY ===
+// === Terrascan MAP FUNCTIONALITY ===
 
 /**
  * @typedef {Object} FireData

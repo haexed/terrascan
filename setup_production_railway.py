@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-TERRASCAN Production Setup for Railway
+Terrascan Production Setup for Railway
 Sets up PostgreSQL database and all environmental monitoring tasks
 """
 
@@ -12,7 +12,7 @@ from datetime import datetime
 def setup_railway_production():
     """Complete production setup for Railway deployment"""
     
-    print("🚀 TERRASCAN Production Setup for Railway")
+    print("🚀 Terrascan Production Setup for Railway")
     print("=" * 60)
     
     # Check if we're in Railway environment
@@ -308,7 +308,7 @@ def check_environment_variables():
         return True
 
 if __name__ == "__main__":
-    print("🚀 TERRASCAN Production Setup for Railway")
+    print("🚀 Terrascan Production Setup for Railway")
     print("=" * 60)
     
     # Check environment first
@@ -318,7 +318,7 @@ if __name__ == "__main__":
     
     # Run production setup
     if setup_railway_production():
-        print("\n🎉 TERRASCAN Production Setup Complete!")
+        print("\n🎉 Terrascan Production Setup Complete!")
         print("🌍 Your environmental monitoring platform is ready!")
         print("\n📋 Next Steps:")
         print("1. Deploy to Railway (git push)")

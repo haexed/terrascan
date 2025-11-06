@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-TERRASCAN Database Schema Inspector
+Terrascan Database Schema Inspector
 Self-documenting PostgreSQL schema introspection
 """
 
@@ -353,7 +353,7 @@ if __name__ == "__main__":
     """CLI tool for schema inspection"""
     import json
     
-    print("🔍 TERRASCAN Database Schema Inspector")
+    print("🔍 Terrascan Database Schema Inspector")
     print("=" * 50)
     
     schema = get_schema_documentation()

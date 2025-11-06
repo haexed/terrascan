@@ -1,6 +1,6 @@
-# 🔧 TERRASCAN Development Guide
+# 🔧 Terrascan Development Guide
 
-This guide helps you set up TERRASCAN for local development using PostgreSQL.
+This guide helps you set up Terrascan for local development using PostgreSQL.
 
 ## 🚀 Quick Start
 
@@ -27,7 +27,7 @@ python3 run.py
 
 ## 🗄️ Detailed PostgreSQL Setup
 
-TERRASCAN uses PostgreSQL for both development and production environments.
+Terrascan uses PostgreSQL for both development and production environments.
 
 ### 1. Install PostgreSQL
 
@@ -89,7 +89,7 @@ python3 run.py
 
 ## 🔄 Database Configuration
 
-TERRASCAN requires PostgreSQL for both development and production. The `DATABASE_URL` environment variable must be set to connect to your PostgreSQL database.
+Terrascan requires PostgreSQL for both development and production. The `DATABASE_URL` environment variable must be set to connect to your PostgreSQL database.
 
 ## 🧪 Testing API Integrations
 

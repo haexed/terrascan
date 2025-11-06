@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""TERRASCAN
+"""Terrascan
 Advanced environmental data monitoring and analysis platform
 """
 
@@ -11,7 +11,7 @@ from database.config_manager import get_system_config, set_system_config
 def main():
     """Main application entry point"""
     
-    print("🌍 TERRASCAN")
+    print("🌍 Terrascan")
     print("=" * 50)
     print("Environmental Health Monitoring Dashboard")
     print("Real-time tracking of fires, air quality, and ocean data")

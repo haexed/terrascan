@@ -11,7 +11,7 @@ from datetime import datetime
 def add_deduplication_constraints():
     """Add unique constraints to prevent duplicate metric data"""
 
-    print("📋 TERRASCAN Database Deduplication Migration - starting")
+    print("📋 Terrascan Database Deduplication Migration - starting")
 
     database_url = os.environ.get('DATABASE_URL')
     if not database_url:
@@ -70,7 +70,7 @@ def add_deduplication_constraints():
         print("🔒 Database connection closed")
 
         print("✅ Deduplication constraints added successfully!")
-        print("🎯 TERRASCAN now prevents duplicate environmental data")
+        print("🎯 Terrascan now prevents duplicate environmental data")
         return True
         
     except psycopg2.errors.UniqueViolation as e:
@@ -231,7 +231,7 @@ def get_duplicate_stats():
         return None
 
 if __name__ == "__main__":
-    print("🚀 TERRASCAN Database Deduplication Migration")
+    print("🚀 Terrascan Database Deduplication Migration")
     print("=" * 50)
     print("📋 Migration script starting...")
 

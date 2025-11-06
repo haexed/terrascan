@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-TERRASCAN Syntax Checker
+Terrascan Syntax Checker
 Quick syntax validation for the rewritten app.py
 """
 
@@ -167,7 +167,7 @@ class SyntaxChecker:
 
     def run_all_checks(self):
         """Run all syntax and structure checks"""
-        print("🔍 TERRASCAN Syntax & Structure Check")
+        print("🔍 Terrascan Syntax & Structure Check")
         print("=" * 50)
         
         # Check environment first

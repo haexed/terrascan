@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Database connection and operations for TERRASCAN
+Database connection and operations for Terrascan
 Python/PostgreSQL production platform
 """
 
@@ -13,14 +13,14 @@ from contextlib import contextmanager
 # PostgreSQL connection (required for both development and production)
 DATABASE_URL = os.environ.get('DATABASE_URL')
 if not DATABASE_URL:
-    raise ValueError("❌ DATABASE_URL environment variable is required. TERRASCAN uses PostgreSQL for both development and production. See DEVELOPMENT.md for setup instructions.")
+    raise ValueError("❌ DATABASE_URL environment variable is required. Terrascan uses PostgreSQL for both development and production. See DEVELOPMENT.md for setup instructions.")
 
 import psycopg2
 import psycopg2.extras
 from psycopg2 import OperationalError, DatabaseError
 from psycopg2 import pool
 
-print("🚀 TERRASCAN - PostgreSQL Platform")
+print("🚀 Terrascan - PostgreSQL Platform")
 
 # Connection pool for better resource management
 _connection_pool = None
@@ -451,7 +451,7 @@ def get_database_info():
         return f"PostgreSQL (connection parse error: {e})"
 
 if __name__ == "__main__":
-    print("🔧 TERRASCAN Database Module")
+    print("🔧 Terrascan Database Module")
     print("🚀 PostgreSQL Platform")
     
     if init_database():

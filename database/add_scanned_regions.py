@@ -183,7 +183,7 @@ def add_helper_functions():
 def main():
     """Run the migration"""
     print("=" * 60)
-    print("TERRASCAN - Scanned Regions Migration")
+    print("Terrascan - Scanned Regions Migration")
     print("Adding lazy-loading regional scan capabilities")
     print("=" * 60)
     print()
