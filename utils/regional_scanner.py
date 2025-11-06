@@ -127,12 +127,12 @@ class RegionalScanner:
             RETURNING id
         """
 
-        result = execute_query(query, (
+        results = execute_query(query, (
             bbox['north'], bbox['south'], bbox['east'], bbox['west'],
             zoom, layers, data_points, triggered_by
-        ), fetch_one=True)
+        ))
 
-        return result['id'] if result else None
+        return results[0]['id'] if results else None
 
     def update_scan(self, scan_id: int, additional_data_points: int):
         """Update an existing scan with more data points"""
@@ -212,8 +212,8 @@ class RegionalScanner:
     def get_scan_statistics(self) -> Dict:
         """Get global scanning statistics"""
         query = "SELECT * FROM get_scan_statistics()"
-        result = execute_query(query, fetch_one=True)
-        return result or {}
+        results = execute_query(query)
+        return results[0] if results else {}
 
     def get_popular_regions(self, limit: int = 10) -> List[Dict]:
         """Get most frequently scanned regions for prefetching"""
