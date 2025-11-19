@@ -14,7 +14,10 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # Import database and utilities
-from database.db import init_database, execute_query
+from database.db import (
+    init_database, execute_query, get_running_tasks,
+    get_recent_task_runs, get_task_by_name
+)
 from database.schema_inspector import get_schema_documentation
 from tasks.runner import TaskRunner
 from utils import get_version, register_template_filters
