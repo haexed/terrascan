@@ -130,17 +130,22 @@ def create_app():
                 ORDER BY tl.started_at DESC LIMIT 50
             """)
             
+            # Get running tasks
+            running_tasks = get_running_tasks()
+
             # Simple stats
             stats = {
                 'total_tasks': len(all_tasks),
                 'active_tasks': len([t for t in all_tasks if t['active']]),
-                'recent_runs': len(recent_runs)
+                'recent_runs': len(recent_runs),
+                'running_tasks': len(running_tasks)
             }
-            
+
             return render_template('tasks.html',
                                  tasks=all_tasks,
                                  recent_runs=recent_runs,
-                                 stats=stats)
+                                 stats=stats,
+                                 running_tasks=running_tasks)
         except Exception as e:
             return f"Error: {e}", 500
 
@@ -177,16 +182,23 @@ def create_app():
             # Data breakdown
             data_breakdown = execute_query("""
                 SELECT provider_key, COUNT(*) as record_count
-                FROM metric_data 
+                FROM metric_data
                 GROUP BY provider_key
                 ORDER BY record_count DESC
             """)
-            
+
+            # Get database size
+            db_size_result = execute_query("""
+                SELECT pg_size_pretty(pg_database_size(current_database())) as size
+            """)
+            database_size = db_size_result[0]['size'] if db_size_result else 'Unknown'
+
             return render_template('system.html',
                                  system_status=system_status,
                                  providers=providers,
                                  recent_runs=recent_runs,
                                  data_breakdown=data_breakdown,
+                                 database_size=database_size,
                                  simulation_mode=False,
                                  version=get_version())
         except Exception as e:
@@ -361,6 +373,94 @@ def create_app():
             """, (task_name,))
             
             return jsonify({'success': True, 'logs': logs})
+        except Exception as e:
+            return jsonify({'success': False, 'error': str(e)}), 500
+
+    @app.route('/api/tasks/status')
+    @no_cache
+    def api_tasks_status():
+        """Get current task system status"""
+        try:
+            running = get_running_tasks()
+            recent = get_recent_task_runs(limit=5)
+
+            return jsonify({
+                'success': True,
+                'running_tasks': len(running),
+                'running_details': running,
+                'recent_runs': recent
+            })
+        except Exception as e:
+            return jsonify({'success': False, 'error': str(e)}), 500
+
+    @app.route('/api/tasks/<task_name>/toggle', methods=['POST'])
+    @no_cache
+    def api_toggle_task(task_name):
+        """Toggle task active status"""
+        try:
+            # Get current task
+            task = get_task_by_name(task_name)
+            if not task:
+                return jsonify({'success': False, 'error': f'Task {task_name} not found'}), 404
+
+            # Toggle active status
+            new_status = not task['active']
+            execute_query(
+                "UPDATE task SET active = %s, updated_date = NOW() WHERE name = %s",
+                (new_status, task_name)
+            )
+
+            return jsonify({
+                'success': True,
+                'task': task_name,
+                'active': new_status,
+                'message': f'Task {task_name} {"enabled" if new_status else "disabled"}'
+            })
+        except Exception as e:
+            return jsonify({'success': False, 'error': str(e)}), 500
+
+    @app.route('/api/collect-all-data', methods=['POST'])
+    @no_cache
+    def api_collect_all_data():
+        """Run all data collection tasks"""
+        try:
+            runner = TaskRunner()
+            tasks = ['nasa_fires_global', 'openaq_latest', 'noaa_ocean_water_level',
+                     'noaa_ocean_temperature', 'openmeteo_marine']
+            results = []
+
+            for task_name in tasks:
+                result = runner.run_task(task_name, triggered_by='web_collect_all')
+                results.append({
+                    'task': task_name,
+                    'success': result['success'],
+                    'records': result.get('records_processed', 0)
+                })
+
+            total_records = sum(r['records'] for r in results)
+            successful = sum(1 for r in results if r['success'])
+
+            return jsonify({
+                'success': True,
+                'message': f'Completed {successful}/{len(tasks)} tasks, {total_records} records',
+                'results': results
+            })
+        except Exception as e:
+            return jsonify({'success': False, 'error': str(e)}), 500
+
+    @app.route('/api/collect-biodiversity', methods=['POST'])
+    @no_cache
+    def api_collect_biodiversity():
+        """Run biodiversity data collection"""
+        try:
+            runner = TaskRunner()
+            result = runner.run_task('gbif_species_observations', triggered_by='web_interface')
+
+            return jsonify({
+                'success': result['success'],
+                'message': f'Biodiversity collection completed',
+                'records_processed': result.get('records_processed', 0)
+            })
         except Exception as e:
             return jsonify({'success': False, 'error': str(e)}), 500
 
