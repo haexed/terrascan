@@ -235,6 +235,17 @@
     z-index: 1000;
     max-width: 300px;
     display: none;
+    color: #333;
+}
+
+.info-popup h6 {
+    color: var(--infp-green);
+    margin-bottom: 10px;
+    font-weight: 600;
+}
+
+.info-popup strong {
+    color: #555;
 }
 
 /* Map refresh button */
