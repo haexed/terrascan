@@ -21,6 +21,11 @@ body {
     text-decoration: none;
 }
 
+.subheader {
+    color: var(--infp-cream);
+    opacity: 0.9;
+}
+
 h1,
 h2,
 h3,
@@ -41,20 +46,27 @@ h6,
     color: var(--infp-forest);
 }
 
-.eco-card a,
-.eco-card a:visited {
-    color: #fff;
-    text-decoration: none;
-}
-
+/* eco-card text and links - all use forest green on white background */
+.eco-card,
 .eco-card h1,
 .eco-card h2,
 .eco-card h3,
 .eco-card h4,
 .eco-card h5,
 .eco-card h6,
-.eco-card .lead {
+.eco-card .lead,
+.eco-card a,
+.eco-card a:visited {
     color: var(--infp-forest);
+}
+
+.eco-card a {
+    text-decoration: underline dotted var(--infp-green);
+}
+
+.eco-card a:hover {
+    color: var(--infp-brown);
+    text-decoration: underline solid var(--infp-green);
 }
 
 .hero-map-header h1,
@@ -104,11 +116,11 @@ h6,
 }
 
 .status-good {
-    color: var(--infp-yellow);
+    color: #8B9A1B; /* Darker yellow-green for readability */
 }
 
 .status-moderate {
-    color: #F6B26B;
+    color: #D4820E; /* Darker orange for readability */
 }
 
 .status-poor {

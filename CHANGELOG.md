@@ -2,6 +2,45 @@
 
 All notable changes to Terrascan will be documented in this file.
 
+## [3.3.0] - 2025-11-19
+
+### Added
+- Open-Meteo Marine API integration for global ocean data
+  - Sea surface temperature, wave height, ocean currents
+  - 20 global ocean monitoring points
+  - CC-BY 4.0 attribution on About, Index, and System pages
+- New API endpoints: `/api/tasks/status`, `/api/tasks/<name>/toggle`, `/api/collect-all-data`, `/api/collect-biodiversity`
+- `.subheader` CSS class for light text on dark backgrounds
+- Open-Meteo provider card on System page with stats
+
+### Fixed
+- **Critical**: Datetime comparison bug in `get_latest_timestamp()` - converted PostgreSQL datetime to ISO string
+- **Critical**: WAQI global fetch returning 0 results - switched to map bounds API with world bbox
+- **Critical**: Task logging not recording runs since September - `result[0]` → `result['id']` for RealDictCursor
+- **Critical**: Task logs modal showing all entries as "Failed" - JavaScript checking non-existent `exit_code` instead of `status`
+- Missing imports for `get_running_tasks`, `get_recent_task_runs`, `get_task_by_name` in app.py
+- Missing template variables: `database_size`, `running_tasks`
+- Hardcoded health score "30/POOR" → actual data or "NO DATA"
+- Hardcoded fire confidence 75 → actual metadata value
+- CSS contrast issues: `.eco-card a` white on white background → forest green
+- Status colors for better readability: `.status-good` yellow → olive-green, `.status-moderate` → darker amber
+- Navigation confusion: "View Dashboard" → "System Status" on index page
+- System page quick action buttons not working
+
+### Changed
+- Ocean Health data source now credits "NOAA & Open-Meteo"
+- Active Data Sources count: 5 → 6 environmental APIs
+- Added `noaa_ocean_temperature` and `openmeteo_marine` to refresh tasks list
+
+## [3.2.0] - 2025-09-05
+
+### Added
+- Production stabilization and Railway deployment improvements
+- Enhanced error handling for API failures
+
+### Fixed
+- Various production bugs and stability issues
+
 ## [2.7.0] - 2025-06-16
 
 ### Fixed

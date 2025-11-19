@@ -2,7 +2,7 @@
 
 **Monitor Earth's environmental health in real-time**
 
-![Version](https://img.shields.io/badge/version-3.2.0-blue)
+![Version](https://img.shields.io/badge/version-3.3.0-blue)
 ![Database](https://img.shields.io/badge/database-PostgreSQL-green)
 ![License](https://img.shields.io/badge/license-MIT-blue)
 ![Status](https://img.shields.io/badge/status-production-green)
@@ -11,7 +11,7 @@
 
 - 🔥 **Active Wildfires**: Live fire detection from NASA satellites
 - 🌬️ **Air Quality**: Real-time pollution levels from 200+ monitoring stations
-- 🌊 **Ocean Health**: Sea surface temperature and water level data from NOAA
+- 🌊 **Ocean Health**: Sea surface temperature, waves, and currents from NOAA & Open-Meteo
 - 🌡️ **Global Weather**: Current conditions and alerts for 24+ major cities
 - 🦋 **Biodiversity**: Species observations from 18 global biodiversity hotspots
 - 📊 **Health Score**: Combined environmental health indicator (0-100)
@@ -72,6 +72,7 @@
 | 🌬️ World AQI (Primary) | **Recommended** | 10,000/day | [AQICN](https://aqicn.org/api/) |
 | 🌬️ OpenAQ (Fallback) | Optional | Limited | [OpenAQ](https://openaq.org/) |
 | 🌊 NOAA | **Free** | Unlimited | No key needed |
+| 🌐 Open-Meteo | **Free** | Unlimited | No key needed (CC-BY 4.0) |
 | 🌡️ OpenWeatherMap | Optional (DB config) | 1000/day | [OpenWeatherMap](https://openweathermap.org/api) |
 | 🦋 GBIF | **Free** | Unlimited | No key needed |
 
@@ -163,6 +164,7 @@ railway add postgresql
 | 🔥 NASA Fires | Active fire detection | 15 minutes | ~500-2000 |
 | 🌬️ OpenAQ Latest | Air quality stations | 30 minutes | ~200-500 |
 | 🌊 NOAA Ocean | Ocean temperature/levels | 1 hour | ~100-300 |
+| 🌐 Open-Meteo Marine | Sea surface temp/waves/currents | 3 hours | ~50-60 |
 | 🌡️ OpenWeatherMap | Current conditions/alerts | 2 hours | ~50-100 |
 | 🦋 GBIF Biodiversity | Species observations | 6 hours | ~20-50 |
 
@@ -217,7 +219,7 @@ The server startup logs can be misleading - just because it prints "Running on l
 - pip package manager
 - Internet connection (for API calls)
 
-### SQLite Development (Recommended)
+### PostgreSQL Development
 
 ```bash
 # 1. Clone and setup
@@ -227,15 +229,13 @@ pip install -r requirements.txt
 
 # 2. Configure environment
 cp .env.example .env
-# Edit .env with your API keys
+# Edit .env with your API keys and DATABASE_URL
 
 # 3. Run application
 python run.py
 ```
 
-### PostgreSQL Development (Advanced)
-
-For local PostgreSQL development, see: [DEVELOPMENT.md](DEVELOPMENT.md)
+**Note**: Terrascan requires PostgreSQL. For detailed local PostgreSQL setup, see: [DEVELOPMENT.md](DEVELOPMENT.md)
 
 ---
 
@@ -284,6 +284,7 @@ For local PostgreSQL development, see: [DEVELOPMENT.md](DEVELOPMENT.md)
 - **NASA FIRMS**: Fire Information for Resource Management System
 - **OpenAQ**: Open Air Quality platform with global coverage
 - **NOAA**: National Oceanic and Atmospheric Administration
+- **Open-Meteo**: Free weather and marine API (CC-BY 4.0 license)
 - **OpenWeatherMap**: Global weather data and alerts
 - **GBIF**: Global Biodiversity Information Facility
 

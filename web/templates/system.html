@@ -226,6 +226,48 @@
             </div>
         </div>
 
+        <!-- Open-Meteo -->
+        <div class="col-lg-4">
+            <div class="eco-card p-4">
+                <div class="d-flex align-items-center mb-3">
+                    <span class="fs-1 me-3">🌐</span>
+                    <div>
+                        <h4 class="mb-0">Open-Meteo</h4>
+                        <div class="data-source">Free Weather & Marine API</div>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <strong>Latest Data Collection</strong><br>
+                    <span class="small">{{ providers.openmeteo.last_run if providers.openmeteo.last_run else 'Never' }}</span>
+                </div>
+
+                <div class="mb-3">
+                    <strong>Records Collected</strong><br>
+                    <span class="metric-value text-info">{{ providers.openmeteo.total_records }}</span>
+                    <span class="small"> marine measurements</span>
+                </div>
+
+                <div class="mb-3">
+                    <strong>Status</strong><br>
+                    <span
+                        class="badge {% if providers.openmeteo.status == 'operational' %}bg-success{% else %}bg-warning{% endif %}">
+                        {{ providers.openmeteo.status.upper() }}
+                    </span>
+                </div>
+
+                <div class="small">
+                    <strong>Coverage:</strong> 20 global ocean points<br>
+                    <strong>Update Frequency:</strong> Every 3 hours<br>
+                    <strong>Metrics:</strong> Sea surface temp, waves, currents<br>
+                    <strong>License:</strong> CC-BY 4.0
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- System Health Row -->
+    <div class="row g-4 mb-4">
         <!-- System Health -->
         <div class="col-lg-4">
             <div class="eco-card p-4">
@@ -244,7 +286,7 @@
 
                 <div class="mb-3">
                     <strong>Active Data Sources</strong><br>
-                    <span class="metric-value text-info">5</span>
+                    <span class="metric-value text-info">6</span>
                     <span class="small"> environmental APIs</span>
                 </div>
 

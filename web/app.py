@@ -672,7 +672,7 @@ def get_count(query):
 def get_provider_stats():
     """Get simplified provider statistics"""
     providers = {}
-    provider_keys = ['nasa_firms', 'openaq', 'noaa_ocean', 'openweather', 'gbif']
+    provider_keys = ['nasa_firms', 'openaq', 'noaa_ocean', 'openweather', 'gbif', 'openmeteo']
     
     for key in provider_keys:
         stats = execute_query("""

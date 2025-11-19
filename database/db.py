@@ -267,7 +267,7 @@ def start_task_run(task_id: int, triggered_by: str = 'manual',
         with get_db_transaction() as (conn, cursor):
             cursor.execute(query, (task_id, 'running', triggered_by, params_json))
             result = cursor.fetchone()
-            return result[0] if result else None
+            return result['id'] if result else None
 
     except (OperationalError, DatabaseError) as e:
         print(f"❌ Database error starting task run: {e}")

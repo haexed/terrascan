@@ -230,12 +230,12 @@ function showTaskLogs(taskName) {
                     html = '<div class="text-center py-4">No logs found for this task</div>';
                 } else {
                     data.logs.forEach(log => {
-                        const statusClass = log.exit_code === 0 ? 'log-success' :
-                            log.exit_code === null ? 'log-running' : 'log-error';
-                        const statusText = log.exit_code === 0 ? 'Success' :
-                            log.exit_code === null ? 'Running' : 'Failed';
-                        const badgeClass = log.exit_code === 0 ? 'bg-success' :
-                            log.exit_code === null ? 'bg-warning' : 'bg-danger';
+                        const statusClass = log.status === 'completed' ? 'log-success' :
+                            log.status === 'running' ? 'log-running' : 'log-error';
+                        const statusText = log.status === 'completed' ? 'Success' :
+                            log.status === 'running' ? 'Running' : 'Failed';
+                        const badgeClass = log.status === 'completed' ? 'bg-success' :
+                            log.status === 'running' ? 'bg-warning' : 'bg-danger';
 
                         html += `
                         <div class="log-entry ${statusClass}">
