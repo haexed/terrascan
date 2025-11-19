@@ -270,7 +270,7 @@ def create_app():
             runner = TaskRunner()
             
             # Run key tasks
-            tasks = ['nasa_fires_global', 'openaq_latest', 'noaa_ocean_water_level']
+            tasks = ['nasa_fires_global', 'openaq_latest', 'noaa_ocean_water_level', 'noaa_ocean_temperature']
             results = []
             
             for task_name in tasks:
