@@ -49,8 +49,9 @@ def _fetch_from_waqi(token: str, limit: int, bbox: Dict[str, float] = None) -> D
         # Use map bounds query
         url = f"https://api.waqi.info/map/bounds/?token={token}&latlng={bbox['south']},{bbox['west']},{bbox['north']},{bbox['east']}"
     else:
-        # Get global feed (limited to major cities)
-        url = f"https://api.waqi.info/feed/here/?token={token}"
+        # Get global data using world bbox
+        # WAQI map bounds API returns all stations in the bounding box
+        url = f"https://api.waqi.info/map/bounds/?token={token}&latlng=-60,-180,60,180"
 
     try:
         response = requests.get(url, timeout=30)
