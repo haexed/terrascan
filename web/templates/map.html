@@ -97,11 +97,11 @@
 <!-- Health Score Widget -->
 <div class="health-score-widget">
     <h6 class="mb-2">🌍 PLANETARY HEALTH</h6>
-    <div class="health-score status-{{ health_score.status.lower() if health_score else 'poor' }}">
-        {{ health_score.score if health_score else '30' }}/100
+    <div class="health-score status-{{ health_score.status.lower() if health_score else 'unknown' }}">
+        {{ health_score.score if health_score else '--' }}/100
     </div>
-    <div class="mt-1 small status-{{ health_score.status.lower() if health_score else 'poor' }}">
-        {{ health_score.status if health_score else '🔴 POOR' }}
+    <div class="mt-1 small status-{{ health_score.status.lower() if health_score else 'unknown' }}">
+        {{ health_score.status if health_score else '⚪ NO DATA' }}
     </div>
     <div class="small mt-2">
         <i class="fas fa-clock"></i> <span id="map-current-time">Loading...</span>

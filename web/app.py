@@ -229,9 +229,9 @@ def create_app():
             # Get recent fire data
             fires = execute_query("""
                 SELECT location_lat as latitude, location_lng as longitude,
-                       value as brightness, DATE(timestamp) as acq_date
-                FROM metric_data 
-                WHERE provider_key = 'nasa_firms' 
+                       value as brightness, DATE(timestamp) as acq_date, metadata
+                FROM metric_data
+                WHERE provider_key = 'nasa_firms'
                 AND timestamp > NOW() - INTERVAL '24 hours'
                 AND location_lat IS NOT NULL AND location_lng IS NOT NULL
                 AND value > 300
@@ -707,11 +707,23 @@ def format_fire_data(fires):
     formatted = []
     for fire in fires:
         try:
+            # Extract confidence from metadata
+            confidence = 50  # Default if not available
+            if fire.get('metadata'):
+                metadata = fire['metadata']
+                if isinstance(metadata, str):
+                    import json
+                    metadata = json.loads(metadata)
+                if isinstance(metadata, dict):
+                    # Confidence stored as 0-1 float, convert to percentage
+                    conf_val = metadata.get('confidence', 0.5)
+                    confidence = int(round(float(conf_val) * 100))
+
             formatted.append({
                 'lat': float(fire['latitude']) if fire['latitude'] is not None else None,
                 'lng': float(fire['longitude']) if fire['longitude'] is not None else None,
                 'brightness': int(round(float(fire['brightness']))) if fire['brightness'] is not None else 0,
-                'confidence': 75,  # Default confidence
+                'confidence': confidence,
                 'acq_date': str(fire['acq_date'])
             })
         except (ValueError, TypeError) as e:
