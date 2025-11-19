@@ -354,11 +354,11 @@
                 <button class="btn btn-primary me-2" onclick="collectBiodiversity()">
                     <i class="fas fa-leaf"></i> Collect Biodiversity Data
                 </button>
-                <button class="btn btn-info me-2" onclick="viewLogs()">
-                    <i class="fas fa-list"></i> View System Logs
-                </button>
-                <button class="btn btn-warning" onclick="clearOldData()">
-                    <i class="fas fa-trash"></i> Clear Old Data (30+ days)
+                <a href="/tasks" class="btn btn-info me-2">
+                    <i class="fas fa-list"></i> View Task Logs
+                </a>
+                <button class="btn btn-secondary" disabled title="Coming in future update">
+                    <i class="fas fa-trash"></i> Clear Old Data
                 </button>
             </div>
         </div>
@@ -376,14 +376,12 @@
         button.disabled = true;
 
         try {
-            const response = await fetch('/api/collect-all-data');
+            const response = await fetch('/api/collect-all-data', { method: 'POST' });
             const result = await response.json();
 
             if (result.success) {
-                const summary = result.summary;
                 alert(`✅ Data collection completed!\n\n` +
-                    `📊 Tasks: ${summary.successful_tasks}/${summary.total_tasks} successful\n` +
-                    `📈 Records collected: ${summary.total_records_collected}\n\n` +
+                    `${result.message}\n\n` +
                     `Page will reload to show new data.`);
                 location.reload();
             } else {
@@ -405,16 +403,13 @@
         button.disabled = true;
 
         try {
-            const response = await fetch('/api/collect-biodiversity');
+            const response = await fetch('/api/collect-biodiversity', { method: 'POST' });
             const result = await response.json();
 
             if (result.success) {
-                const stats = result.biodiversity_stats;
                 alert(`🦋 Biodiversity data collected!\n\n` +
-                    `📊 Records processed: ${result.records_processed}\n` +
-                    `🌍 Regions monitored: ${stats.region_count}\n` +
-                    `🔬 Avg observations: ${stats.avg_observations}\n` +
-                    `🌿 Avg species diversity: ${stats.avg_diversity}\n\n` +
+                    `${result.message}\n` +
+                    `📊 Records processed: ${result.records_processed}\n\n` +
                     `Page will reload to show new data.`);
                 location.reload();
             } else {
@@ -425,16 +420,6 @@
         } finally {
             button.innerHTML = originalText;
             button.disabled = false;
-        }
-    }
-
-    function viewLogs() {
-        alert('📊 System logs are available in the Recent Task Executions table above. For detailed server logs, check your deployment platform.');
-    }
-
-    function clearOldData() {
-        if (confirm('⚠️ This will permanently delete environmental data older than 30 days. Continue?')) {
-            alert('🧹 Data cleanup feature will be implemented in a future update.');
         }
     }
 
