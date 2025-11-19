@@ -36,26 +36,26 @@ def fetch_nasa_fires(region: str = 'WORLD', days: int = 7, bbox: Dict[str, float
         days = 7
 
     # Build URL based on whether bbox is provided
-    # NASA FIRMS API only supports area endpoint (country endpoint deprecated)
-    # We need to use bbox for all queries
+    # NASA FIRMS API supports both region names and bbox coordinates
     if bbox:
         # Regional scan mode - use provided bbox
         # Format: west,south,east,north (minX,minY,maxX,maxY)
-        bbox_str = f"{bbox['west']},{bbox['south']},{bbox['east']},{bbox['north']}"
+        area = f"{bbox['west']},{bbox['south']},{bbox['east']},{bbox['north']}"
     else:
-        # Global/region mode - convert region to bbox
-        region_bboxes = {
+        # Global/region mode - use region names or bbox
+        # NASA accepts: world, usa, europe, asia, australia, south_america, africa
+        region_map = {
+            'WORLD': 'world',
             'USA': '-125,25,-65,50',
-            'WORLD': '-180,-90,180,90',
             'EUROPE': '-10,35,40,70',
             'ASIA': '60,-10,150,60',
             'AUSTRALIA': '110,-45,155,-10',
             'SOUTH_AMERICA': '-82,-56,-34,13',
             'AFRICA': '-18,-35,52,38'
         }
-        bbox_str = region_bboxes.get(region, '-180,-90,180,90')  # Default to WORLD
+        area = region_map.get(region, 'world')  # Default to world
 
-    url = f"https://firms.modaps.eosdis.nasa.gov/api/area/csv/{api_key}/VIIRS_SNPP_NRT/{bbox_str}/{days}"
+    url = f"https://firms.modaps.eosdis.nasa.gov/api/area/csv/{api_key}/VIIRS_SNPP_NRT/{area}/{days}"
     
     try:
         response = requests.get(url, timeout=30)
