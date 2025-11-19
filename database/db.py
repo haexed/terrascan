@@ -354,7 +354,13 @@ def get_latest_timestamp(provider_key: str, metric_name: str = None) -> Optional
             params = (provider_key,)
         
         result = execute_query(query, params)
-        return result[0]['latest_timestamp'] if result and result[0]['latest_timestamp'] else None
+        if result and result[0]['latest_timestamp']:
+            timestamp = result[0]['latest_timestamp']
+            # Convert datetime to ISO string for consistent comparison
+            if hasattr(timestamp, 'isoformat'):
+                return timestamp.strftime('%Y-%m-%dT%H:%M:%S')
+            return str(timestamp)
+        return None
         
     except Exception as e:
         print(f"❌ Error getting latest timestamp: {e}")
