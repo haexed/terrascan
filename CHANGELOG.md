@@ -2,6 +2,32 @@
 
 All notable changes to Terrascan will be documented in this file.
 
+## [3.4.0] - 2025-12-29
+
+### Added
+- **Aurora forecast layer** from NOAA Space Weather Prediction Center
+  - Real-time aurora probability using OVATION model
+  - Kp geomagnetic index display (0-9 scale with status)
+  - Green-to-purple color gradient based on intensity
+  - Updates every 30 minutes
+- **UCDP conflict data layer** from Uppsala Conflict Data Program
+  - Global armed conflict events with fatality counts
+  - Conflict metadata: sides, violence type, region
+  - Historical data up to 365 days
+- **Task creation API endpoint** (`POST /api/tasks/create`)
+- NOAA SWPC and UCDP credits on About page
+
+### Changed
+- **Ocean temperature switched to Open-Meteo** for global SST coverage
+  - Replaced US-only NOAA stations with 20 global monitoring points
+  - Updated map labels and popup sources
+- Removed redundant info-popup box (Leaflet popups sufficient)
+- Cleaned up legend references from layer toggle handlers
+- Map now has 6 toggleable layers: Fires, Air Quality, Ocean, Conflicts, Biodiversity, Aurora
+
+### Fixed
+- Task creation using wrong database function (`execute_query` → `execute_insert`)
+
 ## [3.3.0] - 2025-11-19
 
 ### Added
