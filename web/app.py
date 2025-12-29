@@ -1187,19 +1187,19 @@ def calculate_environmental_health_score(health_data):
         status_suffix = ""
 
     if score >= 80:
-        status = 'EXCELLENT' + status_suffix
+        status = 'Excellent' + status_suffix
         color = '#28a745'
     elif score >= 60:
-        status = 'GOOD' + status_suffix
+        status = 'Good' + status_suffix
         color = '#33a474'
     elif score >= 40:
-        status = 'MODERATE' + status_suffix
+        status = 'Moderate' + status_suffix
         color = '#ffc107'
     elif score >= 20:
-        status = 'POOR' + status_suffix
+        status = 'Poor' + status_suffix
         color = '#fd7e14'
     else:
-        status = 'CRITICAL' + status_suffix
+        status = 'Critical' + status_suffix
         color = '#dc3545'
 
     return {
@@ -1212,28 +1212,28 @@ def calculate_environmental_health_score(health_data):
 def get_air_quality_status(pm25):
     """Get air quality status based on PM2.5"""
     if pm25 is None:
-        return 'NO_DATA'
+        return 'No Data'
     elif pm25 > 75:
-        return 'HAZARDOUS'
+        return 'Hazardous'
     elif pm25 > 55:
-        return 'VERY UNHEALTHY'
+        return 'Very Unhealthy'
     elif pm25 > 35:
-        return 'UNHEALTHY'
+        return 'Unhealthy'
     elif pm25 > 15:
-        return 'MODERATE'
+        return 'Moderate'
     else:
-        return 'GOOD'
+        return 'Good'
 
 def get_ocean_status(temp):
     """Get ocean status based on temperature"""
     if temp is None:
-        return 'NO_DATA'
+        return 'No Data'
     elif temp > 25:
-        return 'WARM'
+        return 'Warm'
     elif temp < 15:
-        return 'COOL'
+        return 'Cool'
     else:
-        return 'NORMAL'
+        return 'Normal'
 
 # Data integrity helpers
 def format_nullable_value(value, decimal_places=None):

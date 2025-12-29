@@ -19,9 +19,9 @@
     <div class="row mb-4">
         <div class="col-12">
             <div class="eco-card text-center p-4">
-                <h2 class="mb-3">🌍 PLANETARY HEALTH STATUS</h2>
+                <h2 class="mb-3">🌍 Planetary Health</h2>
                 <div class="health-score status-{{ health_score.status.lower().replace('_', '-') }}">
-                    {% if health_score.score is not none %}{{ health_score.score }}/100{% else %}🤷 NO DATA{% endif %}
+                    {% if health_score.score is not none %}{{ health_score.score }}/100{% else %}No Data{% endif %}
                 </div>
                 <h3 class="mt-2 status-{{ health_score.status.lower().replace('_', '-') }}">
                     {{ health_score.status.replace('_', ' ') }}
