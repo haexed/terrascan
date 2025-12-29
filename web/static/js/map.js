@@ -542,6 +542,12 @@ function getAuroraColor(intensity) {
     return '#98FB98';  // Pale green - faint aurora
 }
 
+// Toggle control panel collapse state
+function toggleControlPanel() {
+    const panel = document.getElementById('control-panel');
+    panel.classList.toggle('collapsed');
+}
+
 // Refresh map data
 async function refreshMapData() {
     const icon = document.getElementById('refresh-icon');

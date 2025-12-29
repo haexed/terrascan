@@ -47,80 +47,92 @@
 <div id="map"></div>
 
 <!-- Control Panel -->
-<div class="control-panel">
-    <h5 class="mb-3"><strong>🌍 Terrascan</strong></h5>
-    <p class="small mb-3">Live Environmental Layers</p>
-
-    <!-- Fire Layer Toggle -->
-    <div class="layer-toggle">
-        <input type="checkbox" id="fire-layer" checked>
-        <span class="layer-icon">🔥</span>
-        <div>
-            <strong>Active Fires</strong>
-            <div class="small">NASA FIRMS</div>
-        </div>
+<div class="control-panel" id="control-panel">
+    <div class="control-header" onclick="toggleControlPanel()">
+        <h5 class="mb-0"><strong>🌍 Terrascan</strong></h5>
+        <span class="collapse-icon" id="collapse-icon">▼</span>
     </div>
+    <div class="control-body" id="control-body">
+        <p class="small mb-2 text-muted">Live Environmental Layers</p>
 
-    <!-- Air Quality Layer Toggle -->
-    <div class="layer-toggle">
-        <input type="checkbox" id="air-layer" checked>
-        <span class="layer-icon">🌬️</span>
-        <div>
-            <strong>Air Quality</strong>
-            <div class="small">OpenAQ PM2.5</div>
-        </div>
-    </div>
+        <!-- Fire Layer Toggle -->
+        <label class="layer-toggle">
+            <span class="layer-icon">🔥</span>
+            <div class="layer-info">
+                <strong>Active Fires</strong>
+                <span class="layer-source">NASA FIRMS</span>
+            </div>
+            <input type="checkbox" id="fire-layer" checked>
+            <span class="toggle-switch"></span>
+        </label>
 
-    <!-- Ocean Layer Toggle -->
-    <div class="layer-toggle">
-        <input type="checkbox" id="ocean-layer" checked>
-        <span class="layer-icon">🌊</span>
-        <div>
-            <strong>Ocean Temp</strong>
-            <div class="small">Open-Meteo SST</div>
-        </div>
-    </div>
+        <!-- Air Quality Layer Toggle -->
+        <label class="layer-toggle">
+            <span class="layer-icon">🌬️</span>
+            <div class="layer-info">
+                <strong>Air Quality</strong>
+                <span class="layer-source">OpenAQ PM2.5</span>
+            </div>
+            <input type="checkbox" id="air-layer" checked>
+            <span class="toggle-switch"></span>
+        </label>
 
-    <!-- Conflict Layer Toggle -->
-    <div class="layer-toggle">
-        <input type="checkbox" id="conflict-layer" checked>
-        <span class="layer-icon">⚔️</span>
-        <div>
-            <strong>Conflicts</strong>
-            <div class="small">UCDP Events</div>
-        </div>
-    </div>
+        <!-- Ocean Layer Toggle -->
+        <label class="layer-toggle">
+            <span class="layer-icon">🌊</span>
+            <div class="layer-info">
+                <strong>Ocean Temp</strong>
+                <span class="layer-source">Open-Meteo SST</span>
+            </div>
+            <input type="checkbox" id="ocean-layer" checked>
+            <span class="toggle-switch"></span>
+        </label>
 
-    <!-- Biodiversity Layer Toggle -->
-    <div class="layer-toggle">
-        <input type="checkbox" id="biodiversity-layer" checked>
-        <span class="layer-icon">🦋</span>
-        <div>
-            <strong>Biodiversity</strong>
-            <div class="small">GBIF Hotspots</div>
-        </div>
-    </div>
+        <!-- Conflict Layer Toggle -->
+        <label class="layer-toggle">
+            <span class="layer-icon">⚔️</span>
+            <div class="layer-info">
+                <strong>Conflicts</strong>
+                <span class="layer-source">UCDP Events</span>
+            </div>
+            <input type="checkbox" id="conflict-layer" checked>
+            <span class="toggle-switch"></span>
+        </label>
 
-    <!-- Aurora Layer Toggle -->
-    <div class="layer-toggle">
-        <input type="checkbox" id="aurora-layer" checked>
-        <span class="layer-icon">🌌</span>
-        <div>
-            <strong>Aurora</strong>
-            <div class="small" id="kp-status">NOAA SWPC</div>
-        </div>
-    </div>
+        <!-- Biodiversity Layer Toggle -->
+        <label class="layer-toggle">
+            <span class="layer-icon">🦋</span>
+            <div class="layer-info">
+                <strong>Biodiversity</strong>
+                <span class="layer-source">GBIF Hotspots</span>
+            </div>
+            <input type="checkbox" id="biodiversity-layer" checked>
+            <span class="toggle-switch"></span>
+        </label>
 
-    <hr class="my-3">
+        <!-- Aurora Layer Toggle -->
+        <label class="layer-toggle">
+            <span class="layer-icon">🌌</span>
+            <div class="layer-info">
+                <strong>Aurora</strong>
+                <span class="layer-source" id="kp-status">NOAA SWPC</span>
+            </div>
+            <input type="checkbox" id="aurora-layer" checked>
+            <span class="toggle-switch"></span>
+        </label>
 
-    <!-- Map Style Toggle -->
-    <div class="layer-toggle">
-        <input type="checkbox" id="satellite-view" checked>
-        <span class="layer-icon">🛰️</span>
-        <div>
-            <strong>Satellite View</strong>
-            <div class="small">High Resolution</div>
-        </div>
+        <hr class="my-2">
+
+        <!-- Map Style Toggle -->
+        <label class="layer-toggle">
+            <span class="layer-icon">🛰️</span>
+            <div class="layer-info">
+                <strong>Satellite View</strong>
+                <span class="layer-source">High Resolution</span>
+            </div>
+            <input type="checkbox" id="satellite-view" checked>
+            <span class="toggle-switch"></span>
+        </label>
     </div>
 </div>
 
