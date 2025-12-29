@@ -15,7 +15,7 @@ load_dotenv()
 
 # Import database and utilities
 from database.db import (
-    init_database, execute_query, get_running_tasks,
+    init_database, execute_query, execute_insert, get_running_tasks,
     get_recent_task_runs, get_task_by_name
 )
 from database.schema_inspector import get_schema_documentation
@@ -254,25 +254,73 @@ def create_app():
                 ORDER BY value DESC LIMIT 200
             """)
             
-            # Get ocean data
+            # Get ocean data (using Open-Meteo for global SST coverage)
             ocean_stations = execute_query("""
                 SELECT location_lat as latitude, location_lng as longitude,
-                       AVG(CASE WHEN metric_name = 'water_temperature' THEN value END) as temperature,
-                       AVG(CASE WHEN metric_name = 'water_level' THEN value END) as water_level,
+                       AVG(value) as temperature,
+                       NULL as water_level,
                        MAX(timestamp) as last_updated,
                        MAX(metadata) as metadata
                 FROM metric_data
-                WHERE provider_key = 'noaa_ocean'
+                WHERE provider_key = 'openmeteo_marine'
+                AND metric_name = 'sea_surface_temperature'
                 AND timestamp > NOW() - INTERVAL '7 days'
                 AND location_lat IS NOT NULL AND location_lng IS NOT NULL
-                GROUP BY location_lat, location_lng LIMIT 20
+                GROUP BY location_lat, location_lng LIMIT 50
             """)
-            
+
+            # Get conflict data from UCDP
+            conflicts = execute_query("""
+                SELECT location_lat as latitude, location_lng as longitude,
+                       value as deaths, metadata, timestamp
+                FROM metric_data
+                WHERE provider_key = 'ucdp'
+                AND metric_name = 'conflict_event'
+                AND timestamp > NOW() - INTERVAL '365 days'
+                AND location_lat IS NOT NULL AND location_lng IS NOT NULL
+                ORDER BY timestamp DESC LIMIT 500
+            """)
+
+            # Get biodiversity data from GBIF
+            biodiversity = execute_query("""
+                SELECT location_lat as latitude, location_lng as longitude,
+                       value as observations, metadata
+                FROM metric_data
+                WHERE provider_key = 'gbif'
+                AND metric_name = 'species_observations'
+                AND timestamp > NOW() - INTERVAL '30 days'
+                AND location_lat IS NOT NULL AND location_lng IS NOT NULL
+                ORDER BY value DESC LIMIT 50
+            """)
+
+            # Get aurora forecast from NOAA SWPC
+            aurora = execute_query("""
+                SELECT location_lat as latitude, location_lng as longitude,
+                       value as intensity, metadata
+                FROM metric_data
+                WHERE provider_key = 'noaa_swpc'
+                AND metric_name = 'aurora_forecast'
+                AND location_lat IS NOT NULL AND location_lng IS NOT NULL
+                ORDER BY value DESC LIMIT 2000
+            """)
+
+            # Get current Kp index
+            kp_index = execute_query("""
+                SELECT value as kp, metadata, timestamp
+                FROM metric_data
+                WHERE provider_key = 'noaa_swpc'
+                AND metric_name = 'kp_index'
+                ORDER BY timestamp DESC LIMIT 1
+            """)
+
             return jsonify({
                 'success': True,
                 'fires': format_fire_data(fires or []),
                 'air_quality': format_air_data(air_quality or []),
-                'ocean': format_ocean_data(ocean_stations or [])
+                'ocean': format_ocean_data(ocean_stations or []),
+                'conflicts': format_conflict_data(conflicts or []),
+                'biodiversity': format_biodiversity_data(biodiversity or []),
+                'aurora': format_aurora_data(aurora or [], kp_index[0] if kp_index else None)
             })
             
         except Exception as e:
@@ -285,7 +333,7 @@ def create_app():
             runner = TaskRunner()
             
             # Run key tasks
-            tasks = ['nasa_fires_global', 'openaq_latest', 'noaa_ocean_water_level', 'noaa_ocean_temperature', 'openmeteo_marine']
+            tasks = ['nasa_fires_global', 'openaq_latest', 'noaa_ocean_water_level', 'noaa_ocean_temperature', 'openmeteo_marine', 'ucdp_conflicts', 'noaa_aurora']
             results = []
             
             for task_name in tasks:
@@ -342,6 +390,38 @@ def create_app():
                 ORDER BY t.name
             """)
             return jsonify({'success': True, 'tasks': tasks})
+        except Exception as e:
+            return jsonify({'success': False, 'error': str(e)}), 500
+
+    @app.route('/api/tasks/create', methods=['POST'])
+    @no_cache
+    def api_create_task():
+        """Create a new task"""
+        try:
+            data = request.get_json()
+            if not data:
+                return jsonify({'success': False, 'error': 'No JSON data provided'}), 400
+
+            name = data.get('name')
+            description = data.get('description', '')
+            command = data.get('command')
+            cron_schedule = data.get('cron_schedule', '0 */6 * * *')
+            active = data.get('active', True)
+
+            if not name or not command:
+                return jsonify({'success': False, 'error': 'name and command are required'}), 400
+
+            execute_insert("""
+                INSERT INTO task (name, description, command, cron_schedule, active)
+                VALUES (%s, %s, %s, %s, %s)
+                ON CONFLICT (name) DO UPDATE SET
+                    command = EXCLUDED.command,
+                    description = EXCLUDED.description,
+                    cron_schedule = EXCLUDED.cron_schedule,
+                    active = EXCLUDED.active
+            """, (name, description, command, cron_schedule, active))
+
+            return jsonify({'success': True, 'message': f'Task "{name}" created/updated'})
         except Exception as e:
             return jsonify({'success': False, 'error': str(e)}), 500
 
@@ -429,7 +509,7 @@ def create_app():
         try:
             runner = TaskRunner()
             tasks = ['nasa_fires_global', 'openaq_latest', 'noaa_ocean_water_level',
-                     'noaa_ocean_temperature', 'openmeteo_marine']
+                     'noaa_ocean_temperature', 'openmeteo_marine', 'ucdp_conflicts', 'noaa_aurora']
             results = []
 
             for task_name in tasks:
@@ -672,7 +752,7 @@ def get_count(query):
 def get_provider_stats():
     """Get simplified provider statistics"""
     providers = {}
-    provider_keys = ['nasa_firms', 'openaq', 'noaa_ocean', 'openweather', 'gbif', 'openmeteo']
+    provider_keys = ['nasa_firms', 'openaq', 'noaa_ocean', 'openweather', 'gbif', 'openmeteo', 'openmeteo_marine', 'ucdp', 'noaa_swpc']
     
     for key in provider_keys:
         stats = execute_query("""
@@ -818,14 +898,152 @@ def format_ocean_data(stations):
 
     return formatted
 
+def format_conflict_data(conflicts):
+    """
+    Format conflict data for map display
+
+    Args:
+        conflicts: List of conflict event records from database
+
+    Returns:
+        List[Dict]: Formatted conflict data with coordinates and metadata
+    """
+    formatted = []
+    for conflict in conflicts:
+        try:
+            metadata = {}
+            if conflict.get('metadata'):
+                if isinstance(conflict['metadata'], str):
+                    metadata = json.loads(conflict['metadata'])
+                else:
+                    metadata = conflict['metadata']
+
+            formatted.append({
+                'latitude': float(conflict['latitude']) if conflict['latitude'] is not None else None,
+                'longitude': float(conflict['longitude']) if conflict['longitude'] is not None else None,
+                'deaths': int(conflict.get('deaths', 0) or 0),
+                'location': f"{metadata.get('region', 'Unknown')}, {metadata.get('country', '')}",
+                'conflict_name': metadata.get('conflict_name', 'Unknown Conflict'),
+                'violence_type': metadata.get('violence_type', 'unknown'),
+                'side_a': metadata.get('side_a', ''),
+                'side_b': metadata.get('side_b', ''),
+                'date': str(conflict.get('timestamp', ''))[:10]
+            })
+        except (ValueError, TypeError) as e:
+            print(f"⚠️ Error formatting conflict data: {e}")
+            continue
+
+    return formatted
+
+def format_biodiversity_data(biodiversity):
+    """
+    Format biodiversity data for map display
+
+    Args:
+        biodiversity: List of biodiversity records from database
+
+    Returns:
+        List[Dict]: Formatted biodiversity data with coordinates and metadata
+    """
+    formatted = []
+    for bio in biodiversity:
+        try:
+            metadata = {}
+            if bio.get('metadata'):
+                if isinstance(bio['metadata'], str):
+                    metadata = json.loads(bio['metadata'])
+                else:
+                    metadata = bio['metadata']
+
+            formatted.append({
+                'latitude': float(bio['latitude']) if bio['latitude'] is not None else None,
+                'longitude': float(bio['longitude']) if bio['longitude'] is not None else None,
+                'observations': int(bio.get('observations', 0) or 0),
+                'location': metadata.get('region_name', 'Unknown'),
+                'ecosystem': metadata.get('ecosystem', 'unknown'),
+                'unique_species': metadata.get('unique_species', 0),
+                'region': metadata.get('region_name', '')
+            })
+        except (ValueError, TypeError) as e:
+            print(f"⚠️ Error formatting biodiversity data: {e}")
+            continue
+
+    return formatted
+
+def format_aurora_data(aurora_points, kp_data):
+    """
+    Format aurora forecast data for map display
+
+    Args:
+        aurora_points: List of aurora forecast points from database
+        kp_data: Current Kp index data (can be None)
+
+    Returns:
+        Dict: Formatted aurora data with points and Kp index
+    """
+    formatted_points = []
+    for point in aurora_points:
+        try:
+            formatted_points.append({
+                'latitude': float(point['latitude']) if point['latitude'] is not None else None,
+                'longitude': float(point['longitude']) if point['longitude'] is not None else None,
+                'intensity': float(point.get('intensity', 0) or 0)
+            })
+        except (ValueError, TypeError) as e:
+            print(f"⚠️ Error formatting aurora data: {e}")
+            continue
+
+    # Parse Kp metadata
+    kp_info = None
+    if kp_data:
+        try:
+            metadata = {}
+            if kp_data.get('metadata'):
+                if isinstance(kp_data['metadata'], str):
+                    metadata = json.loads(kp_data['metadata'])
+                else:
+                    metadata = kp_data['metadata']
+
+            kp_value = float(kp_data.get('kp', 0))
+            kp_info = {
+                'value': kp_value,
+                'status': get_kp_status(kp_value),
+                'timestamp': str(kp_data.get('timestamp', ''))
+            }
+        except (ValueError, TypeError):
+            pass
+
+    return {
+        'points': formatted_points,
+        'kp_index': kp_info,
+        'point_count': len(formatted_points)
+    }
+
+def get_kp_status(kp: float) -> str:
+    """Get human-readable Kp status"""
+    if kp >= 8:
+        return 'Extreme Storm'
+    elif kp >= 7:
+        return 'Severe Storm'
+    elif kp >= 6:
+        return 'Strong Storm'
+    elif kp >= 5:
+        return 'Minor Storm'
+    elif kp >= 4:
+        return 'Active'
+    elif kp >= 3:
+        return 'Unsettled'
+    else:
+        return 'Quiet'
+
 def get_environmental_health_data():
     """Get current environmental health data from database"""
     try:
         # Fire data
         fire_data = execute_query("""
             SELECT COUNT(*) as fire_count, AVG(value) as avg_brightness
-            FROM metric_data 
-            WHERE provider_key = 'nasa_firms' 
+            FROM metric_data
+            WHERE provider_key = 'nasa_firms'
             AND timestamp >= NOW() - INTERVAL '7 days'
         """)
         
@@ -838,15 +1056,16 @@ def get_environmental_health_data():
             AND timestamp >= NOW() - INTERVAL '7 days'
         """)
         
-        # Ocean data - try temperature first, fall back to water level
+        # Ocean data - using Open-Meteo for global SST coverage
         ocean_data = execute_query("""
             SELECT
-                AVG(CASE WHEN metric_name = 'water_temperature' THEN value END) as avg_temp,
-                AVG(CASE WHEN metric_name = 'water_level' THEN value END) as avg_water_level,
-                COUNT(DISTINCT CASE WHEN metric_name = 'water_temperature' THEN CONCAT(location_lat, ',', location_lng) END) as temp_station_count,
-                COUNT(DISTINCT CASE WHEN metric_name = 'water_level' THEN CONCAT(location_lat, ',', location_lng) END) as water_level_station_count
+                AVG(value) as avg_temp,
+                NULL as avg_water_level,
+                COUNT(DISTINCT CONCAT(location_lat, ',', location_lng)) as temp_station_count,
+                0 as water_level_station_count
             FROM metric_data
-            WHERE provider_key = 'noaa_ocean'
+            WHERE provider_key = 'openmeteo_marine'
+            AND metric_name = 'sea_surface_temperature'
             AND timestamp >= NOW() - INTERVAL '7 days'
         """)
         

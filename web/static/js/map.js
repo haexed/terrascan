@@ -29,13 +29,16 @@
 
 // Global variables
 let map;
-let fireLayer, airLayer, oceanLayer;
+let fireLayer, airLayer, oceanLayer, conflictLayer, biodiversityLayer, auroraLayer;
 /** @type {FireData[]} */
 let fireData = [];
 /** @type {AirQualityData[]} */
 let airData = [];
 /** @type {OceanData[]} */
 let oceanData = [];
+let conflictData = [];
+let biodiversityData = [];
+let auroraData = { points: [], kp_index: null };
 let osmLayer, satelliteLayer;
 
 // Initialize map when page loads
@@ -84,6 +87,9 @@ function initMap() {
     fireLayer = L.layerGroup().addTo(map);
     airLayer = L.layerGroup().addTo(map);
     oceanLayer = L.layerGroup().addTo(map);
+    conflictLayer = L.layerGroup().addTo(map);
+    biodiversityLayer = L.layerGroup().addTo(map);
+    auroraLayer = L.layerGroup().addTo(map);
 
     // Load initial data
     loadEnvironmentalData();
@@ -108,30 +114,48 @@ function setupLayerToggles() {
     document.getElementById('fire-layer').addEventListener('change', function () {
         if (this.checked) {
             map.addLayer(fireLayer);
-            document.getElementById('fire-legend').style.display = 'block';
         } else {
             map.removeLayer(fireLayer);
-            document.getElementById('fire-legend').style.display = 'none';
         }
     });
 
     document.getElementById('air-layer').addEventListener('change', function () {
         if (this.checked) {
             map.addLayer(airLayer);
-            document.getElementById('air-legend').style.display = 'block';
         } else {
             map.removeLayer(airLayer);
-            document.getElementById('air-legend').style.display = 'none';
         }
     });
 
     document.getElementById('ocean-layer').addEventListener('change', function () {
         if (this.checked) {
             map.addLayer(oceanLayer);
-            document.getElementById('ocean-legend').style.display = 'block';
         } else {
             map.removeLayer(oceanLayer);
-            document.getElementById('ocean-legend').style.display = 'none';
+        }
+    });
+
+    document.getElementById('conflict-layer').addEventListener('change', function () {
+        if (this.checked) {
+            map.addLayer(conflictLayer);
+        } else {
+            map.removeLayer(conflictLayer);
+        }
+    });
+
+    document.getElementById('biodiversity-layer').addEventListener('change', function () {
+        if (this.checked) {
+            map.addLayer(biodiversityLayer);
+        } else {
+            map.removeLayer(biodiversityLayer);
+        }
+    });
+
+    document.getElementById('aurora-layer').addEventListener('change', function () {
+        if (this.checked) {
+            map.addLayer(auroraLayer);
+        } else {
+            map.removeLayer(auroraLayer);
         }
     });
 }
@@ -150,10 +174,16 @@ async function loadEnvironmentalData() {
             fireData = validateFireData(data.fires || []);
             airData = validateAirData(data.air_quality || []);
             oceanData = validateOceanData(data.ocean || []);
+            conflictData = data.conflicts || [];
+            biodiversityData = data.biodiversity || [];
+            auroraData = data.aurora || { points: [], kp_index: null };
 
             updateFireLayer();
             updateAirLayer();
             updateOceanLayer();
+            updateConflictLayer();
+            updateBiodiversityLayer();
+            updateAuroraLayer();
         }
     } catch (error) {
         console.error('Error loading environmental data:', error);
@@ -284,15 +314,6 @@ function updateFireLayer() {
             <em>Source: NASA FIRMS</em>
         `);
 
-        marker.on('click', function () {
-            showInfoPopup('🔥 Fire Alert', `
-                <strong>Brightness:</strong> ${fire.brightness}K<br>
-                <strong>Confidence:</strong> ${fire.confidence}%<br>
-                <strong>Location:</strong> ${fire.lat.toFixed(3)}, ${fire.lng.toFixed(3)}<br>
-                <strong>Detected:</strong> ${fire.acq_date}
-            `);
-        });
-
         fireLayer.addLayer(marker);
     });
 }
@@ -329,14 +350,6 @@ function updateAirLayer() {
             <em>Source: OpenAQ</em>
         `);
 
-        marker.on('click', function () {
-            showInfoPopup('🌬️ Air Quality', `
-                <strong>Location:</strong> ${station.lat.toFixed(3)}, ${station.lng.toFixed(3)}<br>
-                <strong>PM2.5:</strong> ${station.pm25} μg/m³<br>
-                <strong>Status:</strong> ${getAirQualityStatus(station.pm25)}
-            `);
-        });
-
         airLayer.addLayer(marker);
     });
 }
@@ -369,24 +382,110 @@ function updateOceanLayer() {
         const waterLevelDisplay = station.water_level != null ? `${station.water_level.toFixed(2)}m` : 'N/A';
 
         marker.bindPopup(`
-            <strong>🌊 Ocean Monitoring Station</strong><br>
+            <strong>🌊 Ocean Temperature</strong><br>
             <strong>Location:</strong> ${station.name}<br>
             <strong>Temperature:</strong> ${tempDisplay}<br>
-            <strong>Water Level:</strong> ${waterLevelDisplay}<br>
             <strong>Updated:</strong> ${station.last_updated}<br>
-            <em>Source: NOAA</em>
+            <em>Source: Open-Meteo</em>
         `);
 
-        marker.on('click', function () {
-            showInfoPopup('🌊 Ocean Station', `
-                <strong>Location:</strong> ${station.name}<br>
-                <strong>Temperature:</strong> ${tempDisplay}<br>
-                <strong>Water Level:</strong> ${waterLevelDisplay}<br>
-                <strong>Updated:</strong> ${station.last_updated}
-            `);
+        oceanLayer.addLayer(marker);
+    });
+}
+
+// Update conflict layer with UCDP data
+function updateConflictLayer() {
+    conflictLayer.clearLayers();
+
+    conflictData.forEach(conflict => {
+        if (!conflict.latitude || !conflict.longitude) return;
+
+        const color = getConflictColor(conflict.deaths);
+        const marker = L.circleMarker([conflict.latitude, conflict.longitude], {
+            radius: Math.min(4 + Math.sqrt(conflict.deaths), 15),
+            fillColor: color,
+            color: '#000',
+            weight: 1,
+            opacity: 0.8,
+            fillOpacity: 0.7
         });
 
-        oceanLayer.addLayer(marker);
+        marker.bindPopup(`
+            <strong>⚔️ ${conflict.conflict_name}</strong><br>
+            <strong>Location:</strong> ${conflict.location}<br>
+            <strong>Deaths:</strong> ${conflict.deaths}<br>
+            <strong>Type:</strong> ${conflict.violence_type.replace('_', ' ')}<br>
+            <strong>Parties:</strong> ${conflict.side_a} vs ${conflict.side_b}<br>
+            <strong>Date:</strong> ${conflict.date}
+        `);
+
+        conflictLayer.addLayer(marker);
+    });
+}
+
+// Update biodiversity layer with GBIF data
+function updateBiodiversityLayer() {
+    biodiversityLayer.clearLayers();
+
+    biodiversityData.forEach(bio => {
+        if (!bio.latitude || !bio.longitude) return;
+
+        const color = getBiodiversityColor(bio.observations);
+        const marker = L.circleMarker([bio.latitude, bio.longitude], {
+            radius: Math.min(6 + Math.log10(bio.observations + 1) * 3, 20),
+            fillColor: color,
+            color: '#006400',
+            weight: 2,
+            opacity: 0.9,
+            fillOpacity: 0.6
+        });
+
+        marker.bindPopup(`
+            <strong>🦋 ${bio.location}</strong><br>
+            <strong>Ecosystem:</strong> ${bio.ecosystem.replace('_', ' ')}<br>
+            <strong>Observations:</strong> ${bio.observations.toLocaleString()}<br>
+            <strong>Unique Species:</strong> ${bio.unique_species}
+        `);
+
+        biodiversityLayer.addLayer(marker);
+    });
+}
+
+// Update aurora layer with NOAA SWPC data
+function updateAuroraLayer() {
+    auroraLayer.clearLayers();
+
+    // Update Kp status in the toggle label
+    const kpStatusEl = document.getElementById('kp-status');
+    if (kpStatusEl && auroraData.kp_index) {
+        kpStatusEl.textContent = `Kp ${auroraData.kp_index.value.toFixed(1)} - ${auroraData.kp_index.status}`;
+    }
+
+    // Aurora points are rendered as semi-transparent circles
+    // Using larger radius and lower opacity for aurora glow effect
+    auroraData.points.forEach(point => {
+        if (!point.latitude || !point.longitude) return;
+
+        const color = getAuroraColor(point.intensity);
+        const radius = Math.min(3 + point.intensity * 0.5, 15);
+
+        const marker = L.circleMarker([point.latitude, point.longitude], {
+            radius: radius,
+            fillColor: color,
+            color: color,
+            weight: 0,
+            opacity: 0.8,
+            fillOpacity: 0.5
+        });
+
+        marker.bindPopup(`
+            <strong>🌌 Aurora Forecast</strong><br>
+            <strong>Intensity:</strong> ${point.intensity}%<br>
+            <strong>Location:</strong> ${point.latitude.toFixed(1)}°, ${point.longitude.toFixed(1)}°<br>
+            <em>Source: NOAA SWPC OVATION Model</em>
+        `);
+
+        auroraLayer.addLayer(marker);
     });
 }
 
@@ -414,6 +513,18 @@ function getAirQualityStatus(pm25) {
     return '🟢 Good';
 }
 
+function getConflictColor(deaths) {
+    if (deaths >= 50) return '#8B0000';  // High fatalities
+    if (deaths >= 10) return '#DC143C';  // Medium
+    return '#FF6B6B';  // Low
+}
+
+function getBiodiversityColor(observations) {
+    if (observations >= 1000) return '#228B22';  // High diversity
+    if (observations >= 100) return '#32CD32';   // Medium
+    return '#90EE90';  // Low
+}
+
 function getOceanColor(temp) {
     if (temp > 28) return '#FF6B35';  // Very warm
     if (temp > 25) return '#F7931E';  // Warm
@@ -422,16 +533,13 @@ function getOceanColor(temp) {
     return '#0040FF';  // Cold
 }
 
-// Show info popup with details
-function showInfoPopup(title, content) {
-    document.getElementById('popup-title').innerHTML = title;
-    document.getElementById('popup-content').innerHTML = content;
-    document.getElementById('info-popup').style.display = 'block';
-}
-
-// Close info popup
-function closeInfoPopup() {
-    document.getElementById('info-popup').style.display = 'none';
+function getAuroraColor(intensity) {
+    // Aurora colors - green to purple gradient based on intensity
+    if (intensity >= 50) return '#FF00FF';  // Bright purple - intense aurora
+    if (intensity >= 30) return '#9400D3';  // Dark violet
+    if (intensity >= 20) return '#00FF7F';  // Spring green
+    if (intensity >= 10) return '#00FF00';  // Green - typical aurora
+    return '#98FB98';  // Pale green - faint aurora
 }
 
 // Refresh map data

@@ -77,7 +77,37 @@
         <span class="layer-icon">🌊</span>
         <div>
             <strong>Ocean Temp</strong>
-            <div class="small">NOAA Stations</div>
+            <div class="small">Open-Meteo SST</div>
+        </div>
+    </div>
+
+    <!-- Conflict Layer Toggle -->
+    <div class="layer-toggle">
+        <input type="checkbox" id="conflict-layer" checked>
+        <span class="layer-icon">⚔️</span>
+        <div>
+            <strong>Conflicts</strong>
+            <div class="small">UCDP Events</div>
+        </div>
+    </div>
+
+    <!-- Biodiversity Layer Toggle -->
+    <div class="layer-toggle">
+        <input type="checkbox" id="biodiversity-layer" checked>
+        <span class="layer-icon">🦋</span>
+        <div>
+            <strong>Biodiversity</strong>
+            <div class="small">GBIF Hotspots</div>
+        </div>
+    </div>
+
+    <!-- Aurora Layer Toggle -->
+    <div class="layer-toggle">
+        <input type="checkbox" id="aurora-layer" checked>
+        <span class="layer-icon">🌌</span>
+        <div>
+            <strong>Aurora</strong>
+            <div class="small" id="kp-status">NOAA SWPC</div>
         </div>
     </div>
 
@@ -106,70 +136,6 @@
     <div class="small mt-2">
         <i class="fas fa-clock"></i> <span id="map-current-time">Loading...</span>
     </div>
-</div>
-
-<!-- Legend -->
-<div class="legend">
-    <h6 class="mb-2">📊 Legend</h6>
-
-    <!-- Fire Legend -->
-    <div id="fire-legend">
-        <div class="legend-item">
-            <div class="legend-color fire-high"></div>
-            <span class="small">High Fire Activity</span>
-        </div>
-        <div class="legend-item">
-            <div class="legend-color fire-moderate"></div>
-            <span class="small">Moderate Fires</span>
-        </div>
-        <div class="legend-item">
-            <div class="legend-color fire-low"></div>
-            <span class="small">Low Fire Activity</span>
-        </div>
-    </div>
-
-    <!-- Air Quality Legend -->
-    <div id="air-legend">
-        <div class="legend-item">
-            <div class="legend-color air-good"></div>
-            <span class="small">Good Air (0-12 μg/m³)</span>
-        </div>
-        <div class="legend-item">
-            <div class="legend-color air-moderate"></div>
-            <span class="small">Moderate (13-35 μg/m³)</span>
-        </div>
-        <div class="legend-item">
-            <div class="legend-color air-unhealthy"></div>
-            <span class="small">Unhealthy (35+ μg/m³)</span>
-        </div>
-    </div>
-
-    <!-- Ocean Legend -->
-    <div id="ocean-legend">
-        <div class="legend-item">
-            <div class="legend-color ocean-cool"></div>
-            <span class="small">Cool (15-20°C)</span>
-        </div>
-        <div class="legend-item">
-            <div class="legend-color ocean-normal"></div>
-            <span class="small">Normal (20-25°C)</span>
-        </div>
-        <div class="legend-item">
-            <div class="legend-color ocean-warm"></div>
-            <span class="small">Warm (25°C+)</span>
-        </div>
-    </div>
-</div>
-
-<!-- Info Popup -->
-<div class="info-popup" id="info-popup">
-    <h6 id="popup-title">Location Details</h6>
-    <div id="popup-content">
-        Click on any data point for details...
-    </div>
-    <button class="btn btn-sm btn-outline-secondary mt-2" onclick="closeInfoPopup()">
-        <i class="fas fa-times"></i> Close
-    </button>
 </div>
 
 <!-- Refresh Button -->

@@ -221,6 +221,32 @@
     background: #ffaa22 !important;
 }
 
+/* Conflict colors */
+.conflict-high {
+    background: #8B0000 !important;
+}
+
+.conflict-medium {
+    background: #DC143C !important;
+}
+
+.conflict-low {
+    background: #FF6B6B !important;
+}
+
+/* Biodiversity colors */
+.biodiversity-high {
+    background: #228B22 !important;
+}
+
+.biodiversity-medium {
+    background: #32CD32 !important;
+}
+
+.biodiversity-low {
+    background: #90EE90 !important;
+}
+
 /* Info popup */
 .info-popup {
     position: fixed;
