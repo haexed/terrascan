@@ -30,11 +30,8 @@
 // Global variables
 let map;
 let fireLayer, airLayer, oceanLayer, conflictLayer, biodiversityLayer, auroraLayer;
-let fireHeatLayer, auroraHeatLayer, airHeatLayer;  // Heatmap layers
+let fireHeatLayer, auroraHeatLayer;  // Heatmap layers (fire + aurora only)
 let airClusterLayer;  // Marker cluster for AQ
-
-// Zoom threshold for switching from heatmap to points
-const HEATMAP_ZOOM_THRESHOLD = 6;
 /** @type {FireData[]} */
 let fireData = [];
 /** @type {AirQualityData[]} */
@@ -122,21 +119,13 @@ function initMap() {
     }).addTo(map);
     fireLayer = L.layerGroup();  // Fallback, not added by default
 
-    // Air Quality: heatmap for global view (green to red gradient)
-    airHeatLayer = L.heatLayer([], {
-        radius: 30,
-        blur: 20,
-        maxZoom: 10,
-        max: 100,
-        gradient: {0.2: '#00ff00', 0.4: '#7fff00', 0.5: '#ffff00', 0.7: '#ff8c00', 0.85: '#ff0000', 1: '#8b0000'}
-    }).addTo(map);
-
-    // Air Quality: marker cluster for zoomed view - colored dots (no numbers)
+    // Air Quality: colored dot clusters - bigger radius at global view
     airClusterLayer = L.markerClusterGroup({
-        maxClusterRadius: 60,
+        maxClusterRadius: 80,  // Larger radius = fewer clusters at global view
         spiderfyOnMaxZoom: true,
         showCoverageOnHover: false,
         zoomToBoundsOnClick: true,
+        disableClusteringAtZoom: 12,  // Show individual points at street level
         iconCreateFunction: function(cluster) {
             const markers = cluster.getAllChildMarkers();
             const count = markers.length;
@@ -152,11 +141,11 @@ function initMap() {
             const color = getAirQualityColor(avgPm25);
 
             // Size based on count (subtle scaling)
-            let size = 14;
-            if (count > 100) size = 22;
-            else if (count > 50) size = 20;
-            else if (count > 20) size = 18;
-            else if (count > 5) size = 16;
+            let size = 16;
+            if (count > 100) size = 26;
+            else if (count > 50) size = 22;
+            else if (count > 20) size = 20;
+            else if (count > 5) size = 18;
 
             return L.divIcon({
                 html: `<div class="aq-dot" style="background-color: ${color}; width: ${size}px; height: ${size}px;"></div>`,
@@ -164,7 +153,7 @@ function initMap() {
                 iconSize: L.point(size, size)
             });
         }
-    });  // Not added initially - will be added when zoomed in
+    }).addTo(map);  // Add directly - always visible
     airLayer = L.layerGroup();  // Fallback
 
     // Ocean: regular markers (visible at zoom >= 3)
@@ -219,24 +208,20 @@ function initMap() {
     map.on('moveend', debouncedLoad);
 }
 
-// Show/hide layers based on zoom level - heatmaps at global, points when zoomed
+// Show/hide detail layers based on zoom level
 function updateLayerVisibility() {
     const zoom = map.getZoom();
-    const airToggle = document.getElementById('air-layer');
     const conflictToggle = document.getElementById('conflict-layer');
     const bioToggle = document.getElementById('biodiversity-layer');
+    const oceanToggle = document.getElementById('ocean-layer');
 
-    // Air quality: heatmap at global, clusters when zoomed in
-    if (airToggle?.checked) {
-        if (zoom >= HEATMAP_ZOOM_THRESHOLD) {
-            // Zoomed in: show clusters, hide heatmap
-            if (map.hasLayer(airHeatLayer)) map.removeLayer(airHeatLayer);
-            if (!map.hasLayer(airClusterLayer)) map.addLayer(airClusterLayer);
-        } else {
-            // Zoomed out: show heatmap, hide clusters
-            if (map.hasLayer(airClusterLayer)) map.removeLayer(airClusterLayer);
-            if (!map.hasLayer(airHeatLayer)) map.addLayer(airHeatLayer);
+    // Ocean markers only at zoom >= 3
+    if (zoom >= 3) {
+        if (oceanToggle?.checked && !map.hasLayer(oceanLayer)) {
+            map.addLayer(oceanLayer);
         }
+    } else {
+        if (map.hasLayer(oceanLayer)) map.removeLayer(oceanLayer);
     }
 
     // Conflicts and biodiversity only visible at zoom >= 5
@@ -248,24 +233,8 @@ function updateLayerVisibility() {
             map.addLayer(biodiversityLayer);
         }
     } else {
-        if (map.hasLayer(conflictLayer)) {
-            map.removeLayer(conflictLayer);
-        }
-        if (map.hasLayer(biodiversityLayer)) {
-            map.removeLayer(biodiversityLayer);
-        }
-    }
-
-    // Ocean markers only at zoom >= 3
-    const oceanToggle = document.getElementById('ocean-layer');
-    if (zoom >= 3) {
-        if (oceanToggle?.checked && !map.hasLayer(oceanLayer)) {
-            map.addLayer(oceanLayer);
-        }
-    } else {
-        if (map.hasLayer(oceanLayer)) {
-            map.removeLayer(oceanLayer);
-        }
+        if (map.hasLayer(conflictLayer)) map.removeLayer(conflictLayer);
+        if (map.hasLayer(biodiversityLayer)) map.removeLayer(biodiversityLayer);
     }
 }
 
@@ -396,16 +365,9 @@ function setupLayerToggles() {
 
     document.getElementById('air-layer').addEventListener('change', function () {
         if (this.checked) {
-            // Add appropriate layer based on zoom
-            if (map.getZoom() >= HEATMAP_ZOOM_THRESHOLD) {
-                map.addLayer(airClusterLayer);
-            } else {
-                map.addLayer(airHeatLayer);
-            }
+            map.addLayer(airClusterLayer);
         } else {
-            // Remove both
-            if (map.hasLayer(airClusterLayer)) map.removeLayer(airClusterLayer);
-            if (map.hasLayer(airHeatLayer)) map.removeLayer(airHeatLayer);
+            map.removeLayer(airClusterLayer);
         }
     });
 
@@ -599,22 +561,12 @@ function updateFireLayer() {
 }
 
 /**
- * Update air quality layers (heatmap + clusters)
+ * Update air quality layer with clustered colored dots
  * @returns {void}
  */
 function updateAirLayer() {
-    // Update heatmap data
-    const heatData = airData
-        .filter(s => s.lat && s.lng)
-        .map(s => {
-            // Invert: good air (low pm25) = low intensity, bad air = high intensity
-            const intensity = Math.min(1, s.pm25 / 100);
-            return [s.lat, s.lng, intensity];
-        });
-    airHeatLayer.setLatLngs(heatData);
-
-    // Update cluster markers
     airClusterLayer.clearLayers();
+
     airData.forEach(station => {
         if (!station.lat || !station.lng) return;
 
