@@ -30,8 +30,11 @@
 // Global variables
 let map;
 let fireLayer, airLayer, oceanLayer, conflictLayer, biodiversityLayer, auroraLayer;
-let fireHeatLayer, auroraHeatLayer;  // Heatmap layers
+let fireHeatLayer, auroraHeatLayer, airHeatLayer;  // Heatmap layers
 let airClusterLayer;  // Marker cluster for AQ
+
+// Zoom threshold for switching from heatmap to points
+const HEATMAP_ZOOM_THRESHOLD = 6;
 /** @type {FireData[]} */
 let fireData = [];
 /** @type {AirQualityData[]} */
@@ -119,9 +122,18 @@ function initMap() {
     }).addTo(map);
     fireLayer = L.layerGroup();  // Fallback, not added by default
 
-    // Air Quality: marker cluster colored by average PM2.5
+    // Air Quality: heatmap for global view (green to red gradient)
+    airHeatLayer = L.heatLayer([], {
+        radius: 30,
+        blur: 20,
+        maxZoom: 10,
+        max: 100,
+        gradient: {0.2: '#00ff00', 0.4: '#7fff00', 0.5: '#ffff00', 0.7: '#ff8c00', 0.85: '#ff0000', 1: '#8b0000'}
+    }).addTo(map);
+
+    // Air Quality: marker cluster for zoomed view - colored dots (no numbers)
     airClusterLayer = L.markerClusterGroup({
-        maxClusterRadius: 50,
+        maxClusterRadius: 60,
         spiderfyOnMaxZoom: true,
         showCoverageOnHover: false,
         zoomToBoundsOnClick: true,
@@ -136,27 +148,33 @@ function initMap() {
             });
             const avgPm25 = totalPm25 / count;
 
-            // Color based on average air quality, not count
+            // Color based on average air quality
             const color = getAirQualityColor(avgPm25);
-            const status = getAirQualityClass(avgPm25);
+
+            // Size based on count (subtle scaling)
+            let size = 14;
+            if (count > 100) size = 22;
+            else if (count > 50) size = 20;
+            else if (count > 20) size = 18;
+            else if (count > 5) size = 16;
 
             return L.divIcon({
-                html: `<div style="background-color: ${color};"><span>${count}</span></div>`,
-                className: 'marker-cluster marker-cluster-aq marker-cluster-' + status,
-                iconSize: L.point(40, 40)
+                html: `<div class="aq-dot" style="background-color: ${color}; width: ${size}px; height: ${size}px;"></div>`,
+                className: 'marker-cluster-dot',
+                iconSize: L.point(size, size)
             });
         }
-    }).addTo(map);
+    });  // Not added initially - will be added when zoomed in
     airLayer = L.layerGroup();  // Fallback
 
-    // Ocean: regular markers (few points)
-    oceanLayer = L.layerGroup().addTo(map);
+    // Ocean: regular markers (visible at zoom >= 3)
+    oceanLayer = L.layerGroup();  // Not added initially
 
-    // Conflicts: regular markers
-    conflictLayer = L.layerGroup().addTo(map);
+    // Conflicts: regular markers (visible at zoom >= 5)
+    conflictLayer = L.layerGroup();  // Not added initially
 
-    // Biodiversity: regular markers
-    biodiversityLayer = L.layerGroup().addTo(map);
+    // Biodiversity: regular markers (visible at zoom >= 5)
+    biodiversityLayer = L.layerGroup();  // Not added initially
 
     // Aurora: heatmap with aurora-like colors
     auroraHeatLayer = L.heatLayer([], {
@@ -187,7 +205,9 @@ function initMap() {
 
     // Show/hide scan button based on zoom level
     map.on('zoomend', updateScanButtonVisibility);
+    map.on('zoomend', updateLayerVisibility);
     updateScanButtonVisibility();
+    updateLayerVisibility();
 
     // Reload data when map moves (debounced) - for viewport-based loading
     const debouncedLoad = debounce(() => {
@@ -197,6 +217,56 @@ function initMap() {
     }, 500);  // 500ms debounce
 
     map.on('moveend', debouncedLoad);
+}
+
+// Show/hide layers based on zoom level - heatmaps at global, points when zoomed
+function updateLayerVisibility() {
+    const zoom = map.getZoom();
+    const airToggle = document.getElementById('air-layer');
+    const conflictToggle = document.getElementById('conflict-layer');
+    const bioToggle = document.getElementById('biodiversity-layer');
+
+    // Air quality: heatmap at global, clusters when zoomed in
+    if (airToggle?.checked) {
+        if (zoom >= HEATMAP_ZOOM_THRESHOLD) {
+            // Zoomed in: show clusters, hide heatmap
+            if (map.hasLayer(airHeatLayer)) map.removeLayer(airHeatLayer);
+            if (!map.hasLayer(airClusterLayer)) map.addLayer(airClusterLayer);
+        } else {
+            // Zoomed out: show heatmap, hide clusters
+            if (map.hasLayer(airClusterLayer)) map.removeLayer(airClusterLayer);
+            if (!map.hasLayer(airHeatLayer)) map.addLayer(airHeatLayer);
+        }
+    }
+
+    // Conflicts and biodiversity only visible at zoom >= 5
+    if (zoom >= 5) {
+        if (conflictToggle?.checked && !map.hasLayer(conflictLayer)) {
+            map.addLayer(conflictLayer);
+        }
+        if (bioToggle?.checked && !map.hasLayer(biodiversityLayer)) {
+            map.addLayer(biodiversityLayer);
+        }
+    } else {
+        if (map.hasLayer(conflictLayer)) {
+            map.removeLayer(conflictLayer);
+        }
+        if (map.hasLayer(biodiversityLayer)) {
+            map.removeLayer(biodiversityLayer);
+        }
+    }
+
+    // Ocean markers only at zoom >= 3
+    const oceanToggle = document.getElementById('ocean-layer');
+    if (zoom >= 3) {
+        if (oceanToggle?.checked && !map.hasLayer(oceanLayer)) {
+            map.addLayer(oceanLayer);
+        }
+    } else {
+        if (map.hasLayer(oceanLayer)) {
+            map.removeLayer(oceanLayer);
+        }
+    }
 }
 
 // Update scan button visibility based on zoom level
@@ -326,14 +396,21 @@ function setupLayerToggles() {
 
     document.getElementById('air-layer').addEventListener('change', function () {
         if (this.checked) {
-            map.addLayer(airClusterLayer);
+            // Add appropriate layer based on zoom
+            if (map.getZoom() >= HEATMAP_ZOOM_THRESHOLD) {
+                map.addLayer(airClusterLayer);
+            } else {
+                map.addLayer(airHeatLayer);
+            }
         } else {
-            map.removeLayer(airClusterLayer);
+            // Remove both
+            if (map.hasLayer(airClusterLayer)) map.removeLayer(airClusterLayer);
+            if (map.hasLayer(airHeatLayer)) map.removeLayer(airHeatLayer);
         }
     });
 
     document.getElementById('ocean-layer').addEventListener('change', function () {
-        if (this.checked) {
+        if (this.checked && map.getZoom() >= 3) {
             map.addLayer(oceanLayer);
         } else {
             map.removeLayer(oceanLayer);
@@ -341,7 +418,7 @@ function setupLayerToggles() {
     });
 
     document.getElementById('conflict-layer').addEventListener('change', function () {
-        if (this.checked) {
+        if (this.checked && map.getZoom() >= 5) {
             map.addLayer(conflictLayer);
         } else {
             map.removeLayer(conflictLayer);
@@ -349,7 +426,7 @@ function setupLayerToggles() {
     });
 
     document.getElementById('biodiversity-layer').addEventListener('change', function () {
-        if (this.checked) {
+        if (this.checked && map.getZoom() >= 5) {
             map.addLayer(biodiversityLayer);
         } else {
             map.removeLayer(biodiversityLayer);
@@ -522,28 +599,34 @@ function updateFireLayer() {
 }
 
 /**
- * Update air quality layer with clustered markers
+ * Update air quality layers (heatmap + clusters)
  * @returns {void}
  */
 function updateAirLayer() {
-    airClusterLayer.clearLayers();
+    // Update heatmap data
+    const heatData = airData
+        .filter(s => s.lat && s.lng)
+        .map(s => {
+            // Invert: good air (low pm25) = low intensity, bad air = high intensity
+            const intensity = Math.min(1, s.pm25 / 100);
+            return [s.lat, s.lng, intensity];
+        });
+    airHeatLayer.setLatLngs(heatData);
 
+    // Update cluster markers
+    airClusterLayer.clearLayers();
     airData.forEach(station => {
-        // Data is already validated
-        if (!station.lat || !station.lng) {
-            return;
-        }
+        if (!station.lat || !station.lng) return;
 
         const color = getAirQualityColor(station.pm25);
 
-        // Use smaller circle markers for clustering, store pm25 for cluster averaging
         const marker = L.circleMarker([station.lat, station.lng], {
-            color: color,
+            color: 'white',
             fillColor: color,
-            fillOpacity: 0.8,
-            radius: 6,
+            fillOpacity: 0.9,
+            radius: 5,
             weight: 1,
-            pm25: station.pm25  // Store for cluster color calculation
+            pm25: station.pm25
         });
 
         marker.bindPopup(`
@@ -573,11 +656,11 @@ function updateOceanLayer() {
         const color = getOceanColor(station.temperature);
 
         const marker = L.circleMarker([station.latitude, station.longitude], {
-            color: color,
+            color: 'white',
             fillColor: color,
-            fillOpacity: 0.8,
-            radius: 12,
-            weight: 2
+            fillOpacity: 0.9,
+            radius: 8,
+            weight: 1
         });
 
         // Format values safely
@@ -605,12 +688,12 @@ function updateConflictLayer() {
 
         const color = getConflictColor(conflict.deaths);
         const marker = L.circleMarker([conflict.latitude, conflict.longitude], {
-            radius: Math.min(4 + Math.sqrt(conflict.deaths), 15),
+            radius: Math.min(4 + Math.sqrt(conflict.deaths) * 0.5, 10),
             fillColor: color,
-            color: '#000',
+            color: 'white',
             weight: 1,
-            opacity: 0.8,
-            fillOpacity: 0.7
+            opacity: 0.9,
+            fillOpacity: 0.8
         });
 
         marker.bindPopup(`
@@ -635,12 +718,12 @@ function updateBiodiversityLayer() {
 
         const color = getBiodiversityColor(bio.observations);
         const marker = L.circleMarker([bio.latitude, bio.longitude], {
-            radius: Math.min(6 + Math.log10(bio.observations + 1) * 3, 20),
+            radius: Math.min(5 + Math.log10(bio.observations + 1) * 2, 12),
             fillColor: color,
-            color: '#006400',
-            weight: 2,
+            color: 'white',
+            weight: 1,
             opacity: 0.9,
-            fillOpacity: 0.6
+            fillOpacity: 0.7
         });
 
         marker.bindPopup(`
