@@ -241,17 +241,17 @@ def create_app():
                 ORDER BY timestamp DESC LIMIT 500
             """)
             
-            # Get air quality data
+            # Get air quality data - include recently scanned stations + worst globally
             air_quality = execute_query("""
                 SELECT location_lat as latitude, location_lng as longitude,
                        AVG(value) as value, MAX(metadata) as metadata
-                FROM metric_data 
-                WHERE provider_key = 'openaq' 
+                FROM metric_data
+                WHERE provider_key = 'openaq'
                 AND metric_name = 'air_quality_pm25'
                 AND timestamp > NOW() - INTERVAL '7 days'
                 AND location_lat IS NOT NULL AND location_lng IS NOT NULL
                 GROUP BY location_lat, location_lng
-                ORDER BY value DESC LIMIT 200
+                ORDER BY MAX(timestamp) DESC, value DESC LIMIT 500
             """)
             
             # Get ocean data (using Open-Meteo for global SST coverage)

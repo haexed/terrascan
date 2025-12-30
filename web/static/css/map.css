@@ -456,135 +456,133 @@
 
 /* Mobile responsiveness */
 @media (max-width: 768px) {
+    /* Control panel - slim & collapsed by default on mobile */
     .control-panel {
-        top: auto;
-        bottom: 80px;
+        top: 70px;
         left: 10px;
         right: auto;
-        max-width: 220px;
-        border-radius: 12px;
+        bottom: auto;
+        max-width: 160px;
+        border-radius: 10px;
+        border-width: 1px;
     }
 
     .control-header {
-        padding: 12px 14px;
+        padding: 8px 12px;
     }
 
     .control-header h5 {
-        font-size: 0.95rem;
+        font-size: 0.85rem;
     }
 
     .control-body {
-        padding: 8px 10px 12px;
-        max-height: 50vh;
+        padding: 6px 8px 10px;
+        max-height: 45vh;
         overflow-y: auto;
     }
 
     .layer-toggle {
-        margin: 4px 0;
-        padding: 8px 10px;
+        margin: 2px 0;
+        padding: 6px 8px;
+        border-radius: 8px;
     }
 
     .layer-icon {
-        font-size: 1.1rem;
-        margin-right: 8px;
-        width: 24px;
+        font-size: 1rem;
+        margin-right: 6px;
+        width: 20px;
     }
 
     .layer-info strong {
-        font-size: 0.85rem;
+        font-size: 0.75rem;
     }
 
     .layer-source {
-        font-size: 0.7rem;
+        display: none;
     }
 
     .toggle-switch {
-        width: 38px;
-        height: 20px;
+        width: 32px;
+        height: 18px;
     }
 
     .toggle-switch::after {
-        width: 16px;
-        height: 16px;
+        width: 14px;
+        height: 14px;
     }
 
     .layer-toggle input:checked + .toggle-switch::after {
-        left: 20px;
+        left: 16px;
     }
 
-    /* Health widget - compact on mobile */
+    /* Health widget - minimal pill in top right */
     .health-score-widget {
-        top: auto;
-        bottom: 80px;
+        top: 70px;
         right: 10px;
         left: auto;
-        padding: 10px 15px;
+        bottom: auto;
+        padding: 6px 12px;
         min-width: auto;
-        border-radius: 12px;
+        border-radius: 20px;
+        border-width: 1px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
     }
 
     .health-score-widget h6 {
-        font-size: 0.7rem;
-        margin-bottom: 4px !important;
+        display: none;
     }
 
-    .health-score-widget .display-3 {
-        font-size: 2rem !important;
+    .health-score-widget .health-score {
+        font-size: 1rem !important;
+        font-weight: 700;
     }
 
-    .health-score-widget .small {
-        font-size: 0.7rem;
+    .health-score-widget .mt-1.small {
+        display: none;
     }
 
-    /* Stats banner - more compact */
+    .health-score-widget .small.mt-2 {
+        display: none;
+    }
+
+    /* Stats banner - hide on mobile, info is in widgets */
     .stats-banner {
-        top: 60px;
-        padding: 6px 10px;
-        border-radius: 10px;
-    }
-
-    .stats-banner-content {
-        gap: 12px;
-    }
-
-    .stat-item {
-        min-width: 50px;
-    }
-
-    .stat-icon {
-        font-size: 1rem;
-        margin-bottom: 2px;
-    }
-
-    .stat-value {
-        font-size: 0.85rem;
-    }
-
-    .stat-label {
-        font-size: 0.55rem;
+        display: none;
     }
 
     /* Refresh button */
     .refresh-btn {
-        width: 50px;
-        height: 50px;
+        width: 46px;
+        height: 46px;
         bottom: 15px;
+    }
+
+    .refresh-btn i {
+        font-size: 1.2rem !important;
     }
 
     /* Scan button */
     .scan-btn {
-        bottom: 75px;
-        padding: 10px 16px;
+        bottom: 70px;
+        padding: 8px 14px;
+        border-radius: 25px;
     }
 
     .scan-label {
-        font-size: 0.8rem;
+        font-size: 0.75rem;
+    }
+
+    .scan-btn i {
+        font-size: 1rem !important;
     }
 
     .scan-toast {
-        bottom: 140px;
-        padding: 10px 20px;
-        font-size: 0.85rem;
+        bottom: 130px;
+        padding: 8px 16px;
+        font-size: 0.8rem;
+        border-radius: 20px;
     }
 
     .legend {
@@ -602,34 +600,66 @@
 /* Extra small screens */
 @media (max-width: 480px) {
     .control-panel {
-        max-width: 180px;
+        max-width: 140px;
+        top: 65px;
     }
 
-    .layer-info strong {
+    .control-header {
+        padding: 6px 10px;
+    }
+
+    .control-header h5 {
         font-size: 0.8rem;
     }
 
-    .layer-source {
-        display: none;
+    .layer-toggle {
+        padding: 5px 6px;
     }
 
+    .layer-icon {
+        font-size: 0.9rem;
+        margin-right: 4px;
+    }
+
+    .layer-info strong {
+        font-size: 0.7rem;
+    }
+
+    .toggle-switch {
+        width: 28px;
+        height: 16px;
+    }
+
+    .toggle-switch::after {
+        width: 12px;
+        height: 12px;
+    }
+
+    .layer-toggle input:checked + .toggle-switch::after {
+        left: 14px;
+    }
+
+    /* Health widget - just the score */
     .health-score-widget {
-        padding: 8px 12px;
+        padding: 4px 10px;
+        top: 65px;
     }
 
-    .health-score-widget h6 {
-        display: none;
+    .health-score-widget .health-score {
+        font-size: 0.9rem !important;
     }
 
-    .health-score-widget .display-3 {
-        font-size: 1.5rem !important;
+    /* Buttons smaller */
+    .refresh-btn {
+        width: 42px;
+        height: 42px;
     }
 
-    .stats-banner {
-        padding: 5px 8px;
+    .scan-btn {
+        padding: 6px 12px;
     }
 
-    .stat-label {
-        display: none;
+    .scan-label {
+        font-size: 0.7rem;
     }
 }
