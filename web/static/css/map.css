@@ -7,7 +7,7 @@
     position: relative;
 }
 
-/* Custom marker cluster styles */
+/* Custom marker cluster styles - colored by average air quality */
 .marker-cluster {
     background-clip: padding-box;
     border-radius: 20px;
@@ -20,34 +20,51 @@
     margin-top: 5px;
     text-align: center;
     border-radius: 15px;
-    font-size: 12px;
+    font-size: 11px;
     font-weight: bold;
     display: flex;
     align-items: center;
     justify-content: center;
     color: white;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.5);
 }
 
-.marker-cluster-small {
-    background-color: rgba(51, 164, 116, 0.6);
-}
-.marker-cluster-small div {
-    background-color: rgba(51, 164, 116, 0.9);
+/* Air quality cluster - outer ring is translucent */
+.marker-cluster-aq {
+    background-color: rgba(255, 255, 255, 0.3);
 }
 
-.marker-cluster-medium {
-    background-color: rgba(241, 196, 15, 0.6);
+/* Good air quality (PM2.5 <= 12) - Green */
+.marker-cluster-good {
+    background-color: rgba(0, 200, 0, 0.3);
 }
-.marker-cluster-medium div {
-    background-color: rgba(241, 196, 15, 0.9);
+.marker-cluster-good div {
+    color: #003300;
+    text-shadow: none;
+}
+
+/* Moderate (PM2.5 12-25) - Yellow */
+.marker-cluster-moderate {
+    background-color: rgba(255, 255, 0, 0.3);
+}
+.marker-cluster-moderate div {
     color: #333;
+    text-shadow: none;
 }
 
-.marker-cluster-large {
-    background-color: rgba(231, 76, 60, 0.6);
+/* Unhealthy for sensitive (PM2.5 25-35) - Orange */
+.marker-cluster-sensitive {
+    background-color: rgba(255, 165, 0, 0.3);
 }
-.marker-cluster-large div {
-    background-color: rgba(231, 76, 60, 0.9);
+
+/* Unhealthy (PM2.5 35-55) - Red */
+.marker-cluster-unhealthy {
+    background-color: rgba(255, 50, 50, 0.3);
+}
+
+/* Dangerous (PM2.5 > 55) - Dark red */
+.marker-cluster-dangerous {
+    background-color: rgba(139, 0, 0, 0.3);
 }
 
 /* Stats Banner - Top overlay */

@@ -119,20 +119,30 @@ function initMap() {
     }).addTo(map);
     fireLayer = L.layerGroup();  // Fallback, not added by default
 
-    // Air Quality: marker cluster for better performance
+    // Air Quality: marker cluster colored by average PM2.5
     airClusterLayer = L.markerClusterGroup({
         maxClusterRadius: 50,
         spiderfyOnMaxZoom: true,
         showCoverageOnHover: false,
         zoomToBoundsOnClick: true,
         iconCreateFunction: function(cluster) {
-            const count = cluster.getChildCount();
-            let size = 'small';
-            if (count > 50) size = 'large';
-            else if (count > 10) size = 'medium';
+            const markers = cluster.getAllChildMarkers();
+            const count = markers.length;
+
+            // Calculate average PM2.5 from marker options
+            let totalPm25 = 0;
+            markers.forEach(m => {
+                totalPm25 += m.options.pm25 || 0;
+            });
+            const avgPm25 = totalPm25 / count;
+
+            // Color based on average air quality, not count
+            const color = getAirQualityColor(avgPm25);
+            const status = getAirQualityClass(avgPm25);
+
             return L.divIcon({
-                html: '<div><span>' + count + '</span></div>',
-                className: 'marker-cluster marker-cluster-' + size,
+                html: `<div style="background-color: ${color};"><span>${count}</span></div>`,
+                className: 'marker-cluster marker-cluster-aq marker-cluster-' + status,
                 iconSize: L.point(40, 40)
             });
         }
@@ -271,7 +281,8 @@ async function scanCurrentArea() {
                         fillColor: color,
                         fillOpacity: 0.8,
                         radius: 6,
-                        weight: 1
+                        weight: 1,
+                        pm25: station.pm25  // Store for cluster averaging
                     });
 
                     marker.bindPopup(`
@@ -525,13 +536,14 @@ function updateAirLayer() {
 
         const color = getAirQualityColor(station.pm25);
 
-        // Use smaller circle markers for clustering
+        // Use smaller circle markers for clustering, store pm25 for cluster averaging
         const marker = L.circleMarker([station.lat, station.lng], {
             color: color,
             fillColor: color,
             fillOpacity: 0.8,
             radius: 6,
-            weight: 1
+            weight: 1,
+            pm25: station.pm25  // Store for cluster color calculation
         });
 
         marker.bindPopup(`
@@ -684,6 +696,15 @@ function getAirQualityStatus(pm25) {
     if (pm25 > 25) return '🟠 Unhealthy for Sensitive';
     if (pm25 > 12) return '🟡 Moderate';
     return '🟢 Good';
+}
+
+// Get CSS class for air quality (used in clusters)
+function getAirQualityClass(pm25) {
+    if (pm25 > 55) return 'dangerous';
+    if (pm25 > 35) return 'unhealthy';
+    if (pm25 > 25) return 'sensitive';
+    if (pm25 > 12) return 'moderate';
+    return 'good';
 }
 
 function getConflictColor(deaths) {
