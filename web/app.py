@@ -476,6 +476,32 @@ def create_app():
         except Exception as e:
             return jsonify({'success': False, 'error': str(e)}), 500
 
+    @app.route('/api/tasks/cleanup-stale', methods=['POST'])
+    @no_cache
+    def api_cleanup_stale_tasks():
+        """Mark stale running tasks as timed_out (tasks running > 30 minutes)"""
+        try:
+            # Find and mark stale tasks
+            stale_tasks = execute_query("""
+                UPDATE task_log
+                SET status = 'timed_out',
+                    completed_at = NOW(),
+                    error_message = 'Task timed out - marked as stale by cleanup'
+                WHERE status = 'running'
+                AND started_at < NOW() - INTERVAL '30 minutes'
+                RETURNING id, task_id, started_at
+            """)
+
+            cleaned_count = len(stale_tasks) if stale_tasks else 0
+
+            return jsonify({
+                'success': True,
+                'message': f'Cleaned up {cleaned_count} stale tasks',
+                'cleaned_tasks': stale_tasks or []
+            })
+        except Exception as e:
+            return jsonify({'success': False, 'error': str(e)}), 500
+
     @app.route('/api/tasks/<task_name>/toggle', methods=['POST'])
     @no_cache
     def api_toggle_task(task_name):

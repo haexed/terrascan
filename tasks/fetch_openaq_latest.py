@@ -101,9 +101,9 @@ def _fetch_from_waqi(token: str, limit: int, bbox: Dict[str, float] = None) -> D
             else:
                 pm25_estimate = 55 + (aqi_num - 150) * 95 / 100
 
-            # Store measurement
+            # Store measurement - use current time so scanned data shows as "fresh"
             store_metric_data(
-                timestamp=station.get('station', {}).get('time', datetime.utcnow().isoformat()),
+                timestamp=datetime.utcnow().isoformat(),
                 provider_key='openaq',
                 dataset='air_quality',
                 metric_name='air_quality_pm25',
