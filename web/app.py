@@ -231,10 +231,36 @@ def create_app():
     @app.route('/api/map-data')
     @no_cache
     def api_map_data():
-        """Get environmental data for map"""
+        """Get environmental data for map - supports viewport-based loading"""
         try:
+            # Parse optional bbox parameter for viewport-based loading
+            bbox_str = request.args.get('bbox', '')
+            bbox = None
+            if bbox_str:
+                try:
+                    parts = [float(x.strip()) for x in bbox_str.split(',')]
+                    if len(parts) == 4:
+                        bbox = {
+                            'south': parts[0],
+                            'west': parts[1],
+                            'north': parts[2],
+                            'east': parts[3]
+                        }
+                except (ValueError, IndexError):
+                    pass  # Fall back to global query
+
+            # Build bbox WHERE clause if provided
+            bbox_clause = ""
+            bbox_params = []
+            if bbox:
+                bbox_clause = """
+                    AND location_lat BETWEEN %s AND %s
+                    AND location_lng BETWEEN %s AND %s
+                """
+                bbox_params = [bbox['south'], bbox['north'], bbox['west'], bbox['east']]
+
             # Get recent fire data
-            fires = execute_query("""
+            fire_query = f"""
                 SELECT location_lat as latitude, location_lng as longitude,
                        value as brightness, DATE(timestamp) as acq_date, metadata
                 FROM metric_data
@@ -242,11 +268,13 @@ def create_app():
                 AND timestamp > NOW() - INTERVAL '24 hours'
                 AND location_lat IS NOT NULL AND location_lng IS NOT NULL
                 AND value > 300
-                ORDER BY timestamp DESC LIMIT 500
-            """)
-            
-            # Get air quality data - prioritize most recently updated locations
-            air_quality = execute_query("""
+                {bbox_clause}
+                ORDER BY timestamp DESC LIMIT {'2000' if bbox else '500'}
+            """
+            fires = execute_query(fire_query, tuple(bbox_params) if bbox_params else None)
+
+            # Get air quality data - viewport-based for better coverage
+            aq_query = f"""
                 SELECT location_lat as latitude, location_lng as longitude,
                        AVG(value) as value, MAX(metadata) as metadata
                 FROM metric_data
@@ -254,9 +282,11 @@ def create_app():
                 AND metric_name = 'air_quality_pm25'
                 AND timestamp > NOW() - INTERVAL '7 days'
                 AND location_lat IS NOT NULL AND location_lng IS NOT NULL
+                {bbox_clause}
                 GROUP BY location_lat, location_lng
-                ORDER BY MAX(timestamp) DESC LIMIT 1000
-            """)
+                ORDER BY MAX(timestamp) DESC LIMIT {'5000' if bbox else '1000'}
+            """
+            air_quality = execute_query(aq_query, tuple(bbox_params) if bbox_params else None)
             
             # Get ocean data (using Open-Meteo for global SST coverage)
             ocean_stations = execute_query("""

@@ -44,6 +44,12 @@ let osmLayer, satelliteLayer;
 // Scan threshold - show scan button when zoomed in this much (8 = regional level)
 const SCAN_ZOOM_THRESHOLD = 8;
 
+// Viewport loading threshold - only load viewport data when zoomed in this much
+const VIEWPORT_LOAD_THRESHOLD = 5;
+
+// Debounce timer for map movement
+let mapMoveTimeout = null;
+
 // Initialize map when page loads
 document.addEventListener('DOMContentLoaded', function () {
     initMap();
@@ -54,6 +60,19 @@ document.addEventListener('DOMContentLoaded', function () {
     // Create toast element for scan notifications
     createScanToast();
 });
+
+// Debounce utility for map movement
+function debounce(func, wait) {
+    let timeout;
+    return function executedFunction(...args) {
+        const later = () => {
+            clearTimeout(timeout);
+            func(...args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+    };
+}
 
 // Initialize map
 function initMap() {
@@ -117,6 +136,15 @@ function initMap() {
     // Show/hide scan button based on zoom level
     map.on('zoomend', updateScanButtonVisibility);
     updateScanButtonVisibility();
+
+    // Reload data when map moves (debounced) - for viewport-based loading
+    const debouncedLoad = debounce(() => {
+        if (map.getZoom() >= VIEWPORT_LOAD_THRESHOLD) {
+            loadEnvironmentalData();
+        }
+    }, 500);  // 500ms debounce
+
+    map.on('moveend', debouncedLoad);
 }
 
 // Update scan button visibility based on zoom level
@@ -288,12 +316,30 @@ function setupLayerToggles() {
 }
 
 /**
+ * Get current map viewport as bbox string
+ * @returns {string} bbox in format "south,west,north,east"
+ */
+function getViewportBbox() {
+    if (!map) return '';
+    const bounds = map.getBounds();
+    return `${bounds.getSouth()},${bounds.getWest()},${bounds.getNorth()},${bounds.getEast()}`;
+}
+
+/**
  * Load environmental data from API
+ * Uses viewport-based loading when zoomed in for better local coverage
  * @returns {Promise<void>}
  */
 async function loadEnvironmentalData() {
     try {
-        const response = await fetch('/api/map-data');
+        // Build URL with optional bbox for viewport-based loading
+        let url = '/api/map-data';
+        if (map && map.getZoom() >= VIEWPORT_LOAD_THRESHOLD) {
+            const bbox = getViewportBbox();
+            url += `?bbox=${encodeURIComponent(bbox)}`;
+        }
+
+        const response = await fetch(url);
         const data = await response.json();
 
         if (data.success) {

@@ -2,6 +2,18 @@
 
 All notable changes to Terrascan will be documented in this file.
 
+## [3.6.1] - 2025-12-30
+
+### Added
+- **Viewport-based lazy loading** for map data
+  - `/api/map-data` now accepts optional `bbox` parameter
+  - Data reloads automatically when panning/zooming (debounced)
+  - Higher limits when viewing specific regions (5000 AQ vs 1000 global)
+
+### Fixed
+- Scanned data now persists after page refresh (viewport-based query includes local data)
+- Norway/rural areas no longer cut off by global station limit
+
 ## [3.6.0] - 2025-12-30
 
 ### Added
