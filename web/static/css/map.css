@@ -7,22 +7,6 @@
     position: relative;
 }
 
-/* Simple dot cluster - no numbers, just colored circles */
-.marker-cluster-dot {
-    background: transparent !important;
-}
-
-.aq-dot {
-    border-radius: 50%;
-    border: 2px solid rgba(255, 255, 255, 0.8);
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
-    transition: transform 0.2s ease;
-}
-
-.aq-dot:hover {
-    transform: scale(1.2);
-}
-
 /* Stats Banner - Top overlay */
 .stats-banner {
     position: fixed;

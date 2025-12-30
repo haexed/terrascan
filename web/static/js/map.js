@@ -30,8 +30,6 @@
 // Global variables
 let map;
 let fireLayer, airLayer, oceanLayer, conflictLayer, biodiversityLayer, auroraLayer;
-let fireHeatLayer, auroraHeatLayer;  // Heatmap layers (fire + aurora only)
-let airClusterLayer;  // Marker cluster for AQ
 /** @type {FireData[]} */
 let fireData = [];
 /** @type {AirQualityData[]} */
@@ -42,9 +40,6 @@ let conflictData = [];
 let biodiversityData = [];
 let auroraData = { points: [], kp_index: null };
 let osmLayer, satelliteLayer;
-
-// Track which visualization mode is active
-let useHeatmaps = true;
 
 // Scan threshold - show scan button when zoomed in this much (8 = regional level)
 const SCAN_ZOOM_THRESHOLD = 8;
@@ -87,7 +82,7 @@ function initMap() {
         [85, 180]     // Northeast corner
     ];
 
-    // Create map centered on world view (no zoom controls - use scroll/pinch)
+    // Create map centered on world view
     map = L.map('map', {
         center: [20, 0],
         zoom: 2,
@@ -97,6 +92,11 @@ function initMap() {
         zoomControl: false,
         attributionControl: false
     });
+
+    // Add zoom control to top right
+    L.control.zoom({
+        position: 'topright'
+    }).addTo(map);
 
     // Default tile layer (OpenStreetMap)
     osmLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -109,71 +109,12 @@ function initMap() {
     }).addTo(map);
 
     // Initialize data layers
-    // Fire: heatmap (primary) + regular layer (fallback)
-    fireHeatLayer = L.heatLayer([], {
-        radius: 25,
-        blur: 15,
-        maxZoom: 10,
-        max: 500,
-        gradient: {0.2: '#ffeda0', 0.4: '#feb24c', 0.6: '#fd8d3c', 0.8: '#f03b20', 1: '#bd0026'}
-    }).addTo(map);
-    fireLayer = L.layerGroup();  // Fallback, not added by default
-
-    // Air Quality: colored dot clusters - bigger radius at global view
-    airClusterLayer = L.markerClusterGroup({
-        maxClusterRadius: 80,  // Larger radius = fewer clusters at global view
-        spiderfyOnMaxZoom: true,
-        showCoverageOnHover: false,
-        zoomToBoundsOnClick: true,
-        disableClusteringAtZoom: 12,  // Show individual points at street level
-        iconCreateFunction: function(cluster) {
-            const markers = cluster.getAllChildMarkers();
-            const count = markers.length;
-
-            // Calculate average PM2.5 from marker options
-            let totalPm25 = 0;
-            markers.forEach(m => {
-                totalPm25 += m.options.pm25 || 0;
-            });
-            const avgPm25 = totalPm25 / count;
-
-            // Color based on average air quality
-            const color = getAirQualityColor(avgPm25);
-
-            // Size based on count (subtle scaling)
-            let size = 16;
-            if (count > 100) size = 26;
-            else if (count > 50) size = 22;
-            else if (count > 20) size = 20;
-            else if (count > 5) size = 18;
-
-            return L.divIcon({
-                html: `<div class="aq-dot" style="background-color: ${color}; width: ${size}px; height: ${size}px;"></div>`,
-                className: 'marker-cluster-dot',
-                iconSize: L.point(size, size)
-            });
-        }
-    }).addTo(map);  // Add directly - always visible
-    airLayer = L.layerGroup();  // Fallback
-
-    // Ocean: regular markers (visible at zoom >= 3)
-    oceanLayer = L.layerGroup();  // Not added initially
-
-    // Conflicts: regular markers (visible at zoom >= 5)
-    conflictLayer = L.layerGroup();  // Not added initially
-
-    // Biodiversity: regular markers (visible at zoom >= 5)
-    biodiversityLayer = L.layerGroup();  // Not added initially
-
-    // Aurora: heatmap with aurora-like colors
-    auroraHeatLayer = L.heatLayer([], {
-        radius: 30,
-        blur: 20,
-        maxZoom: 8,
-        max: 100,
-        gradient: {0.2: '#001a00', 0.4: '#00ff7f', 0.6: '#00ff00', 0.8: '#9400d3', 1: '#ff00ff'}
-    }).addTo(map);
-    auroraLayer = L.layerGroup();  // Fallback
+    fireLayer = L.layerGroup().addTo(map);
+    airLayer = L.layerGroup().addTo(map);
+    oceanLayer = L.layerGroup().addTo(map);
+    conflictLayer = L.layerGroup().addTo(map);
+    biodiversityLayer = L.layerGroup().addTo(map);
+    auroraLayer = L.layerGroup().addTo(map);
 
     // Load initial data
     loadEnvironmentalData();
@@ -194,9 +135,7 @@ function initMap() {
 
     // Show/hide scan button based on zoom level
     map.on('zoomend', updateScanButtonVisibility);
-    map.on('zoomend', updateLayerVisibility);
     updateScanButtonVisibility();
-    updateLayerVisibility();
 
     // Reload data when map moves (debounced) - for viewport-based loading
     const debouncedLoad = debounce(() => {
@@ -206,36 +145,6 @@ function initMap() {
     }, 500);  // 500ms debounce
 
     map.on('moveend', debouncedLoad);
-}
-
-// Show/hide detail layers based on zoom level
-function updateLayerVisibility() {
-    const zoom = map.getZoom();
-    const conflictToggle = document.getElementById('conflict-layer');
-    const bioToggle = document.getElementById('biodiversity-layer');
-    const oceanToggle = document.getElementById('ocean-layer');
-
-    // Ocean markers only at zoom >= 3
-    if (zoom >= 3) {
-        if (oceanToggle?.checked && !map.hasLayer(oceanLayer)) {
-            map.addLayer(oceanLayer);
-        }
-    } else {
-        if (map.hasLayer(oceanLayer)) map.removeLayer(oceanLayer);
-    }
-
-    // Conflicts and biodiversity only visible at zoom >= 5
-    if (zoom >= 5) {
-        if (conflictToggle?.checked && !map.hasLayer(conflictLayer)) {
-            map.addLayer(conflictLayer);
-        }
-        if (bioToggle?.checked && !map.hasLayer(biodiversityLayer)) {
-            map.addLayer(biodiversityLayer);
-        }
-    } else {
-        if (map.hasLayer(conflictLayer)) map.removeLayer(conflictLayer);
-        if (map.hasLayer(biodiversityLayer)) map.removeLayer(biodiversityLayer);
-    }
 }
 
 // Update scan button visibility based on zoom level
@@ -310,7 +219,7 @@ async function scanCurrentArea() {
             if (newRecords > 0) {
                 showScanToast(`📍 Loaded ${newRecords} air quality stations`);
 
-                // Add new stations to the cluster layer
+                // Add new stations to the air layer
                 result.stations.forEach(station => {
                     if (!station.lat || !station.lng) return;
 
@@ -319,19 +228,21 @@ async function scanCurrentArea() {
                         color: color,
                         fillColor: color,
                         fillOpacity: 0.8,
-                        radius: 6,
-                        weight: 1,
-                        pm25: station.pm25  // Store for cluster averaging
+                        radius: 10,
+                        weight: 2
                     });
 
                     marker.bindPopup(`
-                        <strong>🌬️ ${station.location || 'Air Quality'}</strong><br>
+                        <strong>🌬️ ${station.location || 'Air Quality Station'}</strong><br>
                         <strong>PM2.5:</strong> ${station.pm25} μg/m³<br>
                         <strong>Status:</strong> ${getAirQualityStatus(station.pm25)}<br>
                         <em>📍 Scanned just now</em>
                     `);
 
-                    airClusterLayer.addLayer(marker);
+                    airLayer.addLayer(marker);
+
+                    // Flash animation for new markers
+                    marker._path?.classList.add('new-marker-pulse');
                 });
 
                 // Also add to airData for consistency
@@ -357,22 +268,22 @@ async function scanCurrentArea() {
 function setupLayerToggles() {
     document.getElementById('fire-layer').addEventListener('change', function () {
         if (this.checked) {
-            map.addLayer(fireHeatLayer);
+            map.addLayer(fireLayer);
         } else {
-            map.removeLayer(fireHeatLayer);
+            map.removeLayer(fireLayer);
         }
     });
 
     document.getElementById('air-layer').addEventListener('change', function () {
         if (this.checked) {
-            map.addLayer(airClusterLayer);
+            map.addLayer(airLayer);
         } else {
-            map.removeLayer(airClusterLayer);
+            map.removeLayer(airLayer);
         }
     });
 
     document.getElementById('ocean-layer').addEventListener('change', function () {
-        if (this.checked && map.getZoom() >= 3) {
+        if (this.checked) {
             map.addLayer(oceanLayer);
         } else {
             map.removeLayer(oceanLayer);
@@ -380,7 +291,7 @@ function setupLayerToggles() {
     });
 
     document.getElementById('conflict-layer').addEventListener('change', function () {
-        if (this.checked && map.getZoom() >= 5) {
+        if (this.checked) {
             map.addLayer(conflictLayer);
         } else {
             map.removeLayer(conflictLayer);
@@ -388,7 +299,7 @@ function setupLayerToggles() {
     });
 
     document.getElementById('biodiversity-layer').addEventListener('change', function () {
-        if (this.checked && map.getZoom() >= 5) {
+        if (this.checked) {
             map.addLayer(biodiversityLayer);
         } else {
             map.removeLayer(biodiversityLayer);
@@ -397,9 +308,9 @@ function setupLayerToggles() {
 
     document.getElementById('aurora-layer').addEventListener('change', function () {
         if (this.checked) {
-            map.addLayer(auroraHeatLayer);
+            map.addLayer(auroraLayer);
         } else {
-            map.removeLayer(auroraHeatLayer);
+            map.removeLayer(auroraLayer);
         }
     });
 }
@@ -544,51 +455,75 @@ function validateOceanData(stations) {
 }
 
 /**
- * Update fire layer with heatmap
+ * Update fire layer with markers
  * @returns {void}
  */
 function updateFireLayer() {
-    // Convert fire data to heatmap format: [lat, lng, intensity]
-    const heatData = fireData
-        .filter(fire => fire.lat && fire.lng)
-        .map(fire => {
-            // Normalize brightness to 0-1 range (300-500K typical range)
-            const intensity = Math.min(1, Math.max(0, (fire.brightness - 300) / 200));
-            return [fire.lat, fire.lng, intensity];
-        });
+    fireLayer.clearLayers();
 
-    fireHeatLayer.setLatLngs(heatData);
-}
+    fireData.forEach(fire => {
+        // Data is already validated, but double-check to be safe
+        if (!fire.lat || !fire.lng) {
+            return;
+        }
 
-/**
- * Update air quality layer with clustered colored dots
- * @returns {void}
- */
-function updateAirLayer() {
-    airClusterLayer.clearLayers();
+        const color = getFireColor(fire.brightness);
+        const radius = Math.max(5, Math.min(20, fire.brightness / 50));
 
-    airData.forEach(station => {
-        if (!station.lat || !station.lng) return;
-
-        const color = getAirQualityColor(station.pm25);
-
-        const marker = L.circleMarker([station.lat, station.lng], {
-            color: 'white',
+        const marker = L.circleMarker([fire.lat, fire.lng], {
+            color: color,
             fillColor: color,
-            fillOpacity: 0.9,
-            radius: 5,
-            weight: 1,
-            pm25: station.pm25
+            fillOpacity: 0.7,
+            radius: radius,
+            weight: 1
         });
 
         marker.bindPopup(`
-            <strong>🌬️ Air Quality</strong><br>
+            <strong>🔥 Active Fire</strong><br>
+            <strong>Location:</strong> ${fire.lat.toFixed(3)}, ${fire.lng.toFixed(3)}<br>
+            <strong>Brightness:</strong> ${fire.brightness}K<br>
+            <strong>Confidence:</strong> ${fire.confidence}%<br>
+            <strong>Detected:</strong> ${fire.acq_date}<br>
+            <em>Source: NASA FIRMS</em>
+        `);
+
+        fireLayer.addLayer(marker);
+    });
+}
+
+/**
+ * Update air quality layer with markers
+ * @returns {void}
+ */
+function updateAirLayer() {
+    airLayer.clearLayers();
+
+    airData.forEach(station => {
+        // Data is already validated
+        if (!station.lat || !station.lng) {
+            return;
+        }
+
+        const color = getAirQualityColor(station.pm25);
+        const radius = Math.max(8, Math.min(25, station.pm25 / 2));
+
+        const marker = L.circleMarker([station.lat, station.lng], {
+            color: color,
+            fillColor: color,
+            fillOpacity: 0.6,
+            radius: radius,
+            weight: 2
+        });
+
+        marker.bindPopup(`
+            <strong>🌬️ Air Quality Station</strong><br>
+            <strong>Location:</strong> ${station.lat.toFixed(3)}, ${station.lng.toFixed(3)}<br>
             <strong>PM2.5:</strong> ${station.pm25} μg/m³<br>
             <strong>Status:</strong> ${getAirQualityStatus(station.pm25)}<br>
             <em>Source: OpenAQ</em>
         `);
 
-        airClusterLayer.addLayer(marker);
+        airLayer.addLayer(marker);
     });
 }
 
@@ -608,11 +543,11 @@ function updateOceanLayer() {
         const color = getOceanColor(station.temperature);
 
         const marker = L.circleMarker([station.latitude, station.longitude], {
-            color: 'white',
+            color: color,
             fillColor: color,
-            fillOpacity: 0.9,
-            radius: 8,
-            weight: 1
+            fillOpacity: 0.8,
+            radius: 12,
+            weight: 2
         });
 
         // Format values safely
@@ -640,12 +575,12 @@ function updateConflictLayer() {
 
         const color = getConflictColor(conflict.deaths);
         const marker = L.circleMarker([conflict.latitude, conflict.longitude], {
-            radius: Math.min(4 + Math.sqrt(conflict.deaths) * 0.5, 10),
+            radius: Math.min(4 + Math.sqrt(conflict.deaths), 15),
             fillColor: color,
-            color: 'white',
+            color: '#000',
             weight: 1,
-            opacity: 0.9,
-            fillOpacity: 0.8
+            opacity: 0.8,
+            fillOpacity: 0.7
         });
 
         marker.bindPopup(`
@@ -670,12 +605,12 @@ function updateBiodiversityLayer() {
 
         const color = getBiodiversityColor(bio.observations);
         const marker = L.circleMarker([bio.latitude, bio.longitude], {
-            radius: Math.min(5 + Math.log10(bio.observations + 1) * 2, 12),
+            radius: Math.min(6 + Math.log10(bio.observations + 1) * 3, 20),
             fillColor: color,
-            color: 'white',
-            weight: 1,
+            color: '#006400',
+            weight: 2,
             opacity: 0.9,
-            fillOpacity: 0.7
+            fillOpacity: 0.6
         });
 
         marker.bindPopup(`
@@ -689,24 +624,42 @@ function updateBiodiversityLayer() {
     });
 }
 
-// Update aurora layer with heatmap
+// Update aurora layer with NOAA SWPC data
 function updateAuroraLayer() {
+    auroraLayer.clearLayers();
+
     // Update Kp status in the toggle label
     const kpStatusEl = document.getElementById('kp-status');
     if (kpStatusEl && auroraData.kp_index) {
         kpStatusEl.textContent = `Kp ${auroraData.kp_index.value.toFixed(1)} - ${auroraData.kp_index.status}`;
     }
 
-    // Convert aurora data to heatmap format: [lat, lng, intensity]
-    const heatData = auroraData.points
-        .filter(point => point.latitude && point.longitude && point.intensity > 5)  // Filter low intensity
-        .map(point => {
-            // Normalize intensity to 0-1 range
-            const intensity = Math.min(1, point.intensity / 100);
-            return [point.latitude, point.longitude, intensity];
+    // Aurora points are rendered as semi-transparent circles
+    // Using larger radius and lower opacity for aurora glow effect
+    auroraData.points.forEach(point => {
+        if (!point.latitude || !point.longitude) return;
+
+        const color = getAuroraColor(point.intensity);
+        const radius = Math.min(3 + point.intensity * 0.5, 15);
+
+        const marker = L.circleMarker([point.latitude, point.longitude], {
+            radius: radius,
+            fillColor: color,
+            color: color,
+            weight: 0,
+            opacity: 0.8,
+            fillOpacity: 0.5
         });
 
-    auroraHeatLayer.setLatLngs(heatData);
+        marker.bindPopup(`
+            <strong>🌌 Aurora Forecast</strong><br>
+            <strong>Intensity:</strong> ${point.intensity}%<br>
+            <strong>Location:</strong> ${point.latitude.toFixed(1)}°, ${point.longitude.toFixed(1)}°<br>
+            <em>Source: NOAA SWPC OVATION Model</em>
+        `);
+
+        auroraLayer.addLayer(marker);
+    });
 }
 
 // Color functions for different data types
@@ -731,15 +684,6 @@ function getAirQualityStatus(pm25) {
     if (pm25 > 25) return '🟠 Unhealthy for Sensitive';
     if (pm25 > 12) return '🟡 Moderate';
     return '🟢 Good';
-}
-
-// Get CSS class for air quality (used in clusters)
-function getAirQualityClass(pm25) {
-    if (pm25 > 55) return 'dangerous';
-    if (pm25 > 35) return 'unhealthy';
-    if (pm25 > 25) return 'sensitive';
-    if (pm25 > 12) return 'moderate';
-    return 'good';
 }
 
 function getConflictColor(deaths) {

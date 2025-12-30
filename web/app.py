@@ -327,7 +327,7 @@ def create_app():
                 ORDER BY value DESC LIMIT 50
             """)
 
-            # Get aurora forecast from NOAA SWPC (limited for heatmap performance)
+            # Get aurora forecast from NOAA SWPC
             aurora = execute_query("""
                 SELECT location_lat as latitude, location_lng as longitude,
                        value as intensity, metadata
@@ -335,8 +335,7 @@ def create_app():
                 WHERE provider_key = 'noaa_swpc'
                 AND metric_name = 'aurora_forecast'
                 AND location_lat IS NOT NULL AND location_lng IS NOT NULL
-                AND value > 10
-                ORDER BY value DESC LIMIT 500
+                ORDER BY value DESC LIMIT 2000
             """)
 
             # Get current Kp index
