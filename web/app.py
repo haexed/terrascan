@@ -59,9 +59,11 @@ def create_app():
         try:
             health_data = get_environmental_health_data()
             health_score = calculate_environmental_health_score(health_data)
+            freshness = get_data_freshness()
             return render_template('map.html',
                                  health_data=health_data,
-                                 health_score=health_score)
+                                 health_score=health_score,
+                                 freshness=freshness)
         except Exception as e:
             return f"Error: {e}", 500
 
@@ -92,9 +94,11 @@ def create_app():
         try:
             health_data = get_environmental_health_data()
             health_score = calculate_environmental_health_score(health_data)
+            freshness = get_data_freshness()
             return render_template('map.html',
                                  health_data=health_data,
-                                 health_score=health_score)
+                                 health_score=health_score,
+                                 freshness=freshness)
         except Exception as e:
             return f"Error: {e}", 500
 
@@ -693,6 +697,89 @@ def create_app():
         except Exception as e:
             return jsonify({'success': False, 'error': str(e)}), 500
 
+    @app.route('/api/freshness')
+    @no_cache
+    def api_freshness():
+        """Get data freshness status for all sources"""
+        try:
+            freshness = get_data_freshness()
+            health_data = get_environmental_health_data()
+            health_score = calculate_environmental_health_score(health_data)
+
+            return jsonify({
+                'success': True,
+                'freshness': freshness,
+                'health_score': health_score,
+                'summary': {
+                    'fresh_count': sum(1 for f in freshness.values() if f['status'] == 'fresh'),
+                    'aging_count': sum(1 for f in freshness.values() if f['status'] == 'aging'),
+                    'stale_count': sum(1 for f in freshness.values() if f['status'] == 'stale'),
+                    'total_sources': len(freshness)
+                }
+            })
+        except Exception as e:
+            return jsonify({'success': False, 'error': str(e)}), 500
+
+    @app.route('/api/smart-refresh', methods=['POST'])
+    @no_cache
+    def api_smart_refresh():
+        """Smart refresh - only update stale data sources"""
+        try:
+            from tasks.runner import TaskRunner
+            runner = TaskRunner()
+
+            freshness = get_data_freshness()
+
+            # Map providers to task names
+            PROVIDER_TO_TASK = {
+                'nasa_firms': 'nasa_fires_global',
+                'openaq': 'openaq_latest',
+                'openmeteo_marine': 'openmeteo_marine',
+                'noaa_swpc': 'noaa_aurora',
+                'gbif': 'gbif_biodiversity',
+                'ucdp': 'ucdp_conflicts',
+                'openweather': 'openweather_global'
+            }
+
+            refreshed = []
+            skipped = []
+
+            for provider, task_name in PROVIDER_TO_TASK.items():
+                provider_freshness = freshness.get(provider, {})
+                status = provider_freshness.get('status', 'stale')
+
+                if status in ['stale', 'aging']:
+                    # Run this task
+                    result = runner.run_task(task_name, triggered_by='smart_refresh')
+                    if result.get('success'):
+                        refreshed.append({
+                            'provider': provider,
+                            'task': task_name,
+                            'records': result.get('records_processed', 0)
+                        })
+                    else:
+                        refreshed.append({
+                            'provider': provider,
+                            'task': task_name,
+                            'error': result.get('error', 'Unknown error')
+                        })
+                else:
+                    skipped.append({
+                        'provider': provider,
+                        'reason': f'Still fresh ({provider_freshness.get("age_hours", 0):.1f}h old)'
+                    })
+
+            return jsonify({
+                'success': True,
+                'refreshed': refreshed,
+                'skipped': skipped,
+                'message': f'Refreshed {len(refreshed)} sources, skipped {len(skipped)} fresh sources'
+            })
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            return jsonify({'success': False, 'error': str(e)}), 500
+
     @app.route('/api/debug/aq-oslo')
     @no_cache
     def api_debug_oslo():
@@ -878,6 +965,9 @@ def prepare_dashboard_data():
         'last_update': health_data['last_updated']
     }
     
+    # Get freshness data for all sources
+    freshness = get_data_freshness()
+
     return {
         'health_data': health_data,
         'health_score': health_score,
@@ -885,7 +975,8 @@ def prepare_dashboard_data():
         'air_data': air_data,
         'ocean_data': ocean_data,
         'weather_data': weather_data,
-        'biodiversity_data': biodiversity_data
+        'biodiversity_data': biodiversity_data,
+        'freshness': freshness
     }
 
 def get_count(query):
@@ -1180,6 +1271,66 @@ def get_kp_status(kp: float) -> str:
     else:
         return 'Quiet'
 
+def get_data_freshness():
+    """Get last updated timestamps for each data source with freshness status"""
+    # Define ideal refresh intervals (hours)
+    FRESHNESS_THRESHOLDS = {
+        'nasa_firms': 3,        # Fires: 3 hours
+        'openaq': 12,           # Air quality: 12 hours
+        'openmeteo_marine': 24, # Ocean: 24 hours
+        'noaa_aurora': 1,       # Aurora: 1 hour
+        'ucdp': 168,            # Conflicts: weekly
+        'gbif': 168,            # Biodiversity: weekly
+        'openweather': 6        # Weather: 6 hours
+    }
+
+    try:
+        freshness = execute_query("""
+            SELECT
+                provider_key,
+                MAX(timestamp) as last_data,
+                MAX(created_date) as last_fetched,
+                COUNT(*) as record_count
+            FROM metric_data
+            WHERE timestamp > NOW() - INTERVAL '30 days'
+            GROUP BY provider_key
+        """)
+
+        result = {}
+        now = datetime.utcnow()
+
+        for row in (freshness or []):
+            provider = row['provider_key']
+            last_fetched = row['last_fetched']
+            threshold_hours = FRESHNESS_THRESHOLDS.get(provider, 24)
+
+            if last_fetched:
+                age_hours = (now - last_fetched).total_seconds() / 3600
+
+                if age_hours < threshold_hours:
+                    status = 'fresh'
+                    color = '#28a745'  # Green
+                elif age_hours < threshold_hours * 2:
+                    status = 'aging'
+                    color = '#ffc107'  # Yellow
+                else:
+                    status = 'stale'
+                    color = '#dc3545'  # Red
+
+                result[provider] = {
+                    'last_fetched': last_fetched.isoformat() if last_fetched else None,
+                    'age_hours': round(age_hours, 1),
+                    'status': status,
+                    'color': color,
+                    'threshold_hours': threshold_hours,
+                    'record_count': row['record_count']
+                }
+
+        return result
+    except Exception as e:
+        print(f"Error getting freshness data: {e}")
+        return {}
+
 def get_environmental_health_data():
     """Get current environmental health data from database"""
     try:
@@ -1346,11 +1497,75 @@ def calculate_environmental_health_score(health_data):
         status = 'Critical' + status_suffix
         color = '#dc3545'
 
+    # Build breakdown details
+    breakdown = []
+
+    # Fire breakdown
+    if fire_count is not None:
+        if fire_count > 1000:
+            fire_impact = -25
+        elif fire_count > 500:
+            fire_impact = -15
+        elif fire_count > 100:
+            fire_impact = -8
+        else:
+            fire_impact = 0
+        breakdown.append({
+            'source': 'Fires',
+            'icon': '🔥',
+            'value': f'{fire_count} active',
+            'impact': fire_impact,
+            'provider': 'nasa_firms'
+        })
+
+    # Air quality breakdown
+    if pm25 is not None:
+        if pm25 > 75:
+            air_impact = -30
+        elif pm25 > 55:
+            air_impact = -20
+        elif pm25 > 35:
+            air_impact = -12
+        elif pm25 > 15:
+            air_impact = -5
+        else:
+            air_impact = 0
+        breakdown.append({
+            'source': 'Air Quality',
+            'icon': '🌬️',
+            'value': f'PM2.5: {pm25:.1f}',
+            'impact': air_impact,
+            'provider': 'openaq'
+        })
+
+    # Ocean breakdown
+    if ocean_temp is not None:
+        if ocean_temp > 25:
+            ocean_impact = -15
+        elif ocean_temp > 23:
+            ocean_impact = -8
+        elif ocean_temp < 15:
+            ocean_impact = -10
+        elif ocean_temp < 18:
+            ocean_impact = -5
+        else:
+            ocean_impact = 0
+        breakdown.append({
+            'source': 'Ocean Temp',
+            'icon': '🌊',
+            'value': f'{ocean_temp:.1f}°C',
+            'impact': ocean_impact,
+            'provider': 'openmeteo_marine'
+        })
+
     return {
         'score': score,
         'status': status,
         'color': color,
-        'data_coverage': round(data_coverage * 100, 0)
+        'data_coverage': round(data_coverage * 100, 0),
+        'breakdown': breakdown,
+        'sources_used': len(data_points),
+        'sources_total': 3
     }
 
 def get_air_quality_status(pm25):

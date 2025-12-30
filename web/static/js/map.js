@@ -718,4 +718,24 @@ function updateTime() {
     if (mapTimeElement) {
         mapTimeElement.textContent = timeString;
     }
+}
+
+// Toggle health score breakdown panel
+function toggleHealthBreakdown() {
+    const panel = document.getElementById('health-breakdown');
+    if (!panel) return;
+
+    if (panel.style.display === 'none' || !panel.style.display) {
+        panel.style.display = 'block';
+        // Add slight animation
+        panel.style.opacity = '0';
+        setTimeout(() => {
+            panel.style.opacity = '1';
+        }, 10);
+    } else {
+        panel.style.opacity = '0';
+        setTimeout(() => {
+            panel.style.display = 'none';
+        }, 200);
+    }
 } 

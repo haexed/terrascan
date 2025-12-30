@@ -2,6 +2,27 @@
 
 All notable changes to Terrascan will be documented in this file.
 
+## [3.6.0] - 2025-12-30
+
+### Added
+- **Data freshness visibility** across all views
+  - Color-coded freshness badges (green/yellow/red) on dashboard cards
+  - Per-source age indicators ("Updated 0.6h ago")
+  - New `/api/freshness` endpoint with detailed source status
+- **Health score breakdown panel** (clickable on map view)
+  - Shows impact of each data source on total score
+  - Displays freshness dots for each contributing source
+  - Expandable/collapsible panel with animations
+- **Smart refresh API** (`/api/smart-refresh`)
+  - Only updates stale/aging data sources
+  - Skips fresh sources to reduce API calls
+  - Returns detailed refresh report
+
+### Changed
+- `/map` route now passes freshness data to template
+- Health score calculation includes breakdown details
+- Mobile-responsive breakdown panel (slides up from bottom)
+
 ## [3.5.1] - 2025-12-30
 
 ### Fixed

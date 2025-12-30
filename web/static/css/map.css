@@ -157,6 +157,97 @@
     z-index: 1000;
     text-align: center;
     min-width: 180px;
+    transition: transform 0.2s ease;
+}
+
+.health-score-widget:hover {
+    transform: scale(1.02);
+}
+
+/* Health breakdown panel */
+.health-breakdown-panel {
+    position: fixed;
+    top: 80px;
+    right: 210px;
+    background: rgba(255, 255, 255, 0.98);
+    border: 2px solid var(--infp-green);
+    border-radius: 15px;
+    padding: 15px;
+    box-shadow: 0 8px 32px rgba(51, 164, 116, 0.3);
+    backdrop-filter: blur(10px);
+    z-index: 1001;
+    min-width: 260px;
+    max-width: 300px;
+    transition: opacity 0.2s ease;
+}
+
+.breakdown-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid rgba(51, 164, 116, 0.2);
+}
+
+.close-breakdown {
+    cursor: pointer;
+    font-size: 1.4rem;
+    color: #999;
+    line-height: 1;
+}
+
+.close-breakdown:hover {
+    color: #333;
+}
+
+.breakdown-item {
+    display: flex;
+    align-items: center;
+    padding: 8px 0;
+    border-bottom: 1px solid #eee;
+    font-size: 0.85rem;
+}
+
+.breakdown-item:last-child {
+    border-bottom: none;
+}
+
+.breakdown-icon {
+    font-size: 1.1rem;
+    width: 28px;
+}
+
+.breakdown-label {
+    flex: 1;
+    font-weight: 500;
+}
+
+.breakdown-value {
+    color: #666;
+    font-size: 0.8rem;
+    margin-right: 8px;
+}
+
+.breakdown-impact {
+    font-weight: 600;
+    min-width: 35px;
+    text-align: right;
+}
+
+.breakdown-impact.negative {
+    color: #dc3545;
+}
+
+.breakdown-impact.neutral {
+    color: #28a745;
+}
+
+.freshness-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    margin-left: 6px;
 }
 
 /* Layer toggle controls - clickable rows with toggle switches */
@@ -545,6 +636,27 @@
 
     .health-score-widget .small.mt-2 {
         display: none;
+    }
+
+    /* Health breakdown panel - slides up from bottom on mobile */
+    .health-breakdown-panel {
+        top: auto;
+        bottom: 20px;
+        right: 10px;
+        left: 10px;
+        max-width: none;
+        border-radius: 12px;
+        padding: 12px;
+    }
+
+    .breakdown-item {
+        padding: 6px 0;
+        font-size: 0.8rem;
+    }
+
+    .breakdown-icon {
+        font-size: 1rem;
+        width: 24px;
     }
 
     /* Stats banner - hide on mobile, info is in widgets */

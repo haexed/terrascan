@@ -136,17 +136,44 @@
     </div>
 </div>
 
-<!-- Health Score Widget -->
-<div class="health-score-widget">
+<!-- Health Score Widget (clickable for breakdown) -->
+<div class="health-score-widget" onclick="toggleHealthBreakdown()" style="cursor: pointer;" title="Click for breakdown">
     <h6 class="mb-2">🌍 Planetary Health</h6>
     <div class="health-score status-{{ health_score.status.lower() if health_score else 'unknown' }}">
         {{ health_score.score if health_score else '--' }}/100
     </div>
     <div class="mt-1 small status-{{ health_score.status.lower() if health_score else 'unknown' }}">
-        {{ health_score.status if health_score else '⚪ NO DATA' }}
+        {{ health_score.status if health_score else 'No Data' }}
     </div>
-    <div class="small mt-2">
-        <i class="fas fa-clock"></i> <span id="map-current-time">Loading...</span>
+    <div class="small mt-1 text-muted">
+        {{ health_score.sources_used if health_score else 0 }}/{{ health_score.sources_total if health_score else 3 }} sources
+    </div>
+</div>
+
+<!-- Health Score Breakdown Panel -->
+<div class="health-breakdown-panel" id="health-breakdown" style="display: none;">
+    <div class="breakdown-header">
+        <strong>Score Breakdown</strong>
+        <span class="close-breakdown" onclick="toggleHealthBreakdown()">&times;</span>
+    </div>
+    <div class="breakdown-content">
+        {% if health_score and health_score.breakdown %}
+        {% for item in health_score.breakdown %}
+        <div class="breakdown-item">
+            <span class="breakdown-icon">{{ item.icon }}</span>
+            <span class="breakdown-label">{{ item.source }}</span>
+            <span class="breakdown-value">{{ item.value }}</span>
+            <span class="breakdown-impact {% if item.impact < 0 %}negative{% else %}neutral{% endif %}">
+                {{ item.impact if item.impact != 0 else '±0' }}
+            </span>
+            {% if freshness[item.provider] %}
+            <span class="freshness-dot" style="background: {{ freshness[item.provider].color }};" title="{{ freshness[item.provider].status }}"></span>
+            {% endif %}
+        </div>
+        {% endfor %}
+        {% else %}
+        <div class="text-muted small">No breakdown available</div>
+        {% endif %}
     </div>
 </div>
 

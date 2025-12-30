@@ -42,7 +42,14 @@
                     <span class="fs-1 me-3">🔥</span>
                     <div>
                         <h4 class="mb-0">Global Fires</h4>
-                        <div class="data-source">NASA FIRMS Satellite Data</div>
+                        <div class="data-source">
+                            NASA FIRMS
+                            {% if freshness.nasa_firms %}
+                            <span class="freshness-badge" style="background: {{ freshness.nasa_firms.color }};" title="{{ freshness.nasa_firms.age_hours }}h ago">
+                                {{ freshness.nasa_firms.status }}
+                            </span>
+                            {% endif %}
+                        </div>
                     </div>
                 </div>
 
@@ -66,23 +73,11 @@
                 </div>
 
                 <div class="last-update mt-3 text-center">
-                    Last update: {{ fire_data.last_update }}
-                    <script>
-                        // Add timezone info to fire update time
-                        (function () {
-                            const now = new Date();
-                            const offsetMinutes = now.getTimezoneOffset();
-                            const offsetHours = Math.floor(Math.abs(offsetMinutes) / 60);
-                            const offsetMins = Math.abs(offsetMinutes) % 60;
-                            const offsetSign = offsetMinutes <= 0 ? '+' : '-';
-                            const offsetString = ` (${offsetSign}${offsetHours.toString().padStart(2, '0')}:${offsetMins.toString().padStart(2, '0')})`;
-
-                            const updateElement = document.currentScript.parentElement;
-                            if (updateElement && !updateElement.textContent.includes('(')) {
-                                updateElement.innerHTML = updateElement.innerHTML.replace('UTC', 'UTC' + offsetString);
-                            }
-                        })();
-                    </script>
+                    {% if freshness.nasa_firms %}
+                    Updated {{ freshness.nasa_firms.age_hours }}h ago
+                    {% else %}
+                    No data
+                    {% endif %}
                 </div>
             </div>
         </div>
@@ -94,7 +89,14 @@
                     <span class="fs-1 me-3">🌬️</span>
                     <div>
                         <h4 class="mb-0">Air Quality</h4>
-                        <div class="data-source">OpenAQ Global Network</div>
+                        <div class="data-source">
+                            OpenAQ
+                            {% if freshness.openaq %}
+                            <span class="freshness-badge" style="background: {{ freshness.openaq.color }};" title="{{ freshness.openaq.age_hours }}h ago">
+                                {{ freshness.openaq.status }}
+                            </span>
+                            {% endif %}
+                        </div>
                     </div>
                 </div>
 
@@ -118,7 +120,11 @@
                 </div>
 
                 <div class="last-update mt-3 text-center">
-                    Last update: {{ air_data.last_update }}
+                    {% if freshness.openaq %}
+                    Updated {{ freshness.openaq.age_hours }}h ago
+                    {% else %}
+                    No data
+                    {% endif %}
                 </div>
             </div>
         </div>
@@ -130,7 +136,14 @@
                     <span class="fs-1 me-3">🌊</span>
                     <div>
                         <h4 class="mb-0">Ocean Health</h4>
-                        <div class="data-source">NOAA & Open-Meteo</div>
+                        <div class="data-source">
+                            Open-Meteo
+                            {% if freshness.openmeteo_marine %}
+                            <span class="freshness-badge" style="background: {{ freshness.openmeteo_marine.color }};" title="{{ freshness.openmeteo_marine.age_hours }}h ago">
+                                {{ freshness.openmeteo_marine.status }}
+                            </span>
+                            {% endif %}
+                        </div>
                     </div>
                 </div>
 
@@ -154,7 +167,11 @@
                 </div>
 
                 <div class="last-update mt-3 text-center">
-                    Last update: {{ ocean_data.last_update }}
+                    {% if freshness.openmeteo_marine %}
+                    Updated {{ freshness.openmeteo_marine.age_hours }}h ago
+                    {% else %}
+                    No data
+                    {% endif %}
                 </div>
             </div>
         </div>
