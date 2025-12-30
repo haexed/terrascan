@@ -241,7 +241,7 @@ def create_app():
                 ORDER BY timestamp DESC LIMIT 500
             """)
             
-            # Get air quality data - include recently scanned stations + worst globally
+            # Get air quality data - prioritize most recently updated locations
             air_quality = execute_query("""
                 SELECT location_lat as latitude, location_lng as longitude,
                        AVG(value) as value, MAX(metadata) as metadata
@@ -251,7 +251,7 @@ def create_app():
                 AND timestamp > NOW() - INTERVAL '7 days'
                 AND location_lat IS NOT NULL AND location_lng IS NOT NULL
                 GROUP BY location_lat, location_lng
-                ORDER BY MAX(timestamp) DESC, value DESC LIMIT 500
+                ORDER BY MAX(timestamp) DESC LIMIT 1000
             """)
             
             # Get ocean data (using Open-Meteo for global SST coverage)
@@ -692,6 +692,44 @@ def create_app():
             })
         except Exception as e:
             return jsonify({'success': False, 'error': str(e)}), 500
+
+    @app.route('/api/debug/aq-oslo')
+    @no_cache
+    def api_debug_oslo():
+        """Debug: Check Oslo AQ data directly"""
+        try:
+            # Direct query for Oslo area
+            oslo_data = execute_query("""
+                SELECT location_lat, location_lng, value, timestamp, metadata
+                FROM metric_data
+                WHERE provider_key = 'openaq'
+                AND metric_name = 'air_quality_pm25'
+                AND location_lat BETWEEN 59.5 AND 60.5
+                AND location_lng BETWEEN 10.0 AND 11.5
+                ORDER BY timestamp DESC
+                LIMIT 50
+            """)
+
+            # Also check total count and recent timestamps
+            stats = execute_query("""
+                SELECT
+                    COUNT(*) as total_aq_records,
+                    COUNT(DISTINCT (location_lat, location_lng)) as unique_locations,
+                    MAX(timestamp) as newest,
+                    MIN(timestamp) as oldest
+                FROM metric_data
+                WHERE provider_key = 'openaq'
+                AND metric_name = 'air_quality_pm25'
+                AND timestamp > NOW() - INTERVAL '7 days'
+            """)
+
+            return jsonify({
+                'oslo_records': len(oslo_data) if oslo_data else 0,
+                'oslo_data': oslo_data[:10] if oslo_data else [],
+                'global_stats': stats[0] if stats else {}
+            })
+        except Exception as e:
+            return jsonify({'error': str(e)}), 500
 
     @app.route('/api/scan-area', methods=['POST'])
     @no_cache
