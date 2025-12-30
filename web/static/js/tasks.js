@@ -439,9 +439,48 @@ function formatTime(dateString) {
     return date.toLocaleDateString();
 }
 
+/**
+ * Cleanup stale tasks (mark tasks running > 30 min as timed_out)
+ */
+function cleanupStaleTasks() {
+    const button = document.getElementById('cleanup-btn');
+    if (!button) return;
+
+    button.disabled = true;
+    button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Cleaning...';
+
+    fetch('/api/tasks/cleanup-stale', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+    })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const count = data.cleaned_tasks?.length || 0;
+                if (count > 0) {
+                    showNotification(`🧹 Cleaned up ${count} stale task(s)`, 'success');
+                    setTimeout(() => refreshAllData(), 1500);
+                } else {
+                    showNotification('✨ No stale tasks found', 'info');
+                }
+            } else {
+                showNotification(`❌ Cleanup failed: ${data.error}`, 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error cleaning up tasks:', error);
+            showNotification(`❌ Cleanup error: ${error.message}`, 'error');
+        })
+        .finally(() => {
+            button.disabled = false;
+            button.innerHTML = '<i class="fas fa-broom"></i> Cleanup Stale';
+        });
+}
+
 // Export functions for global access (but with read-only restrictions)
 window.runTask = runTask;
 window.toggleTask = toggleTask;
 window.showTaskLogs = showTaskLogs;
 window.runAllTasks = runAllTasks;
-window.refreshAllData = refreshAllData; 
+window.refreshAllData = refreshAllData;
+window.cleanupStaleTasks = cleanupStaleTasks; 

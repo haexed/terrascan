@@ -17,10 +17,12 @@
                     <p class="subheader mb-0">Real-time monitoring of data collection tasks</p>
                 </div>
                 <div class="d-flex gap-2">
+                    <button class="btn btn-outline-warning" onclick="cleanupStaleTasks()" id="cleanup-btn" title="Mark tasks running > 30 min as timed out">
+                        <i class="fas fa-broom"></i> Cleanup Stale
+                    </button>
                     <button class="btn btn-primary" onclick="refreshAllData()" id="refresh-btn">
                         <i class="fas fa-sync-alt"></i> Refresh Status
                     </button>
-
                 </div>
             </div>
         </div>
