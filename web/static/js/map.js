@@ -189,7 +189,7 @@ async function scanCurrentArea() {
             const newRecords = result.records_stored || 0;
 
             if (newRecords > 0) {
-                showScanToast(`🎉 Found ${newRecords} air quality stations!`);
+                showScanToast(`📍 Loaded ${newRecords} air quality stations`);
 
                 // Add new stations to the air layer
                 result.stations.forEach(station => {

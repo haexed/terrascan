@@ -2,6 +2,18 @@
 
 All notable changes to Terrascan will be documented in this file.
 
+## [3.5.1] - 2025-12-30
+
+### Fixed
+- Scan toast message now says "Loaded X stations" instead of misleading "Found new"
+- AQ data query no longer deprioritizes good air quality locations
+- Scanned data persists after page refresh (timestamp fix)
+- Stale tasks cleanup endpoint and button on Tasks page
+
+### Changed
+- Scan threshold lowered to zoom level 8 (regional view)
+- AQ station limit increased to 1000 for better coverage
+
 ## [3.5.0] - 2025-12-30
 
 ### Added
