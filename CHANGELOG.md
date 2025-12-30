@@ -2,6 +2,25 @@
 
 All notable changes to Terrascan will be documented in this file.
 
+## [3.7.0] - 2025-12-30
+
+### Added
+- **Heatmap visualization** for fires and aurora layers (Leaflet.heat)
+- **Clustered markers** for air quality stations (Leaflet.markercluster)
+- Custom cluster styling with count badges
+
+### Changed
+- Fires now render as orange-red heatmap instead of 500 circle markers
+- Aurora now renders as green-purple heatmap instead of 2000 circle markers
+- Air quality stations cluster when zoomed out, expand when zoomed in
+- Aurora data limited to 500 high-intensity points (was 2000)
+- Removed Leaflet zoom controls (use scroll/pinch to zoom)
+
+### Performance
+- DOM markers reduced from ~3,500 to ~74 + dynamic clusters
+- Heatmaps use canvas rendering (much faster than SVG)
+- Smoother pan/zoom experience on all devices
+
 ## [3.6.1] - 2025-12-30
 
 ### Added
