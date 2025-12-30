@@ -385,6 +385,75 @@
     box-shadow: 0 6px 30px rgba(51, 164, 116, 0.4);
 }
 
+/* Scan area button */
+.scan-btn {
+    position: fixed;
+    bottom: 90px;
+    right: 50%;
+    transform: translateX(50%);
+    padding: 12px 20px;
+    border-radius: 30px;
+    background: linear-gradient(135deg, #4a90d9 0%, #357abd 100%);
+    border: none;
+    box-shadow: 0 4px 20px rgba(74, 144, 217, 0.4);
+    transition: all 0.3s ease;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+}
+
+.scan-btn:hover {
+    transform: translateX(50%) scale(1.05);
+    box-shadow: 0 6px 30px rgba(74, 144, 217, 0.5);
+}
+
+.scan-btn:active {
+    transform: translateX(50%) scale(0.98);
+}
+
+.scan-btn.scanning {
+    background: linear-gradient(135deg, #6ba3e0 0%, #4a8fd4 100%);
+    animation: scan-pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes scan-pulse {
+    0%, 100% { box-shadow: 0 4px 20px rgba(74, 144, 217, 0.4); }
+    50% { box-shadow: 0 4px 30px rgba(74, 144, 217, 0.7); }
+}
+
+.scan-label {
+    color: white;
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+.scan-btn .fa-search-location {
+    font-size: 1.2rem;
+}
+
+/* Scan result toast notification */
+.scan-toast {
+    position: fixed;
+    bottom: 160px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0, 0, 0, 0.85);
+    color: white;
+    padding: 12px 24px;
+    border-radius: 25px;
+    font-size: 0.9rem;
+    z-index: 1002;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    pointer-events: none;
+}
+
+.scan-toast.show {
+    opacity: 1;
+}
+
 /* Mobile responsiveness */
 @media (max-width: 768px) {
     .control-panel {
@@ -500,6 +569,22 @@
         width: 50px;
         height: 50px;
         bottom: 15px;
+    }
+
+    /* Scan button */
+    .scan-btn {
+        bottom: 75px;
+        padding: 10px 16px;
+    }
+
+    .scan-label {
+        font-size: 0.8rem;
+    }
+
+    .scan-toast {
+        bottom: 140px;
+        padding: 10px 20px;
+        font-size: 0.85rem;
     }
 
     .legend {

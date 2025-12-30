@@ -41,12 +41,18 @@ let biodiversityData = [];
 let auroraData = { points: [], kp_index: null };
 let osmLayer, satelliteLayer;
 
+// Scan threshold - show scan button when zoomed in this much (10 = city level)
+const SCAN_ZOOM_THRESHOLD = 10;
+
 // Initialize map when page loads
 document.addEventListener('DOMContentLoaded', function () {
     initMap();
     updateTime();
     setInterval(updateTime, 1000);
     setInterval(refreshMapData, 15 * 60 * 1000); // Auto-refresh every 15 minutes
+
+    // Create toast element for scan notifications
+    createScanToast();
 });
 
 // Initialize map
@@ -107,6 +113,127 @@ function initMap() {
             map.addLayer(osmLayer);
         }
     });
+
+    // Show/hide scan button based on zoom level
+    map.on('zoomend', updateScanButtonVisibility);
+    updateScanButtonVisibility();
+}
+
+// Update scan button visibility based on zoom level
+function updateScanButtonVisibility() {
+    const scanBtn = document.getElementById('scan-btn');
+    if (!scanBtn) return;
+
+    const zoom = map.getZoom();
+    if (zoom >= SCAN_ZOOM_THRESHOLD) {
+        scanBtn.style.display = 'flex';
+    } else {
+        scanBtn.style.display = 'none';
+    }
+}
+
+// Create toast notification element
+function createScanToast() {
+    const toast = document.createElement('div');
+    toast.id = 'scan-toast';
+    toast.className = 'scan-toast';
+    document.body.appendChild(toast);
+}
+
+// Show toast notification
+function showScanToast(message, duration = 3000) {
+    const toast = document.getElementById('scan-toast');
+    if (!toast) return;
+
+    toast.textContent = message;
+    toast.classList.add('show');
+
+    setTimeout(() => {
+        toast.classList.remove('show');
+    }, duration);
+}
+
+// Scan current map area for air quality stations
+async function scanCurrentArea() {
+    const scanBtn = document.getElementById('scan-btn');
+    const scanIcon = document.getElementById('scan-icon');
+    const scanLabel = scanBtn.querySelector('.scan-label');
+
+    // Get current map bounds
+    const bounds = map.getBounds();
+    const bbox = {
+        south: bounds.getSouth(),
+        west: bounds.getWest(),
+        north: bounds.getNorth(),
+        east: bounds.getEast()
+    };
+
+    // Show scanning state
+    scanBtn.classList.add('scanning');
+    scanIcon.classList.add('fa-spin');
+    scanLabel.textContent = 'Scanning...';
+
+    try {
+        const response = await fetch('/api/scan-area', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ bbox })
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+            const stationCount = result.stations?.length || 0;
+            const newRecords = result.records_stored || 0;
+
+            if (newRecords > 0) {
+                showScanToast(`🎉 Found ${newRecords} air quality stations!`);
+
+                // Add new stations to the air layer
+                result.stations.forEach(station => {
+                    if (!station.lat || !station.lng) return;
+
+                    const color = getAirQualityColor(station.pm25);
+                    const marker = L.circleMarker([station.lat, station.lng], {
+                        color: color,
+                        fillColor: color,
+                        fillOpacity: 0.8,
+                        radius: 10,
+                        weight: 2
+                    });
+
+                    marker.bindPopup(`
+                        <strong>🌬️ ${station.location || 'Air Quality Station'}</strong><br>
+                        <strong>PM2.5:</strong> ${station.pm25} μg/m³<br>
+                        <strong>Status:</strong> ${getAirQualityStatus(station.pm25)}<br>
+                        <em>📍 Scanned just now</em>
+                    `);
+
+                    airLayer.addLayer(marker);
+
+                    // Flash animation for new markers
+                    marker._path?.classList.add('new-marker-pulse');
+                });
+
+                // Also add to airData for consistency
+                airData = [...airData, ...result.stations];
+            } else {
+                showScanToast('No new stations found in this area');
+            }
+        } else {
+            showScanToast(`⚠️ ${result.error || 'Scan failed'}`);
+        }
+    } catch (error) {
+        console.error('Scan error:', error);
+        showScanToast('⚠️ Scan failed - check connection');
+    } finally {
+        // Reset button state
+        scanBtn.classList.remove('scanning');
+        scanIcon.classList.remove('fa-spin');
+        scanLabel.textContent = 'Scan Area';
+    }
 }
 
 // Setup layer toggle controls

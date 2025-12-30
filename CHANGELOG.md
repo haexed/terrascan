@@ -2,6 +2,20 @@
 
 All notable changes to Terrascan will be documented in this file.
 
+## [3.5.0] - 2025-12-30
+
+### Added
+- **On-demand area scanning** - "Scan Area" button for discovering local data
+  - Appears when zoomed to city level (zoom >= 10)
+  - Fetches air quality stations from WAQI for visible map area
+  - Toast notifications show scan results
+  - New stations appear instantly on map with "Scanned just now" indicator
+- New `/api/scan-area` endpoint for bbox-based data fetching
+
+### Changed
+- Scan button has pulsing animation while fetching data
+- Mobile-responsive scan button and toast notifications
+
 ## [3.4.0] - 2025-12-29
 
 ### Added

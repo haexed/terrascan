@@ -150,6 +150,12 @@
     </div>
 </div>
 
+<!-- Scan Area Button (appears when zoomed in) -->
+<button class="scan-btn" id="scan-btn" onclick="scanCurrentArea()" title="Scan this area for more data" style="display: none;">
+    <i class="fas fa-search-location text-white fs-4" id="scan-icon"></i>
+    <span class="scan-label">Scan Area</span>
+</button>
+
 <!-- Refresh Button -->
 <button class="refresh-btn" onclick="refreshMapData()" title="Refresh Environmental Data">
     <i class="fas fa-sync-alt text-white fs-4" id="refresh-icon"></i>

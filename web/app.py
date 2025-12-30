@@ -667,6 +667,86 @@ def create_app():
         except Exception as e:
             return jsonify({'success': False, 'error': str(e)}), 500
 
+    @app.route('/api/scan-area', methods=['POST'])
+    @no_cache
+    def api_scan_area():
+        """
+        Simple on-demand area scanning endpoint
+        Fetches fresh air quality data for a specific bounding box
+
+        POST body:
+            {
+                "bbox": {"south": float, "west": float, "north": float, "east": float},
+                "layers": ["air"]  // optional, defaults to air quality only for now
+            }
+        """
+        try:
+            from tasks.fetch_openaq_latest import fetch_openaq_latest
+
+            data = request.get_json()
+            if not data or 'bbox' not in data:
+                return jsonify({'success': False, 'error': 'bbox required'}), 400
+
+            bbox = data['bbox']
+
+            # Validate bbox
+            required_keys = ['south', 'west', 'north', 'east']
+            if not all(k in bbox for k in required_keys):
+                return jsonify({'success': False, 'error': 'bbox must have south, west, north, east'}), 400
+
+            # Fetch air quality data for this area
+            result = fetch_openaq_latest(limit=100, bbox=bbox)
+
+            if result['success']:
+                # Query the data we just fetched to return it
+                new_stations = execute_query("""
+                    SELECT location_lat as lat, location_lng as lng,
+                           value as pm25, metadata
+                    FROM metric_data
+                    WHERE provider_key = 'openaq'
+                    AND metric_name = 'air_quality_pm25'
+                    AND location_lat BETWEEN %s AND %s
+                    AND location_lng BETWEEN %s AND %s
+                    AND timestamp > NOW() - INTERVAL '1 hour'
+                    ORDER BY timestamp DESC
+                    LIMIT 100
+                """, (bbox['south'], bbox['north'], bbox['west'], bbox['east']))
+
+                # Format for map display
+                stations = []
+                for s in (new_stations or []):
+                    location = 'Unknown'
+                    try:
+                        if s.get('metadata'):
+                            meta = json.loads(s['metadata']) if isinstance(s['metadata'], str) else s['metadata']
+                            location = meta.get('station_name', 'Unknown')
+                    except:
+                        pass
+
+                    stations.append({
+                        'lat': float(s['lat']),
+                        'lng': float(s['lng']),
+                        'pm25': round(float(s['pm25']), 1),
+                        'location': location
+                    })
+
+                return jsonify({
+                    'success': True,
+                    'message': result['message'],
+                    'records_stored': result.get('records_stored', 0),
+                    'stations': stations
+                })
+            else:
+                return jsonify({
+                    'success': False,
+                    'error': result.get('message', 'Scan failed')
+                }), 500
+
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            return jsonify({'success': False, 'error': str(e)}), 500
+
     @app.errorhandler(404)
     def not_found(error):
         return "Page not found", 404
