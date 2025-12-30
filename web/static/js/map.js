@@ -41,8 +41,8 @@ let biodiversityData = [];
 let auroraData = { points: [], kp_index: null };
 let osmLayer, satelliteLayer;
 
-// Scan threshold - show scan button when zoomed in this much (10 = city level)
-const SCAN_ZOOM_THRESHOLD = 10;
+// Scan threshold - show scan button when zoomed in this much (8 = regional level)
+const SCAN_ZOOM_THRESHOLD = 8;
 
 // Initialize map when page loads
 document.addEventListener('DOMContentLoaded', function () {
