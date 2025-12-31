@@ -14,13 +14,21 @@ All notable changes to Terrascan will be documented in this file.
   - `idx_metric_location` - spatial queries
 - Google Analytics tracking (G-BVDKV5QWQ1)
 - Beta badge on logo to indicate work-in-progress
+- Logo assets for social media (logo-emoji.png, logo.svg)
+- @Terrascan_io X/Twitter account
 
 ### Changed
 - Provider stats query consolidated from 9 DB calls to 1 (GROUP BY)
 - Task query extracted to reusable `get_tasks_with_last_run()` function
 - UCDP conflicts filter extended from 365 to 730 days
+- SECRET_KEY now required (no insecure fallback)
+- Refresh/scan buttons moved to bottom-right corner
 
 ### Fixed
+- Bare `except: pass` replaced with specific exceptions
+- Removed duplicate `refreshRailwayData()` function
+- Removed unused `get_db_connection` import
+- Replaced deprecated `.substr()` with `.substring()`
 - Removed duplicate return statement in add_deduplication.py
 - Moved late imports (json, traceback, Decimal) to module top
 
