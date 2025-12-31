@@ -6,7 +6,9 @@ Clean, maintainable Flask application
 
 import os
 import json
+import traceback
 from datetime import datetime
+from decimal import Decimal
 from flask import Flask, render_template, jsonify, make_response, request
 from dotenv import load_dotenv
 
@@ -16,7 +18,7 @@ load_dotenv()
 # Import database and utilities
 from database.db import (
     init_database, execute_query, execute_insert, get_running_tasks,
-    get_recent_task_runs, get_task_by_name
+    get_recent_task_runs, get_task_by_name, get_tasks_with_last_run
 )
 from database.schema_inspector import get_schema_documentation
 from tasks.runner import TaskRunner
@@ -113,22 +115,7 @@ def create_app():
         """Task management page"""
         try:
             # Get tasks with last run information
-            all_tasks = execute_query("""
-                SELECT t.id, t.name, t.description, t.command, t.active, t.cron_schedule, 
-                       t.created_date, t.updated_date, t.parameters,
-                       lr.last_run_time, lr.last_status, lr.last_records_processed, lr.last_duration
-                FROM task t
-                LEFT JOIN (
-                    SELECT task_id,
-                           MAX(started_at) as last_run_time,
-                           (SELECT status FROM task_log tl2 WHERE tl2.task_id = task_log.task_id AND tl2.started_at = MAX(task_log.started_at) LIMIT 1) as last_status,
-                           (SELECT records_processed FROM task_log tl3 WHERE tl3.task_id = task_log.task_id AND tl3.started_at = MAX(task_log.started_at) LIMIT 1) as last_records_processed,
-                           (SELECT duration_seconds FROM task_log tl4 WHERE tl4.task_id = task_log.task_id AND tl4.started_at = MAX(task_log.started_at) LIMIT 1) as last_duration
-                    FROM task_log 
-                    GROUP BY task_id
-                ) lr ON t.id = lr.task_id
-                ORDER BY t.name
-            """)
+            all_tasks = get_tasks_with_last_run()
             
             recent_runs = execute_query("""
                 SELECT tl.*, t.name as task_name, t.description as task_description
@@ -407,22 +394,7 @@ def create_app():
     def api_tasks():
         """Get all tasks"""
         try:
-            tasks = execute_query("""
-                SELECT t.id, t.name, t.description, t.command, t.active, t.cron_schedule, 
-                       t.created_date, t.updated_date, t.parameters,
-                       lr.last_run_time, lr.last_status, lr.last_records_processed, lr.last_duration
-                FROM task t
-                LEFT JOIN (
-                    SELECT task_id,
-                           MAX(started_at) as last_run_time,
-                           (SELECT status FROM task_log tl2 WHERE tl2.task_id = task_log.task_id AND tl2.started_at = MAX(task_log.started_at) LIMIT 1) as last_status,
-                           (SELECT records_processed FROM task_log tl3 WHERE tl3.task_id = task_log.task_id AND tl3.started_at = MAX(task_log.started_at) LIMIT 1) as last_records_processed,
-                           (SELECT duration_seconds FROM task_log tl4 WHERE tl4.task_id = task_log.task_id AND tl4.started_at = MAX(task_log.started_at) LIMIT 1) as last_duration
-                    FROM task_log 
-                    GROUP BY task_id
-                ) lr ON t.id = lr.task_id
-                ORDER BY t.name
-            """)
+            tasks = get_tasks_with_last_run()
             return jsonify({'success': True, 'tasks': tasks})
         except Exception as e:
             return jsonify({'success': False, 'error': str(e)}), 500
@@ -709,7 +681,6 @@ def create_app():
             })
 
         except Exception as e:
-            import traceback
             traceback.print_exc()
             return jsonify({'success': False, 'error': str(e)}), 500
 
@@ -806,7 +777,6 @@ def create_app():
                 'message': f'Refreshed {len(refreshed)} sources, skipped {len(skipped)} fresh sources'
             })
         except Exception as e:
-            import traceback
             traceback.print_exc()
             return jsonify({'success': False, 'error': str(e)}), 500
 
@@ -924,7 +894,6 @@ def create_app():
                 }), 500
 
         except Exception as e:
-            import traceback
             traceback.print_exc()
             return jsonify({'success': False, 'error': str(e)}), 500
 
@@ -1015,21 +984,28 @@ def get_count(query):
     return result[0]['count'] if result and len(result) > 0 and result[0]['count'] is not None else 0
 
 def get_provider_stats():
-    """Get simplified provider statistics"""
-    providers = {}
+    """Get simplified provider statistics - optimized single query"""
     provider_keys = ['nasa_firms', 'openaq', 'noaa_ocean', 'openweather', 'gbif', 'openmeteo', 'openmeteo_marine', 'ucdp', 'noaa_swpc']
-    
+
+    # Single query for all providers instead of N queries
+    stats = execute_query("""
+        SELECT provider_key, COUNT(*) as total_records, MAX(timestamp) as last_run
+        FROM metric_data
+        WHERE provider_key = ANY(%s)
+        GROUP BY provider_key
+    """, (provider_keys,))
+
+    # Build results dict
+    providers = {}
+    stats_dict = {row['provider_key']: row for row in (stats or [])}
+
     for key in provider_keys:
-        stats = execute_query("""
-            SELECT COUNT(*) as total_records, MAX(timestamp) as last_run
-            FROM metric_data WHERE provider_key = %s
-        """, (key,))
-        
-        if stats and len(stats) > 0:
+        if key in stats_dict:
+            row = stats_dict[key]
             providers[key] = {
-                'total_records': stats[0]['total_records'] or 0,
-                'last_run': stats[0]['last_run'] or 'Never',
-                'status': 'operational' if (stats[0]['total_records'] or 0) > 0 else 'no_data'
+                'total_records': row['total_records'] or 0,
+                'last_run': row['last_run'] or 'Never',
+                'status': 'operational' if (row['total_records'] or 0) > 0 else 'no_data'
             }
         else:
             providers[key] = {
@@ -1037,7 +1013,7 @@ def get_provider_stats():
                 'last_run': 'Never',
                 'status': 'no_data'
             }
-    
+
     return providers
 
 def format_fire_data(fires):
@@ -1050,8 +1026,6 @@ def format_fire_data(fires):
     Returns:
         List[Dict]: Formatted fire data with numeric coordinates
     """
-    from decimal import Decimal
-
     formatted = []
     for fire in fires:
         try:
@@ -1060,7 +1034,6 @@ def format_fire_data(fires):
             if fire.get('metadata'):
                 metadata = fire['metadata']
                 if isinstance(metadata, str):
-                    import json
                     metadata = json.loads(metadata)
                 if isinstance(metadata, dict):
                     # Confidence stored as 0-1 float, convert to percentage
@@ -1089,7 +1062,6 @@ def format_air_data(stations):
     Returns:
         List[Dict]: Formatted air quality data with numeric coordinates and values
     """
-    from decimal import Decimal
 
     formatted = []
     for station in stations:
@@ -1124,7 +1096,6 @@ def format_ocean_data(stations):
     Returns:
         List[Dict]: Formatted ocean data with numeric coordinates and values
     """
-    from decimal import Decimal
     from datetime import datetime
 
     formatted = []
@@ -1630,7 +1601,6 @@ def format_nullable_value(value, decimal_places=None):
     Properly handle nullable values for strict data display
     Returns None for NULL/empty values, rounded numeric value for real data
     """
-    from decimal import Decimal
 
     if value is None:
         return None

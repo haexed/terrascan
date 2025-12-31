@@ -228,7 +228,6 @@ def get_duplicate_stats():
         import traceback
         print(f"📜 Stats error traceback: {traceback.format_exc()}")
         return None
-        return None
 
 if __name__ == "__main__":
     print("🚀 Terrascan Database Deduplication Migration")

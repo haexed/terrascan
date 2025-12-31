@@ -2,6 +2,28 @@
 
 All notable changes to Terrascan will be documented in this file.
 
+## [3.6.3] - 2025-12-31
+
+### Added
+- Database performance indexes migration script
+  - `idx_metric_provider` - provider_key filtering
+  - `idx_metric_timestamp` - timestamp ordering
+  - `idx_metric_provider_metric` - composite for common WHERE patterns
+  - `idx_metric_provider_timestamp` - viewport queries
+  - `idx_task_log_task_started` - task log queries
+  - `idx_metric_location` - spatial queries
+- Google Analytics tracking (G-BVDKV5QWQ1)
+- Beta badge on logo to indicate work-in-progress
+
+### Changed
+- Provider stats query consolidated from 9 DB calls to 1 (GROUP BY)
+- Task query extracted to reusable `get_tasks_with_last_run()` function
+- UCDP conflicts filter extended from 365 to 730 days
+
+### Fixed
+- Removed duplicate return statement in add_deduplication.py
+- Moved late imports (json, traceback, Decimal) to module top
+
 ## [3.6.2] - 2025-12-30
 
 ### Reverted

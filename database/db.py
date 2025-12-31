@@ -238,10 +238,34 @@ def get_tasks(active_only: bool = True) -> List[Dict[str, Any]]:
         if active_only:
             query += " WHERE active = true"
         query += " ORDER BY created_date DESC"
-        
+
         return execute_query(query)
     except Exception as e:
         print(f"❌ Error getting tasks: {e}")
+        return []
+
+
+def get_tasks_with_last_run() -> List[Dict[str, Any]]:
+    """Get all tasks with their last run information"""
+    try:
+        return execute_query("""
+            SELECT t.id, t.name, t.description, t.command, t.active, t.cron_schedule,
+                   t.created_date, t.updated_date, t.parameters,
+                   lr.last_run_time, lr.last_status, lr.last_records_processed, lr.last_duration
+            FROM task t
+            LEFT JOIN (
+                SELECT task_id,
+                       MAX(started_at) as last_run_time,
+                       (SELECT status FROM task_log tl2 WHERE tl2.task_id = task_log.task_id AND tl2.started_at = MAX(task_log.started_at) LIMIT 1) as last_status,
+                       (SELECT records_processed FROM task_log tl3 WHERE tl3.task_id = task_log.task_id AND tl3.started_at = MAX(task_log.started_at) LIMIT 1) as last_records_processed,
+                       (SELECT duration_seconds FROM task_log tl4 WHERE tl4.task_id = task_log.task_id AND tl4.started_at = MAX(task_log.started_at) LIMIT 1) as last_duration
+                FROM task_log
+                GROUP BY task_id
+            ) lr ON t.id = lr.task_id
+            ORDER BY t.name
+        """)
+    except Exception as e:
+        print(f"❌ Error getting tasks with last run: {e}")
         return []
 
 def get_task_by_name(name: str) -> Optional[Dict[str, Any]]:
