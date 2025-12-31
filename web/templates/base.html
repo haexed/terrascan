@@ -9,6 +9,15 @@
     <meta http-equiv="Expires" content="0">
     <title>{% block title %}🌍 Terrascan{% endblock %}</title>
 
+    <!-- Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-BVDKV5QWQ1"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-BVDKV5QWQ1');
+    </script>
+
     <!-- Leaflet CSS (conditional) -->
     {% block leaflet_css %}{% endblock %}
 
