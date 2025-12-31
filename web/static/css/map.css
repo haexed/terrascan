@@ -459,8 +459,7 @@
 .refresh-btn {
     position: fixed;
     bottom: 20px;
-    right: 50%;
-    transform: translateX(50%);
+    right: 20px;
     width: 60px;
     height: 60px;
     border-radius: 50%;
@@ -472,7 +471,7 @@
 }
 
 .refresh-btn:hover {
-    transform: translateX(50%) scale(1.1);
+    transform: scale(1.1);
     box-shadow: 0 6px 30px rgba(51, 164, 116, 0.4);
 }
 
@@ -480,8 +479,7 @@
 .scan-btn {
     position: fixed;
     bottom: 90px;
-    right: 50%;
-    transform: translateX(50%);
+    right: 20px;
     padding: 12px 20px;
     border-radius: 30px;
     background: linear-gradient(135deg, #4a90d9 0%, #357abd 100%);
@@ -496,12 +494,12 @@
 }
 
 .scan-btn:hover {
-    transform: translateX(50%) scale(1.05);
+    transform: scale(1.05);
     box-shadow: 0 6px 30px rgba(74, 144, 217, 0.5);
 }
 
 .scan-btn:active {
-    transform: translateX(50%) scale(0.98);
+    transform: scale(0.98);
 }
 
 .scan-btn.scanning {
