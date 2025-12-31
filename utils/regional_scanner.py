@@ -6,7 +6,7 @@ Handles "scan as you go" functionality for map exploration
 
 from datetime import datetime, timedelta
 from typing import Dict, List, Tuple, Optional
-from database.db import execute_query, get_db_connection
+from database.db import execute_query
 
 
 class RegionalScanner:

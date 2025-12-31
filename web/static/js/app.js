@@ -263,30 +263,4 @@ function initOperationalPage() {
     }
 }
 
-// Refresh Railway operational data
-async function refreshRailwayData() {
-    const btn = document.getElementById('refreshBtn');
-    const originalText = btn.innerHTML;
-
-    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Refreshing...';
-    btn.disabled = true;
-
-    try {
-        const response = await fetch('/api/health');
-        if (response.ok) {
-            // Reload the page to show updated data
-            window.location.reload();
-        } else {
-            console.error('Failed to refresh Railway data');
-            btn.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Error';
-        }
-    } catch (error) {
-        console.error('Error refreshing Railway data:', error);
-        btn.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Error';
-    } finally {
-        setTimeout(() => {
-            btn.innerHTML = originalText;
-            btn.disabled = false;
-        }, 2000);
-    }
-}
+// Note: refreshRailwayData() defined above at line 209

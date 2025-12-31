@@ -751,7 +751,7 @@ async function refreshMapData() {
 // Update current time display
 function updateTime() {
     const now = new Date();
-    const timeString = now.toISOString().replace('T', ' ').substr(0, 19) + ' UTC';
+    const timeString = now.toISOString().replace('T', ' ').substring(0, 19) + ' UTC';
 
     // Update navbar time
     const navTimeElement = document.getElementById('current-time');

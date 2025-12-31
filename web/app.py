@@ -30,7 +30,10 @@ from utils.regional_fetcher import get_regional_fetcher
 def create_app():
     """Create and configure the Flask application"""
     app = Flask(__name__, static_folder='static', static_url_path='/static')
-    app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'terrascan-2024')
+    secret_key = os.environ.get('SECRET_KEY')
+    if not secret_key:
+        raise ValueError("SECRET_KEY environment variable is required for production security")
+    app.config['SECRET_KEY'] = secret_key
     
     # Initialize database on startup
     init_database()
@@ -871,8 +874,8 @@ def create_app():
                         if s.get('metadata'):
                             meta = json.loads(s['metadata']) if isinstance(s['metadata'], str) else s['metadata']
                             location = meta.get('station_name', 'Unknown')
-                    except:
-                        pass
+                    except (json.JSONDecodeError, TypeError, AttributeError):
+                        pass  # Use default 'Unknown' location
 
                     stations.append({
                         'lat': float(s['lat']),
