@@ -303,14 +303,14 @@ def create_app():
                 GROUP BY location_lat, location_lng LIMIT 50
             """)
 
-            # Get conflict data from UCDP
+            # Get conflict data from UCDP (use 2 years to handle data lag)
             conflicts = execute_query("""
                 SELECT location_lat as latitude, location_lng as longitude,
                        value as deaths, metadata, timestamp
                 FROM metric_data
                 WHERE provider_key = 'ucdp'
                 AND metric_name = 'conflict_event'
-                AND timestamp > NOW() - INTERVAL '365 days'
+                AND timestamp > NOW() - INTERVAL '730 days'
                 AND location_lat IS NOT NULL AND location_lng IS NOT NULL
                 ORDER BY timestamp DESC LIMIT 500
             """)
