@@ -7,5 +7,6 @@ restartPolicyMaxRetries = 3
 healthcheckPath = "/api/health"
 healthcheckTimeout = 30
 
-# Sleep after 10 minutes of no traffic (saves $$$)
-sleepApplication = true
+# Resource limits - minimal for low-traffic hobby project
+numCpus = 0.5
+memoryMB = 512
