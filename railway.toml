@@ -7,6 +7,6 @@ restartPolicyMaxRetries = 3
 healthcheckPath = "/api/health"
 healthcheckTimeout = 30
 
-# Resource limits - minimal for low-traffic hobby project
-numCpus = 0.5
-memoryMB = 512
+# NOTE: Resource limits (CPU/RAM) must be set in Railway dashboard:
+# Service Settings → Deploy → Resource Limits
+# Recommended: 0.5 vCPU, 512 MB for web service
