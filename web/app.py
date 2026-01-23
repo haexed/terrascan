@@ -1010,18 +1010,35 @@ def get_count(query):
     result = execute_query(query)
     return result[0]['count'] if result and len(result) > 0 and result[0]['count'] is not None else 0
 
-# Simple cache for expensive queries
+# Timestamp-based cache for expensive queries
 _cache = {}
-_cache_ttl = 300  # 5 minutes
+
+def _get_latest_data_timestamp():
+    """Get the latest timestamp from metric_data (fast with index)"""
+    result = execute_query("SELECT MAX(timestamp) as ts FROM metric_data")
+    return result[0]['ts'] if result and result[0]['ts'] else None
+
+def _get_cached_with_staleness(key, fetch_fn):
+    """
+    Smart cache: returns cached data + staleness info.
+    Cache is invalid when new data exists (based on max timestamp).
+    """
+    current_ts = _get_latest_data_timestamp()
+
+    if key in _cache:
+        cached = _cache[key]
+        # Cache is fresh if data timestamp hasn't changed
+        if cached.get('data_ts') == current_ts:
+            return cached['data'], False  # data, is_stale
+
+    # Fetch fresh data
+    data = fetch_fn()
+    _cache[key] = {'data': data, 'data_ts': current_ts}
+    return data, False
 
 def _get_cached(key, fetch_fn):
-    """Get cached value or fetch and cache"""
-    import time
-    now = time.time()
-    if key in _cache and now - _cache[key]['time'] < _cache_ttl:
-        return _cache[key]['data']
-    data = fetch_fn()
-    _cache[key] = {'data': data, 'time': now}
+    """Simple wrapper that just returns data (for backwards compat)"""
+    data, _ = _get_cached_with_staleness(key, fetch_fn)
     return data
 
 def get_provider_stats():
