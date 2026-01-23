@@ -195,15 +195,9 @@ def create_app():
             """)
             timings['recent_runs'] = time.time() - t0
 
-            # Data breakdown (last 90 days for performance)
+            # Data breakdown (cached)
             t0 = time.time()
-            data_breakdown = execute_query("""
-                SELECT provider_key, COUNT(*) as record_count
-                FROM metric_data
-                WHERE timestamp > NOW() - INTERVAL '90 days'
-                GROUP BY provider_key
-                ORDER BY record_count DESC
-            """)
+            data_breakdown = get_data_breakdown()
             timings['data_breakdown'] = time.time() - t0
 
             # Get database size
@@ -1016,39 +1010,63 @@ def get_count(query):
     result = execute_query(query)
     return result[0]['count'] if result and len(result) > 0 and result[0]['count'] is not None else 0
 
+# Simple cache for expensive queries
+_cache = {}
+_cache_ttl = 300  # 5 minutes
+
+def _get_cached(key, fetch_fn):
+    """Get cached value or fetch and cache"""
+    import time
+    now = time.time()
+    if key in _cache and now - _cache[key]['time'] < _cache_ttl:
+        return _cache[key]['data']
+    data = fetch_fn()
+    _cache[key] = {'data': data, 'time': now}
+    return data
+
 def get_provider_stats():
-    """Get simplified provider statistics - optimized with time filter"""
-    provider_keys = ['nasa_firms', 'openaq', 'noaa_ocean', 'openweather', 'gbif', 'openmeteo', 'openmeteo_marine', 'ucdp', 'noaa_swpc']
+    """Get simplified provider statistics - cached for 5 min"""
+    def fetch():
+        provider_keys = ['nasa_firms', 'openaq', 'noaa_ocean', 'openweather', 'gbif', 'openmeteo', 'openmeteo_marine', 'ucdp', 'noaa_swpc']
 
-    # Single query for all providers - last 90 days only for performance
-    stats = execute_query("""
-        SELECT provider_key, COUNT(*) as total_records, MAX(timestamp) as last_run
-        FROM metric_data
-        WHERE provider_key = ANY(%s)
-        AND timestamp > NOW() - INTERVAL '90 days'
-        GROUP BY provider_key
-    """, (provider_keys,))
+        stats = execute_query("""
+            SELECT provider_key, COUNT(*) as total_records, MAX(timestamp) as last_run
+            FROM metric_data
+            WHERE provider_key = ANY(%s)
+            GROUP BY provider_key
+        """, (provider_keys,))
 
-    # Build results dict
-    providers = {}
-    stats_dict = {row['provider_key']: row for row in (stats or [])}
+        providers = {}
+        stats_dict = {row['provider_key']: row for row in (stats or [])}
 
-    for key in provider_keys:
-        if key in stats_dict:
-            row = stats_dict[key]
-            providers[key] = {
-                'total_records': row['total_records'] or 0,
-                'last_run': row['last_run'] or 'Never',
-                'status': 'operational' if (row['total_records'] or 0) > 0 else 'no_data'
-            }
-        else:
-            providers[key] = {
-                'total_records': 0,
-                'last_run': 'Never',
-                'status': 'no_data'
-            }
+        for key in provider_keys:
+            if key in stats_dict:
+                row = stats_dict[key]
+                providers[key] = {
+                    'total_records': row['total_records'] or 0,
+                    'last_run': row['last_run'] or 'Never',
+                    'status': 'operational' if (row['total_records'] or 0) > 0 else 'no_data'
+                }
+            else:
+                providers[key] = {
+                    'total_records': 0,
+                    'last_run': 'Never',
+                    'status': 'no_data'
+                }
+        return providers
 
-    return providers
+    return _get_cached('provider_stats', fetch)
+
+def get_data_breakdown():
+    """Get data breakdown by provider - cached for 5 min"""
+    def fetch():
+        return execute_query("""
+            SELECT provider_key, COUNT(*) as record_count
+            FROM metric_data
+            GROUP BY provider_key
+            ORDER BY record_count DESC
+        """)
+    return _get_cached('data_breakdown', fetch)
 
 def format_fire_data(fires):
     """
