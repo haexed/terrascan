@@ -797,6 +797,10 @@ def create_app():
                         'reason': f'Still fresh ({provider_freshness.get("age_hours", 0):.1f}h old)'
                     })
 
+            # Invalidate cache after refresh so new data is served immediately
+            if refreshed:
+                invalidate_cache()
+
             return jsonify({
                 'success': True,
                 'refreshed': refreshed,
@@ -1010,36 +1014,35 @@ def get_count(query):
     result = execute_query(query)
     return result[0]['count'] if result and len(result) > 0 and result[0]['count'] is not None else 0
 
-# Timestamp-based cache for expensive queries
+# Simple time-based cache (no DB query for cache check)
 _cache = {}
+_CACHE_TTL = 300  # 5 minutes
 
-def _get_latest_data_timestamp():
-    """Get the latest timestamp from metric_data (fast with index)"""
-    result = execute_query("SELECT MAX(timestamp) as ts FROM metric_data")
-    return result[0]['ts'] if result and result[0]['ts'] else None
-
-def _get_cached_with_staleness(key, fetch_fn):
-    """
-    Smart cache: returns cached data + staleness info.
-    Cache is invalid when new data exists (based on max timestamp).
-    """
-    current_ts = _get_latest_data_timestamp()
+def _get_cached(key, fetch_fn):
+    """Time-based cache - no DB overhead for cache checks"""
+    import time
+    now = time.time()
 
     if key in _cache:
         cached = _cache[key]
-        # Cache is fresh if data timestamp hasn't changed
-        if cached.get('data_ts') == current_ts:
-            return cached['data'], False  # data, is_stale
+        age = now - cached['time']
+        if age < _CACHE_TTL:
+            print(f"📦 Cache hit: {key} (age: {age:.0f}s)")
+            return cached['data']
 
-    # Fetch fresh data
+    # Cache miss - fetch fresh data
+    print(f"🔄 Cache miss: {key} - fetching...")
     data = fetch_fn()
-    _cache[key] = {'data': data, 'data_ts': current_ts}
-    return data, False
-
-def _get_cached(key, fetch_fn):
-    """Simple wrapper that just returns data (for backwards compat)"""
-    data, _ = _get_cached_with_staleness(key, fetch_fn)
+    _cache[key] = {'data': data, 'time': now}
     return data
+
+def invalidate_cache(key=None):
+    """Invalidate cache - call after data updates"""
+    global _cache
+    if key:
+        _cache.pop(key, None)
+    else:
+        _cache = {}
 
 def get_provider_stats():
     """Get simplified provider statistics - cached for 5 min"""
@@ -1342,7 +1345,13 @@ def get_kp_status(kp: float) -> str:
         return 'Quiet'
 
 def get_data_freshness():
-    """Get last updated timestamps for each data source with freshness status"""
+    """Get last updated timestamps for each data source with freshness status - cached 5 min"""
+    def fetch():
+        return _fetch_data_freshness()
+    return _get_cached('data_freshness', fetch)
+
+def _fetch_data_freshness():
+    """Actually fetch freshness data from DB"""
     # Define ideal refresh intervals (hours)
     FRESHNESS_THRESHOLDS = {
         'nasa_firms': 3,        # Fires: 3 hours
@@ -1402,7 +1411,13 @@ def get_data_freshness():
         return {}
 
 def get_environmental_health_data():
-    """Get current environmental health data from database"""
+    """Get current environmental health data from database - cached for 5 min"""
+    def fetch():
+        return _fetch_environmental_health_data()
+    return _get_cached('environmental_health_data', fetch)
+
+def _fetch_environmental_health_data():
+    """Actually fetch the health data from DB"""
     import time
     timings = {}
     try:
