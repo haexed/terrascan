@@ -2,7 +2,7 @@
 
 **Monitor Earth's environmental health in real-time**
 
-![Version](https://img.shields.io/badge/version-3.6.4-blue)
+![Version](https://img.shields.io/badge/version-3.6.5-blue)
 ![Database](https://img.shields.io/badge/database-PostgreSQL-green)
 ![License](https://img.shields.io/badge/license-MIT-blue)
 ![Status](https://img.shields.io/badge/status-production-green)
@@ -113,60 +113,37 @@ Terrascan is production-ready and deployed on Railway at [terrascan.io](https://
    railway up
    ```
 
-### Task Management Security
+### Data Collection
 
-**🔒 Admin Task Control**: For security, task management is **read-only** for public users. Task enable/disable controls are managed via environment variables:
+Data is collected **on-demand** rather than via scheduled cron jobs:
 
-```bash
-# Environment variables for production task control
-TASK_ENABLED_FIRES=true
-TASK_ENABLED_AIR_QUALITY=true
-TASK_ENABLED_OCEAN=true
-TASK_ENABLED_WEATHER=true
-TASK_ENABLED_BIODIVERSITY=true
-```
+- **Smart Refresh**: App detects stale data and prompts user to refresh
+- **Manual Refresh**: Users can trigger data collection via `/tasks` page
+- **Scan on Explore**: Map scanning fetches fresh data for viewed regions
 
-**Public Interface**: The `/tasks` page shows monitoring information:
-- ✅ Task status and last run information
-- ✅ Recent execution logs (last 10 runs)
-- ✅ Success/failure statistics
+This approach minimizes costs for low-traffic deployments (serverless-friendly).
 
-**Admin Control**: Task configuration changes require:
-- Railway dashboard environment variable updates
-- Database configuration changes
-- Server restart for changes to take effect
+| Task | Description | Freshness TTL |
+|------|-------------|---------------|
+| 🔥 NASA Fires | Active fire detection | 3 hours |
+| 🌬️ OpenAQ | Air quality stations | 12 hours |
+| 🌊 Open-Meteo Marine | Sea surface temperature | 24 hours |
+| 🌡️ OpenWeatherMap | Current conditions | 6 hours |
+| 🦋 GBIF Biodiversity | Species observations | 48 hours |
+| ⚡ NOAA Aurora | Aurora forecast | 6 hours |
+| ⚔️ UCDP Conflicts | Armed conflicts | 168 hours |
 
 ---
 
 ## 📊 System Architecture
 
-### Database Architecture
+### Database
 
-Terrascan is built on **PostgreSQL** for production deployment:
+PostgreSQL on Railway (serverless-compatible):
 
-**PostgreSQL (Production & Development)**
 ```bash
-# Set via environment variable
 DATABASE_URL=postgresql://user:pass@host:port/db
 ```
-
-**Railway PostgreSQL** (Recommended)
-```bash
-# Automatically configured via Railway
-railway add postgresql
-# DATABASE_URL automatically set
-```
-
-### Data Collection Tasks
-
-| Task | Description | Frequency | Records/Run |
-|------|-------------|-----------|-------------|
-| 🔥 NASA Fires | Active fire detection | 15 minutes | ~500-2000 |
-| 🌬️ OpenAQ Latest | Air quality stations | 30 minutes | ~200-500 |
-| 🌊 NOAA Ocean | Ocean temperature/levels | 1 hour | ~100-300 |
-| 🌐 Open-Meteo Marine | Sea surface temp/waves/currents | 3 hours | ~50-60 |
-| 🌡️ OpenWeatherMap | Current conditions/alerts | 2 hours | ~50-100 |
-| 🦋 GBIF Biodiversity | Species observations | 6 hours | ~20-50 |
 
 ### Database Schema
 

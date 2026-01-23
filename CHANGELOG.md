@@ -2,6 +2,31 @@
 
 All notable changes to Terrascan will be documented in this file.
 
+## [3.6.5] - 2026-01-23
+
+### Added
+- **Lazy TTL Refresh**: Auto-detects stale data and shows refresh banner
+- **Timestamp-based cache invalidation**: Cache auto-expires when new data arrives
+- Stale data banner with one-click refresh button
+
+### Changed
+- Removed hamburger menu - nav always visible (icons stack on mobile)
+- Optimized `get_tasks_with_last_run()` using `DISTINCT ON` (was 4 correlated subqueries)
+- Cached expensive `/system` queries (provider_stats, data_breakdown)
+
+### Removed
+- Orphaned cron schedules (tasks are now on-demand only)
+- Deleted `test_task_123` leftover from testing
+- Removed unused task scheduling infrastructure
+
+### Fixed
+- Navbar responsive: icons above text at medium, icons only at small
+- Query timing instrumentation for debugging slow pages
+
+### Documentation
+- Updated README: tasks are on-demand, not cron-scheduled
+- Documented freshness TTL thresholds per data source
+
 ## [3.6.4] - 2026-01-23
 
 ### Changed

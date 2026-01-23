@@ -264,3 +264,127 @@ function initOperationalPage() {
 }
 
 // Note: refreshRailwayData() defined above at line 209
+
+// ============================================
+// Lazy TTL Refresh - Auto-refresh stale data
+// ============================================
+
+let isRefreshing = false;
+
+function checkAndRefreshStaleData() {
+    // Only run on data pages
+    const dataPages = ['/', '/status', '/map'];
+    if (!dataPages.includes(window.location.pathname)) return;
+
+    fetch('/api/freshness')
+        .then(response => response.json())
+        .then(data => {
+            if (!data.success) return;
+
+            const staleCount = data.summary?.stale_count || 0;
+            const agingCount = data.summary?.aging_count || 0;
+
+            if (staleCount > 0 && !isRefreshing) {
+                showStaleBanner(staleCount);
+            }
+        })
+        .catch(err => console.log('Freshness check failed:', err));
+}
+
+function showStaleBanner(staleCount) {
+    // Don't show if already exists
+    if (document.getElementById('stale-banner')) return;
+
+    const banner = document.createElement('div');
+    banner.id = 'stale-banner';
+    banner.style.cssText = `
+        position: fixed;
+        top: 60px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+        color: white;
+        padding: 8px 20px;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        z-index: 9999;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    `;
+    banner.innerHTML = `
+        <span>📡 ${staleCount} data source${staleCount > 1 ? 's' : ''} stale</span>
+        <button onclick="triggerSmartRefresh()" style="
+            background: white;
+            color: #d97706;
+            border: none;
+            padding: 4px 12px;
+            border-radius: 12px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.8rem;
+        ">Refresh</button>
+        <button onclick="dismissStaleBanner()" style="
+            background: transparent;
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-size: 1.1rem;
+            padding: 0 4px;
+        ">×</button>
+    `;
+    document.body.appendChild(banner);
+}
+
+function dismissStaleBanner() {
+    const banner = document.getElementById('stale-banner');
+    if (banner) banner.remove();
+}
+
+function triggerSmartRefresh() {
+    if (isRefreshing) return;
+    isRefreshing = true;
+
+    const banner = document.getElementById('stale-banner');
+    if (banner) {
+        banner.innerHTML = `
+            <span>🔄 Refreshing data...</span>
+        `;
+    }
+
+    fetch('/api/smart-refresh', { method: 'POST' })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                if (banner) {
+                    banner.style.background = 'linear-gradient(135deg, #10b981 0%, #059669 100%)';
+                    banner.innerHTML = `
+                        <span>✅ Data refreshed!</span>
+                        <button onclick="window.location.reload()" style="
+                            background: white;
+                            color: #059669;
+                            border: none;
+                            padding: 4px 12px;
+                            border-radius: 12px;
+                            cursor: pointer;
+                            font-weight: 600;
+                            font-size: 0.8rem;
+                        ">Reload page</button>
+                    `;
+                }
+            }
+        })
+        .catch(err => {
+            console.error('Smart refresh failed:', err);
+            if (banner) banner.remove();
+        })
+        .finally(() => {
+            isRefreshing = false;
+        });
+}
+
+// Check for stale data on page load (after small delay)
+document.addEventListener('DOMContentLoaded', () => {
+    setTimeout(checkAndRefreshStaleData, 2000);
+});
