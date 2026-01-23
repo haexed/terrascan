@@ -153,9 +153,14 @@ def create_app():
         import time
         timings = {}
         try:
-            # Basic system stats
+            # Basic system stats - use approximate count for speed
             t0 = time.time()
-            total_records = get_count("SELECT COUNT(*) FROM metric_data")
+            approx_count = execute_query("""
+                SELECT reltuples::bigint as count
+                FROM pg_class
+                WHERE relname = 'metric_data'
+            """)
+            total_records = approx_count[0]['count'] if approx_count else 0
             timings['count_metric_data'] = time.time() - t0
 
             t0 = time.time()
@@ -1012,14 +1017,15 @@ def get_count(query):
     return result[0]['count'] if result and len(result) > 0 and result[0]['count'] is not None else 0
 
 def get_provider_stats():
-    """Get simplified provider statistics - optimized single query"""
+    """Get simplified provider statistics - optimized with time filter"""
     provider_keys = ['nasa_firms', 'openaq', 'noaa_ocean', 'openweather', 'gbif', 'openmeteo', 'openmeteo_marine', 'ucdp', 'noaa_swpc']
 
-    # Single query for all providers instead of N queries
+    # Single query for all providers - last 90 days only for performance
     stats = execute_query("""
         SELECT provider_key, COUNT(*) as total_records, MAX(timestamp) as last_run
         FROM metric_data
         WHERE provider_key = ANY(%s)
+        AND timestamp > NOW() - INTERVAL '90 days'
         GROUP BY provider_key
     """, (provider_keys,))
 
