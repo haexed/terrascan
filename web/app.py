@@ -176,10 +176,11 @@ def create_app():
                 ORDER BY tl.started_at DESC LIMIT 20
             """)
             
-            # Data breakdown
+            # Data breakdown (last 90 days for performance)
             data_breakdown = execute_query("""
                 SELECT provider_key, COUNT(*) as record_count
                 FROM metric_data
+                WHERE timestamp > NOW() - INTERVAL '90 days'
                 GROUP BY provider_key
                 ORDER BY record_count DESC
             """)

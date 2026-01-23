@@ -246,7 +246,7 @@ def get_tasks(active_only: bool = True) -> List[Dict[str, Any]]:
 
 
 def get_tasks_with_last_run() -> List[Dict[str, Any]]:
-    """Get all tasks with their last run information"""
+    """Get all tasks with their last run information - optimized with window functions"""
     try:
         return execute_query("""
             SELECT t.id, t.name, t.description, t.command, t.active, t.cron_schedule,
@@ -254,13 +254,14 @@ def get_tasks_with_last_run() -> List[Dict[str, Any]]:
                    lr.last_run_time, lr.last_status, lr.last_records_processed, lr.last_duration
             FROM task t
             LEFT JOIN (
-                SELECT task_id,
-                       MAX(started_at) as last_run_time,
-                       (SELECT status FROM task_log tl2 WHERE tl2.task_id = task_log.task_id AND tl2.started_at = MAX(task_log.started_at) LIMIT 1) as last_status,
-                       (SELECT records_processed FROM task_log tl3 WHERE tl3.task_id = task_log.task_id AND tl3.started_at = MAX(task_log.started_at) LIMIT 1) as last_records_processed,
-                       (SELECT duration_seconds FROM task_log tl4 WHERE tl4.task_id = task_log.task_id AND tl4.started_at = MAX(task_log.started_at) LIMIT 1) as last_duration
+                SELECT DISTINCT ON (task_id)
+                       task_id,
+                       started_at as last_run_time,
+                       status as last_status,
+                       records_processed as last_records_processed,
+                       duration_seconds as last_duration
                 FROM task_log
-                GROUP BY task_id
+                ORDER BY task_id, started_at DESC
             ) lr ON t.id = lr.task_id
             ORDER BY t.name
         """)
