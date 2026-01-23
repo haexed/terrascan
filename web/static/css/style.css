@@ -187,16 +187,8 @@ h6,
         font-size: 1.2rem;
     }
 
-    .nav-time span {
-        display: none;
-    }
-
     .logo strong {
         font-size: 0.85rem;
-    }
-
-    .beta-badge {
-        display: none;
     }
 }
 

@@ -150,33 +150,48 @@ def create_app():
     @no_cache
     def system():
         """System status page"""
+        import time
+        timings = {}
         try:
             # Basic system stats
+            t0 = time.time()
             total_records = get_count("SELECT COUNT(*) FROM metric_data")
+            timings['count_metric_data'] = time.time() - t0
+
+            t0 = time.time()
             active_tasks = get_count("SELECT COUNT(*) FROM task WHERE active = true")
-            recent_runs = get_count("""
-                SELECT COUNT(*) FROM task_log 
+            timings['count_tasks'] = time.time() - t0
+
+            t0 = time.time()
+            recent_runs_count = get_count("""
+                SELECT COUNT(*) FROM task_log
                 WHERE started_at > NOW() - INTERVAL '24 hours'
             """)
-            
+            timings['count_task_log'] = time.time() - t0
+
             system_status = {
                 'total_records': total_records,
                 'active_tasks': active_tasks,
-                'recent_runs': recent_runs
+                'recent_runs': recent_runs_count
             }
-            
+
             # Provider stats (simplified)
+            t0 = time.time()
             providers = get_provider_stats()
-            
+            timings['provider_stats'] = time.time() - t0
+
             # Recent runs
+            t0 = time.time()
             recent_runs = execute_query("""
                 SELECT tl.*, t.name as task_name, t.description as task_description
-                FROM task_log tl 
-                JOIN task t ON tl.task_id = t.id 
+                FROM task_log tl
+                JOIN task t ON tl.task_id = t.id
                 ORDER BY tl.started_at DESC LIMIT 20
             """)
-            
+            timings['recent_runs'] = time.time() - t0
+
             # Data breakdown (last 90 days for performance)
+            t0 = time.time()
             data_breakdown = execute_query("""
                 SELECT provider_key, COUNT(*) as record_count
                 FROM metric_data
@@ -184,12 +199,21 @@ def create_app():
                 GROUP BY provider_key
                 ORDER BY record_count DESC
             """)
+            timings['data_breakdown'] = time.time() - t0
 
             # Get database size
+            t0 = time.time()
             db_size_result = execute_query("""
                 SELECT pg_size_pretty(pg_database_size(current_database())) as size
             """)
             database_size = db_size_result[0]['size'] if db_size_result else 'Unknown'
+            timings['db_size'] = time.time() - t0
+
+            # Log timings
+            total = sum(timings.values())
+            print(f"⏱️ /system query timings (total: {total:.2f}s):")
+            for name, t in sorted(timings.items(), key=lambda x: -x[1]):
+                print(f"   {name}: {t*1000:.0f}ms")
 
             return render_template('system.html',
                                  system_status=system_status,
@@ -1338,25 +1362,32 @@ def get_data_freshness():
 
 def get_environmental_health_data():
     """Get current environmental health data from database"""
+    import time
+    timings = {}
     try:
         # Fire data
+        t0 = time.time()
         fire_data = execute_query("""
             SELECT COUNT(*) as fire_count, AVG(value) as avg_brightness
             FROM metric_data
             WHERE provider_key = 'nasa_firms'
             AND timestamp >= NOW() - INTERVAL '7 days'
         """)
-        
+        timings['fire'] = time.time() - t0
+
         # Air quality data
+        t0 = time.time()
         air_data = execute_query("""
             SELECT AVG(value) as avg_pm25, COUNT(*) as station_count
-            FROM metric_data 
-            WHERE provider_key = 'openaq' 
+            FROM metric_data
+            WHERE provider_key = 'openaq'
             AND metric_name = 'air_quality_pm25'
             AND timestamp >= NOW() - INTERVAL '7 days'
         """)
-        
+        timings['air'] = time.time() - t0
+
         # Ocean data - using Open-Meteo for global SST coverage
+        t0 = time.time()
         ocean_data = execute_query("""
             SELECT
                 AVG(value) as avg_temp,
@@ -1368,10 +1399,12 @@ def get_environmental_health_data():
             AND metric_name = 'sea_surface_temperature'
             AND timestamp >= NOW() - INTERVAL '7 days'
         """)
-        
+        timings['ocean'] = time.time() - t0
+
         # Weather data
+        t0 = time.time()
         weather_data = execute_query("""
-            SELECT 
+            SELECT
                 AVG(CASE WHEN metric_name = 'temperature' THEN value END) as avg_temp,
                 AVG(CASE WHEN metric_name = 'humidity' THEN value END) as avg_humidity,
                 COUNT(DISTINCT CASE WHEN metric_name = 'temperature' THEN CONCAT(location_lat, ',', location_lng) END) as city_count
@@ -1379,16 +1412,25 @@ def get_environmental_health_data():
             WHERE provider_key = 'openweather'
             AND timestamp >= NOW() - INTERVAL '24 hours'
         """)
-        
+        timings['weather'] = time.time() - t0
+
         # Biodiversity data
+        t0 = time.time()
         biodiversity_data = execute_query("""
-            SELECT 
+            SELECT
                 AVG(CASE WHEN metric_name = 'species_observations' THEN value END) as avg_observations,
                 COUNT(DISTINCT CASE WHEN metric_name = 'species_observations' THEN CONCAT(location_lat, ',', location_lng) END) as region_count
             FROM metric_data
             WHERE provider_key = 'gbif'
             AND timestamp >= NOW() - INTERVAL '7 days'
         """)
+        timings['biodiversity'] = time.time() - t0
+
+        # Log timings
+        total = sum(timings.values())
+        print(f"⏱️ get_environmental_health_data (total: {total:.2f}s):")
+        for name, t in sorted(timings.items(), key=lambda x: -x[1]):
+            print(f"   {name}: {t*1000:.0f}ms")
         
         return {
             'fires': {
