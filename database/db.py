@@ -32,10 +32,10 @@ def get_connection_pool():
         try:
             _connection_pool = psycopg2.pool.ThreadedConnectionPool(
                 minconn=1,
-                maxconn=20,  # Reasonable for a hobby project
+                maxconn=3,  # Minimal for low-traffic hobby project
                 dsn=DATABASE_URL
             )
-            print("🏈 Connection pool initialized (1-20 connections)")
+            print("🏈 Connection pool initialized (1-3 connections)")
         except Exception as e:
             print(f"⚠️ Connection pool creation failed: {e}")
             _connection_pool = None
