@@ -2,6 +2,24 @@
 
 All notable changes to Terrascan will be documented in this file.
 
+## [3.6.4] - 2026-01-23
+
+### Changed
+- Switched to gunicorn (1 worker, 2 threads) from Flask dev server
+- Reduced DB connection pool from 20 to 3
+- Added worker recycling (max-requests 500) to prevent memory leaks
+
+### Infrastructure
+- Added `railway.toml` with resource limits (0.5 vCPU, 512MB web)
+- Enabled serverless mode (scale to zero when idle)
+- Postgres resource limits: 0.5 vCPU, 1GB RAM
+- Added `wsgi.py` entry point for gunicorn
+
+### Notes
+- Target: fit within Railway $5 hobby tier
+- Serverless = near-zero cost during idle periods
+- 2GB database with 2.2M rows works well with 1GB Postgres RAM
+
 ## [3.6.3] - 2025-12-31
 
 ### Added
