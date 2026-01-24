@@ -1,16 +1,18 @@
 /* === Terrascan MAP VIEW STYLES === */
 
-/* Main map container */
+/* Main map container - starts below sticky navbar */
 #map {
-    height: 100vh;
+    height: calc(100vh - 56px);
     width: 100%;
-    position: relative;
+    position: fixed;
+    top: 56px;
+    left: 0;
 }
 
 /* Stats Banner - Top overlay */
 .stats-banner {
     position: fixed;
-    top: 70px;
+    top: 66px;
     left: 50%;
     transform: translateX(-50%);
     z-index: 1001;
@@ -71,7 +73,7 @@
 /* Mobile responsiveness */
 @media (max-width: 768px) {
     .stats-banner {
-        top: 60px;
+        top: 62px;
         padding: 8px 12px;
         border-radius: 10px;
     }
@@ -100,7 +102,7 @@
 /* Control panel */
 .control-panel {
     position: fixed;
-    top: 80px;
+    top: 66px;
     left: 20px;
     background: rgba(255, 255, 255, 0.95);
     border: 2px solid var(--infp-green);
@@ -146,7 +148,7 @@
 /* Health score widget */
 .health-score-widget {
     position: fixed;
-    top: 80px;
+    top: 66px;
     right: 20px;
     background: rgba(255, 255, 255, 0.95);
     border: 2px solid var(--infp-green);
@@ -167,7 +169,7 @@
 /* Health breakdown panel */
 .health-breakdown-panel {
     position: fixed;
-    top: 80px;
+    top: 66px;
     right: 210px;
     background: rgba(255, 255, 255, 0.98);
     border: 2px solid var(--infp-green);
@@ -547,7 +549,7 @@
 @media (max-width: 768px) {
     /* Control panel - slim & collapsed by default on mobile */
     .control-panel {
-        top: 70px;
+        top: 62px;
         left: 10px;
         right: auto;
         bottom: auto;
@@ -606,7 +608,7 @@
 
     /* Health widget - minimal pill in top right */
     .health-score-widget {
-        top: 70px;
+        top: 62px;
         right: 10px;
         left: auto;
         bottom: auto;
@@ -711,7 +713,7 @@
 @media (max-width: 480px) {
     .control-panel {
         max-width: 140px;
-        top: 65px;
+        top: 60px;
     }
 
     .control-header {
@@ -752,7 +754,7 @@
     /* Health widget - just the score */
     .health-score-widget {
         padding: 4px 10px;
-        top: 65px;
+        top: 60px;
     }
 
     .health-score-widget .health-score {
