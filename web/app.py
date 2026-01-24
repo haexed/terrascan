@@ -465,7 +465,11 @@ def create_app():
         try:
             runner = TaskRunner()
             result = runner.run_task(task_name, triggered_by='web_interface')
-            
+
+            # Invalidate cache after task modifies data
+            if result.get('success'):
+                invalidate_cache()
+
             return jsonify({
                 'success': result['success'],
                 'message': f'Task "{task_name}" completed',
@@ -527,6 +531,10 @@ def create_app():
 
             cleaned_count = len(stale_tasks) if stale_tasks else 0
 
+            # Invalidate cache after data modification
+            if cleaned_count > 0:
+                invalidate_cache()
+
             return jsonify({
                 'success': True,
                 'message': f'Cleaned up {cleaned_count} stale tasks',
@@ -582,6 +590,10 @@ def create_app():
             total_records = sum(r['records'] for r in results)
             successful = sum(1 for r in results if r['success'])
 
+            # Invalidate cache after collecting new data
+            if successful > 0:
+                invalidate_cache()
+
             return jsonify({
                 'success': True,
                 'message': f'Completed {successful}/{len(tasks)} tasks, {total_records} records',
@@ -597,6 +609,10 @@ def create_app():
         try:
             runner = TaskRunner()
             result = runner.run_task('gbif_species_observations', triggered_by='web_interface')
+
+            # Invalidate cache after collecting new data
+            if result.get('success'):
+                invalidate_cache()
 
             return jsonify({
                 'success': result['success'],
