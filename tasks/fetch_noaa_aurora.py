@@ -8,7 +8,7 @@ Free API - no key required!
 import requests
 from datetime import datetime
 from typing import Dict, Any
-from database.db import store_metric_data, execute_query
+from database.db import store_metric_data, execute_query, execute_insert
 
 # NOAA SWPC endpoints
 AURORA_URL = "https://services.swpc.noaa.gov/json/ovation_aurora_latest.json"
@@ -80,7 +80,7 @@ def fetch_noaa_aurora(**kwargs) -> Dict[str, Any]:
                 })
 
         # Clear old aurora data before inserting new (it's a forecast, not historical)
-        execute_query("""
+        execute_insert("""
             DELETE FROM metric_data
             WHERE provider_key = 'noaa_swpc'
             AND metric_name = 'aurora_forecast'
