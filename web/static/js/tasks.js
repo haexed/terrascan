@@ -12,7 +12,6 @@ let readOnlyMode = false;
 document.addEventListener('DOMContentLoaded', function () {
     initializePage();
     setupAutoRefresh();
-    addFadeInAnimations();
 });
 
 /**
@@ -387,17 +386,6 @@ function checkTaskStatus() {
         });
 }
 
-/**
- * Add fade-in animation to task cards
- */
-function addFadeInAnimations() {
-    const taskCards = document.querySelectorAll('.task-card');
-    taskCards.forEach((card, index) => {
-        setTimeout(() => {
-            card.classList.add('fade-in');
-        }, index * 100);
-    });
-}
 
 /**
  * Escape HTML to prevent XSS
