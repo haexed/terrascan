@@ -139,6 +139,8 @@ h6,
 
 .navbar .nav-link i {
     font-size: 1rem;
+    width: 1.2em;  /* Reserve space to prevent layout shift when font loads */
+    text-align: center;
 }
 
 .nav-time {
@@ -160,6 +162,7 @@ h6,
 
     .navbar .nav-link i {
         font-size: 1.1rem;
+        width: 1.2em;
     }
 
     .nav-time {
@@ -185,6 +188,7 @@ h6,
 
     .navbar .nav-link i {
         font-size: 1.2rem;
+        width: 1.2em;
     }
 
     .logo strong {
