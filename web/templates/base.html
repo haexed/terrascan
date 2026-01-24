@@ -71,11 +71,7 @@
                 </li>
             </ul>
 
-            {% block nav_extra %}
-            <span class="navbar-text nav-time">
-                <i class="fas fa-clock"></i><span id="current-time">Loading...</span>
-            </span>
-            {% endblock %}
+            {% block nav_extra %}{% endblock %}
         </div>
     </nav>
 
@@ -121,35 +117,6 @@
 
     <!-- Base JavaScript -->
     <script>
-        let lastTimeString = '';
-
-        // Update current time with timezone info (optimized to prevent janking)
-        function updateTime() {
-            const now = new Date();
-            const timeString = now.toISOString().replace('T', ' ').substr(0, 19) + ' UTC';
-
-            // Only update DOM if time actually changed (prevents janking)
-            if (timeString === lastTimeString) {
-                return;
-            }
-            lastTimeString = timeString;
-
-            const timeElement = document.getElementById('current-time');
-            if (timeElement) {
-                timeElement.textContent = timeString;
-            }
-
-            // Also update map widget time if it exists
-            const mapTimeElement = document.getElementById('map-current-time');
-            if (mapTimeElement) {
-                mapTimeElement.textContent = timeString;
-            }
-        }
-
-        // Update time every second (but only change DOM when needed)
-        setInterval(updateTime, 1000);
-        updateTime();
-
         // Add cache-busting for critical data
         function addCacheBuster(url) {
             const separator = url.includes('?') ? '&' : '?';

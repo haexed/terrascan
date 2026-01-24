@@ -53,8 +53,6 @@ let mapMoveTimeout = null;
 // Initialize map when page loads
 document.addEventListener('DOMContentLoaded', function () {
     initMap();
-    updateTime();
-    setInterval(updateTime, 1000);
     setInterval(refreshMapData, 15 * 60 * 1000); // Auto-refresh every 15 minutes
 
     // Create toast element for scan notifications
@@ -745,24 +743,6 @@ async function refreshMapData() {
         setTimeout(() => {
             icon.classList.remove('fa-spin');
         }, 2000);
-    }
-}
-
-// Update current time display
-function updateTime() {
-    const now = new Date();
-    const timeString = now.toISOString().replace('T', ' ').substring(0, 19) + ' UTC';
-
-    // Update navbar time
-    const navTimeElement = document.getElementById('current-time');
-    if (navTimeElement) {
-        navTimeElement.textContent = timeString;
-    }
-
-    // Update map widget time
-    const mapTimeElement = document.getElementById('map-current-time');
-    if (mapTimeElement) {
-        mapTimeElement.textContent = timeString;
     }
 }
 
