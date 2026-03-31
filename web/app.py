@@ -245,8 +245,11 @@ def create_app():
     @app.route('/api/map-data')
     @no_cache
     def api_map_data():
-        """Get environmental data for map - supports viewport-based loading"""
+        """Get environmental data for map - supports viewport-based and hero loading"""
         try:
+            # Hero mode: lightweight subset for the landing page overview map
+            hero = request.args.get('hero', '') == 'true'
+
             # Parse optional bbox parameter for viewport-based loading
             bbox_str = request.args.get('bbox', '')
             bbox = None
@@ -273,7 +276,54 @@ def create_app():
                 """
                 bbox_params = [bbox['south'], bbox['north'], bbox['west'], bbox['east']]
 
-            # Get recent fire data
+            bp = tuple(bbox_params) if bbox_params else None
+
+            if hero:
+                # Hero map: small fixed limits, no bbox needed
+                fires = execute_query("""
+                    SELECT location_lat as latitude, location_lng as longitude,
+                           value as brightness, DATE(timestamp) as acq_date, metadata
+                    FROM metric_data
+                    WHERE provider_key = 'nasa_firms'
+                    AND timestamp > NOW() - INTERVAL '24 hours'
+                    AND location_lat IS NOT NULL AND location_lng IS NOT NULL
+                    AND value > 300
+                    ORDER BY value DESC LIMIT 50
+                """)
+                air_quality = execute_query("""
+                    SELECT location_lat as latitude, location_lng as longitude,
+                           AVG(value) as value, MAX(metadata) as metadata
+                    FROM metric_data
+                    WHERE provider_key = 'openaq'
+                    AND metric_name = 'air_quality_pm25'
+                    AND timestamp > NOW() - INTERVAL '3 days'
+                    AND location_lat IS NOT NULL AND location_lng IS NOT NULL
+                    GROUP BY location_lat, location_lng
+                    ORDER BY AVG(value) DESC LIMIT 50
+                """)
+                ocean_stations = execute_query("""
+                    SELECT location_lat as latitude, location_lng as longitude,
+                           AVG(value) as temperature, NULL as water_level,
+                           MAX(timestamp) as last_updated, MAX(metadata) as metadata
+                    FROM metric_data
+                    WHERE provider_key = 'openmeteo_marine'
+                    AND metric_name = 'sea_surface_temperature'
+                    AND timestamp > NOW() - INTERVAL '7 days'
+                    AND location_lat IS NOT NULL AND location_lng IS NOT NULL
+                    GROUP BY location_lat, location_lng LIMIT 30
+                """)
+                return jsonify({
+                    'success': True,
+                    'fires': format_fire_data(fires or []),
+                    'air_quality': format_air_data(air_quality or []),
+                    'ocean': format_ocean_data(ocean_stations or []),
+                    'conflicts': [],
+                    'biodiversity': [],
+                    'aurora': format_aurora_data([], None)
+                })
+
+            # Full map queries with bbox support on all layers
+            fire_limit = 2000 if bbox else 500
             fire_query = f"""
                 SELECT location_lat as latitude, location_lng as longitude,
                        value as brightness, DATE(timestamp) as acq_date, metadata
@@ -283,27 +333,26 @@ def create_app():
                 AND location_lat IS NOT NULL AND location_lng IS NOT NULL
                 AND value > 300
                 {bbox_clause}
-                ORDER BY timestamp DESC LIMIT {'2000' if bbox else '500'}
+                ORDER BY timestamp DESC LIMIT {fire_limit}
             """
-            fires = execute_query(fire_query, tuple(bbox_params) if bbox_params else None)
+            fires = execute_query(fire_query, bp)
 
-            # Get air quality data - viewport-based for better coverage
+            aq_limit = 2000 if bbox else 500
             aq_query = f"""
                 SELECT location_lat as latitude, location_lng as longitude,
                        AVG(value) as value, MAX(metadata) as metadata
                 FROM metric_data
                 WHERE provider_key = 'openaq'
                 AND metric_name = 'air_quality_pm25'
-                AND timestamp > NOW() - INTERVAL '7 days'
+                AND timestamp > NOW() - INTERVAL '3 days'
                 AND location_lat IS NOT NULL AND location_lng IS NOT NULL
                 {bbox_clause}
                 GROUP BY location_lat, location_lng
-                ORDER BY MAX(timestamp) DESC LIMIT {'5000' if bbox else '1000'}
+                ORDER BY MAX(timestamp) DESC LIMIT {aq_limit}
             """
-            air_quality = execute_query(aq_query, tuple(bbox_params) if bbox_params else None)
-            
-            # Get ocean data (using Open-Meteo for global SST coverage)
-            ocean_stations = execute_query("""
+            air_quality = execute_query(aq_query, bp)
+
+            ocean_query = f"""
                 SELECT location_lat as latitude, location_lng as longitude,
                        AVG(value) as temperature,
                        NULL as water_level,
@@ -314,11 +363,12 @@ def create_app():
                 AND metric_name = 'sea_surface_temperature'
                 AND timestamp > NOW() - INTERVAL '7 days'
                 AND location_lat IS NOT NULL AND location_lng IS NOT NULL
+                {bbox_clause}
                 GROUP BY location_lat, location_lng LIMIT 50
-            """)
+            """
+            ocean_stations = execute_query(ocean_query, bp)
 
-            # Get conflict data from UCDP (use 2 years to handle data lag)
-            conflicts = execute_query("""
+            conflict_query = f"""
                 SELECT location_lat as latitude, location_lng as longitude,
                        value as deaths, metadata, timestamp
                 FROM metric_data
@@ -326,11 +376,12 @@ def create_app():
                 AND metric_name = 'conflict_event'
                 AND timestamp > NOW() - INTERVAL '730 days'
                 AND location_lat IS NOT NULL AND location_lng IS NOT NULL
+                {bbox_clause}
                 ORDER BY timestamp DESC LIMIT 500
-            """)
+            """
+            conflicts = execute_query(conflict_query, bp)
 
-            # Get biodiversity data from GBIF
-            biodiversity = execute_query("""
+            biodiversity_query = f"""
                 SELECT location_lat as latitude, location_lng as longitude,
                        value as observations, metadata
                 FROM metric_data
@@ -338,19 +389,22 @@ def create_app():
                 AND metric_name = 'species_observations'
                 AND timestamp > NOW() - INTERVAL '30 days'
                 AND location_lat IS NOT NULL AND location_lng IS NOT NULL
+                {bbox_clause}
                 ORDER BY value DESC LIMIT 50
-            """)
+            """
+            biodiversity = execute_query(biodiversity_query, bp)
 
-            # Get aurora forecast from NOAA SWPC
-            aurora = execute_query("""
+            aurora_query = f"""
                 SELECT location_lat as latitude, location_lng as longitude,
                        value as intensity, metadata
                 FROM metric_data
                 WHERE provider_key = 'noaa_swpc'
                 AND metric_name = 'aurora_forecast'
                 AND location_lat IS NOT NULL AND location_lng IS NOT NULL
+                {bbox_clause}
                 ORDER BY value DESC LIMIT 2000
-            """)
+            """
+            aurora = execute_query(aurora_query, bp)
 
             # Get current Kp index
             kp_index = execute_query("""
@@ -370,7 +424,7 @@ def create_app():
                 'biodiversity': format_biodiversity_data(biodiversity or []),
                 'aurora': format_aurora_data(aurora or [], kp_index[0] if kp_index else None)
             })
-            
+
         except Exception as e:
             return jsonify({'success': False, 'error': str(e)})
 

@@ -73,7 +73,7 @@ function setupHeroLayerToggles() {
 // Load environmental data for hero map
 async function loadHeroEnvironmentalData() {
     try {
-        const response = await fetch('/api/map-data');
+        const response = await fetch('/api/map-data?hero=true');
         const data = await response.json();
 
         if (data.success) {
@@ -94,12 +94,7 @@ async function loadHeroEnvironmentalData() {
 function updateHeroFireLayer() {
     heroFireLayer.clearLayers();
 
-    // Show fewer fires for hero map (top 50 by brightness)
-    const topFires = heroFireData
-        .sort((a, b) => b.brightness - a.brightness)
-        .slice(0, 50);
-
-    topFires.forEach(fire => {
+    heroFireData.forEach(fire => {
         const color = getHeroFireColor(fire.brightness);
         const radius = Math.max(4, Math.min(12, fire.brightness / 60));
 
