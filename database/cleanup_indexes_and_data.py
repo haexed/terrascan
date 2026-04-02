@@ -79,7 +79,11 @@ def drop_redundant_indexes(cursor):
 
 
 def enforce_data_retention(cursor):
-    """Delete metric_data older than data_retention_days (default 30)"""
+    """Delete metric_data older than data_retention_days (default 30).
+    Exempts providers that store historical event dates (e.g. UCDP conflicts)."""
+    # Providers that use historical timestamps and need longer retention
+    exempt_providers = ('ucdp',)
+
     # Read retention config from system_config
     cursor.execute(
         "SELECT value FROM system_config WHERE key = 'data_retention_days'"
@@ -87,12 +91,12 @@ def enforce_data_retention(cursor):
     row = cursor.fetchone()
     retention_days = int(row[0]) if row else 30
 
-    print(f"\nData retention: {retention_days} days")
+    print(f"\nData retention: {retention_days} days (exempt: {', '.join(exempt_providers)})")
 
     # Count what we'll delete
     cursor.execute(
-        "SELECT COUNT(*) FROM metric_data WHERE timestamp < NOW() - INTERVAL '%s days'",
-        (retention_days,)
+        "SELECT COUNT(*) FROM metric_data WHERE timestamp < NOW() - INTERVAL '%s days' AND provider_key NOT IN %s",
+        (retention_days, exempt_providers)
     )
     stale_count = cursor.fetchone()[0]
     print(f"Records older than {retention_days} days: {stale_count:,}")
@@ -110,9 +114,10 @@ def enforce_data_retention(cursor):
             WHERE id IN (
                 SELECT id FROM metric_data
                 WHERE timestamp < NOW() - INTERVAL '%s days'
+                AND provider_key NOT IN %s
                 LIMIT %s
             )
-        """, (retention_days, batch_size))
+        """, (retention_days, exempt_providers, batch_size))
         deleted = cursor.rowcount
         total_deleted += deleted
         if deleted > 0:
