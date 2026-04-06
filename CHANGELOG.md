@@ -6,6 +6,7 @@ All notable changes to Terrascan will be documented in this file.
 
 ### Added
 - **UCDP API token auth**: `fetch_ucdp_conflicts.py` now sends `x-ucdp-access-token` header from `UCDP_API_TOKEN` env var (UCDP moved to authenticated access, 5,000 req/day limit)
+- **UCDP candidate dataset**: switched endpoint from stable `gedevents/25.1` (annual, lags ~1 year) to monthly candidate release `gedevents/26.0.2`. The stable dataset had no events newer than 2024 so the task was silently returning 0 records; candidate has 1000+ events from 2026 alone. See https://ucdp.uu.se/apidocs/ for current version string.
 - `database/cleanup_indexes_and_data.py`: maintenance script for index cleanup, batched data retention enforcement, task_log pruning, and VACUUM ANALYZE
 - `database/dump_backup.py`: portable Python-based full DB backup (schema + data) to stdout, no `pg_dump` required
 - `?hero=true` parameter on `/api/map-data` returning a lightweight payload (50 fires, 50 air, 30 ocean — no conflicts/biodiversity/aurora) for the homepage hero map

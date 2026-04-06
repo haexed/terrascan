@@ -75,6 +75,7 @@
 | 🌐 Open-Meteo | **Free** | Unlimited | No key needed (CC-BY 4.0) |
 | 🌡️ OpenWeatherMap | Optional (DB config) | 1000/day | [OpenWeatherMap](https://openweathermap.org/api) |
 | 🦋 GBIF | **Free** | Unlimited | No key needed |
+| ⚔️ UCDP | **Required** | 5,000/day | [UCDP API docs](https://ucdp.uu.se/apidocs/) (email for token) |
 
 ---
 
@@ -131,7 +132,7 @@ This approach minimizes costs for low-traffic deployments (serverless-friendly).
 | 🌡️ OpenWeatherMap | Current conditions | 6 hours |
 | 🦋 GBIF Biodiversity | Species observations | 48 hours |
 | ⚡ NOAA Aurora | Aurora forecast | 6 hours |
-| ⚔️ UCDP Conflicts | Armed conflicts | 168 hours |
+| ⚔️ UCDP Conflicts | Armed conflicts (monthly candidate release) | 168 hours |
 
 ---
 
