@@ -35,9 +35,10 @@ def fetch_ucdp_conflicts(product='conflict_events', **kwargs):
         total_deaths = 0
         total_events = 0
 
-        # Get events from last 365 days (UCDP updates annually but has recent data)
+        # UCDP GED is released annually and lags ~1 year behind real-time.
+        # Use a 3-year window so we always cover the most recent completed release.
         end_date = datetime.now()
-        start_date = end_date - timedelta(days=365)
+        start_date = end_date - timedelta(days=1095)
 
         # Fetch recent conflict events globally
         params = {
