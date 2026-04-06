@@ -27,18 +27,17 @@ def fetch_ucdp_conflicts(product='conflict_events', **kwargs):
     try:
         timeout = get_provider_config('ucdp', 'timeout_seconds', 30)
 
-        # UCDP GED (Georeferenced Event Dataset) API
-        # Version 25.1 is current as of 2025
-        base_url = "https://ucdpapi.pcr.uu.se/api/gedevents/25.1"
+        # UCDP GED Candidate dataset — monthly release with near-real-time events.
+        # The stable annual release (25.1) lags ~1 year behind; candidate covers the gap.
+        # See https://ucdp.uu.se/apidocs/ for current version.
+        base_url = "https://ucdpapi.pcr.uu.se/api/gedevents/26.0.2"
 
         records_processed = 0
         total_deaths = 0
         total_events = 0
 
-        # UCDP GED is released annually and lags ~1 year behind real-time.
-        # Use a 3-year window so we always cover the most recent completed release.
         end_date = datetime.now()
-        start_date = end_date - timedelta(days=1095)
+        start_date = end_date - timedelta(days=365)
 
         # Fetch recent conflict events globally
         params = {
