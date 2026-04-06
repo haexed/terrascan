@@ -6,7 +6,7 @@ Advanced environmental data monitoring and analysis platform
 import os
 import sys
 from web.app import create_app
-from database.config_manager import get_system_config, set_system_config
+from utils import get_version
 
 def main():
     """Main application entry point"""
@@ -23,9 +23,7 @@ def main():
         print("❌ Failed to initialize system configurations")
         sys.exit(1)
     
-    # Get version info
-    version = get_system_config('version', 'Unknown')
-    print(f"✅ System initialized (version: {version})")
+    print(f"✅ System initialized (version: {get_version()})")
     
     # Create Flask application
     app = create_app()

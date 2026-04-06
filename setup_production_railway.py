@@ -125,7 +125,6 @@ def setup_railway_production():
         print("⚙️ Setting up system configuration...")
         
         system_configs = [
-            ('version', '2.5.0', 'string', 'Current system version'),
             ('simulation_mode', 'false', 'boolean', 'Enable simulation mode for testing'),
             ('data_retention_days', '30', 'int', 'Number of days to retain environmental data'),
             ('max_records_per_provider', '10000', 'int', 'Maximum records per data provider'),

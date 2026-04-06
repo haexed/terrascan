@@ -19,11 +19,6 @@ def setup_system_configs():
         db_info = get_database_info()
         print(f"✅ Database configured: {db_info}")
         
-        # Set version information
-        version = "2.7.0"
-        set_system_config('version', version, 'str', 'Current system version')
-        print(f"✅ Version set to: {version}")
-        
         # Set startup timestamp
         from datetime import datetime
         startup_time = datetime.now().isoformat()
@@ -37,7 +32,6 @@ def setup_system_configs():
         
         print("\n🎉 System configurations completed successfully!")
         print("\n📋 Configuration Summary:")
-        print(f"   • Version: {version}")
         print(f"   • Database: {db_info}")
         print(f"   • Platform: {platform_info}")
         print(f"   • Startup: {startup_time}")

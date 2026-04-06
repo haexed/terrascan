@@ -2,9 +2,10 @@
 """
 Conflict data collection from UCDP (Uppsala Conflict Data Program)
 Collects georeferenced conflict events, battle deaths, and violence metrics
-Free API - No key required
+Requires UCDP_API_TOKEN env var (5,000 req/day limit)
 """
 
+import os
 import requests
 import json
 from datetime import datetime, timedelta
@@ -47,7 +48,16 @@ def fetch_ucdp_conflicts(product='conflict_events', **kwargs):
 
         print(f"Fetching UCDP conflict events from {start_date.date()} to {end_date.date()}...")
 
-        response = requests.get(base_url, params=params, timeout=timeout)
+        token = os.environ.get('UCDP_API_TOKEN')
+        if not token:
+            return {
+                'success': False,
+                'records_processed': 0,
+                'error': 'UCDP_API_TOKEN not set'
+            }
+        headers = {'x-ucdp-access-token': token}
+
+        response = requests.get(base_url, params=params, headers=headers, timeout=timeout)
         response.raise_for_status()
 
         data = response.json()

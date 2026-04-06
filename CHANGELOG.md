@@ -2,6 +2,39 @@
 
 All notable changes to Terrascan will be documented in this file.
 
+## [3.6.6] - 2026-04-06
+
+### Added
+- **UCDP API token auth**: `fetch_ucdp_conflicts.py` now sends `x-ucdp-access-token` header from `UCDP_API_TOKEN` env var (UCDP moved to authenticated access, 5,000 req/day limit)
+- `database/cleanup_indexes_and_data.py`: maintenance script for index cleanup, batched data retention enforcement, task_log pruning, and VACUUM ANALYZE
+- `database/dump_backup.py`: portable Python-based full DB backup (schema + data) to stdout, no `pg_dump` required
+- `?hero=true` parameter on `/api/map-data` returning a lightweight payload (50 fires, 50 air, 30 ocean — no conflicts/biodiversity/aurora) for the homepage hero map
+
+### Changed
+- **Map API performance**: bbox filtering now applied to all six query layers (previously conflicts, biodiversity, aurora, ocean ignored bbox)
+- Air quality query window tightened from 7 days → 3 days; global limit reduced from 1000 → 500 (bbox 5000 → 2000)
+- Hero map JS now requests the hero endpoint and renders backend results directly (eliminated client-side over-fetch + slice of 4100+ markers down to ~130)
+- UCDP exempted from the 30-day data retention sweep (it stores historical event dates, not collection timestamps)
+- Cleanup script uses autocommit batched DELETEs (50k rows/batch) to avoid long locks
+
+### Fixed
+- **Map layout**: map no longer renders behind the navbar
+- **noaa_aurora task**: use `execute_insert` for DELETE so the statement actually commits
+- **Cache invalidation**: now triggered after all data-modifying operations (was missing in several paths)
+- **Status page — hero map removed**: redundant embedded map removed from `/status` (use `/map` for full view); dropped Leaflet deps from that page
+- **Status page — ocean health "NO DATA"**: query now reads both `water_temperature` and `water_level` from `noaa_ocean`; UI shows whichever is available with a dynamic label, falls back gracefully
+- **Decimal display**: `format_nullable_value()` now converts `Decimal` → `float` so PM2.5 etc. round properly (no more `6.1566568914956012`)
+- **API type coercion**: fire/air/ocean formatters explicitly cast lat/lng/values to `float`/`int` before serialization, fixing `fire.lat.toFixed is not a function` in the frontend
+- **JS validation**: added `validateFireData` / `validateAirData` / `validateOceanData` at the API boundary in `web/static/js/map.js`, plus JSDoc typedefs and null-safe display
+
+### Removed
+- **Version drift cleanup**: dropped the stale `system_config['version']` row (was `2.5.0`/`2.7.0` depending on which `setup_*` script ran last) and removed version-seeding from `setup_configs.py` and `setup_production_railway.py`. `utils.VERSION` is now the single source of truth — `run.py` startup banner, templates, and `/system` page all read from it.
+
+### Infrastructure
+- **Massive DB shrink**: deleted ~3M stale rows from `metric_data` (5.6M → 19k); volume dropped from ~6GB → ~3GB visible on Railway metrics on 2026-04-01
+- Removed 7 redundant indexes covered by the unique constraint and composite indexes; ~2.6GB → ~1.3GB index footprint
+- VACUUM ANALYZE reclaimed disk after batch deletions
+
 ## [3.6.5] - 2026-01-23
 
 ### Added
