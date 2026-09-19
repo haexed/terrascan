@@ -109,6 +109,21 @@ class MetricValue:
         formatted = self.formatted_value
         return f"{formatted}{self.unit}" if formatted else f"{self.no_data_emoji} {self.no_data_text}"
 
+    def __html__(self):
+        """Template rendering - Jinja calls this instead of escaping __str__
+
+        The no-data marker is wrapped so it can be sized down; it sits in
+        `.metric-value` elements whose font size is meant for a number.
+        """
+        from markupsafe import Markup, escape
+
+        if not self.has_value or not self.formatted_value:
+            return Markup(
+                f'<span class="no-data">{escape(self.no_data_emoji)} '
+                f'{escape(self.no_data_text)}</span>'
+            )
+        return escape(str(self))
+
     def __repr__(self):
         return f"MetricValue({self.raw_value}, unit='{self.unit}', status='{self.status}')"
 

@@ -660,3 +660,9 @@ a.btn:visited {
         animation: fa-spin 3s linear infinite !important;
     }
 }
+
+/* "No data" stands in for a number inside .metric-value and similar, where the
+   font size is set for a figure and the words end up shouting. */
+.no-data {
+    font-size: 1rem;
+}

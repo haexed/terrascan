@@ -2,6 +2,14 @@
 
 All notable changes to Terrascan will be documented in this file.
 
+## [3.7.8] - 2026-09-19
+
+### Changed
+- "🤷 No data" renders at 1rem instead of inheriting the 40px `.metric-value` size.
+
+### Removed
+- `nasa_fires_viirs` and `openaq_cities` task rows. Both pointed at modules that don't exist and carried parameters that don't match the real signatures; they duplicated `nasa_fires_global` and `openaq_latest`.
+
 ## [3.7.7] - 2026-09-19
 
 ### Fixed
