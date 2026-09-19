@@ -2,6 +2,11 @@
 
 All notable changes to Terrascan will be documented in this file.
 
+## [3.7.4] - 2026-09-19
+
+### Changed
+- `/map`: `/api/map-data` responses are cached client-side by request URL for 5 minutes, so returning to a viewport already loaded redraws from memory instead of waiting on a ~500ms round trip. Zooming in and back out now costs no requests after the first of each viewport; a redraw of the full 3032-marker globe takes ~20ms. Manual and auto refresh still force a fetch, and an area scan clears the cache.
+
 ## [3.7.3] - 2026-09-19
 
 ### Fixed

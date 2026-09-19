@@ -50,8 +50,15 @@ const VIEWPORT_LOAD_THRESHOLD = 5;
 // Debounce timer for map movement
 let mapMoveTimeout = null;
 
-// Last /api/map-data URL fetched, so an unchanged viewport doesn't refetch
-let lastDataUrl = null;
+// Cache of /api/map-data responses, keyed by request URL. The underlying data
+// refreshes on the order of hours (see the freshness TTLs), so returning to a
+// viewport already fetched shouldn't cost another round trip.
+const MAP_DATA_CACHE_TTL = 5 * 60 * 1000;
+const MAP_DATA_CACHE_MAX = 20;
+const mapDataCache = new Map();
+
+// URL currently drawn on the map, so an unchanged viewport doesn't redraw
+let renderedDataUrl = null;
 
 // Initialize map when page loads
 document.addEventListener('DOMContentLoaded', function () {
@@ -248,8 +255,9 @@ async function scanCurrentArea() {
                 // Also add to airData for consistency
                 airData = [...airData, ...result.stations];
 
-                // A scan stores new rows, so the cached URL is stale
-                lastDataUrl = null;
+                // A scan stores new rows, so every cached response is stale
+                mapDataCache.clear();
+                renderedDataUrl = null;
             } else {
                 showScanToast('No new stations found in this area');
             }
@@ -342,34 +350,68 @@ async function loadEnvironmentalData(force = false) {
             url += `?bbox=${encodeURIComponent(bbox)}`;
         }
 
-        // Panning at world zoom produces the same global URL every time
-        if (url === lastDataUrl && !force) {
+        // Already on screen - nothing to fetch, nothing to redraw
+        if (url === renderedDataUrl && !force) {
             return;
         }
-        lastDataUrl = url;
+
+        // Zooming back out returns to a viewport we already have. Draw it
+        // straight from cache instead of waiting on the round trip.
+        if (!force) {
+            const cached = mapDataCache.get(url);
+            if (cached && Date.now() - cached.time < MAP_DATA_CACHE_TTL) {
+                renderMapData(url, cached.data);
+                return;
+            }
+        }
 
         const response = await fetch(url);
         const data = await response.json();
 
         if (data.success) {
-            // Validate and sanitize data
-            fireData = validateFireData(data.fires || []);
-            airData = validateAirData(data.air_quality || []);
-            oceanData = validateOceanData(data.ocean || []);
-            conflictData = data.conflicts || [];
-            biodiversityData = data.biodiversity || [];
-            auroraData = data.aurora || { points: [], kp_index: null };
-
-            updateFireLayer();
-            updateAirLayer();
-            updateOceanLayer();
-            updateConflictLayer();
-            updateBiodiversityLayer();
-            updateAuroraLayer();
+            cacheMapData(url, data);
+            renderMapData(url, data);
         }
     } catch (error) {
         console.error('Error loading environmental data:', error);
     }
+}
+
+/**
+ * Store a map-data response, evicting the oldest entry past the cap
+ * @param {string} url - Request URL the response came from
+ * @param {object} data - Parsed API response
+ */
+function cacheMapData(url, data) {
+    mapDataCache.delete(url);
+    mapDataCache.set(url, { data, time: Date.now() });
+
+    while (mapDataCache.size > MAP_DATA_CACHE_MAX) {
+        mapDataCache.delete(mapDataCache.keys().next().value);
+    }
+}
+
+/**
+ * Draw a map-data response onto the layers
+ * @param {string} url - Request URL the response came from
+ * @param {object} data - Parsed API response
+ */
+function renderMapData(url, data) {
+    fireData = validateFireData(data.fires || []);
+    airData = validateAirData(data.air_quality || []);
+    oceanData = validateOceanData(data.ocean || []);
+    conflictData = data.conflicts || [];
+    biodiversityData = data.biodiversity || [];
+    auroraData = data.aurora || { points: [], kp_index: null };
+
+    updateFireLayer();
+    updateAirLayer();
+    updateOceanLayer();
+    updateConflictLayer();
+    updateBiodiversityLayer();
+    updateAuroraLayer();
+
+    renderedDataUrl = url;
 }
 
 /**
