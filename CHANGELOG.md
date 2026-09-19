@@ -2,6 +2,11 @@
 
 All notable changes to Terrascan will be documented in this file.
 
+## [3.6.21] - 2026-09-19
+
+### Fixed
+- `.toast-notification` overlapped the "Cleanup Stale"/"Refresh Status" buttons on `/tasks`. Moved from top-right to bottom-right.
+
 ## [3.6.20] - 2026-09-19
 
 ### Fixed
