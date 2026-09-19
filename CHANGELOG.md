@@ -2,6 +2,11 @@
 
 All notable changes to Terrascan will be documented in this file.
 
+## [3.7.3] - 2026-09-19
+
+### Fixed
+- `/map`: zooming in dropped every marker outside the viewport and zooming back out never restored them. The `moveend` handler only reloaded at zoom >= 5, so zooming out left the layers holding the last viewport fetch. It now reloads at every zoom level; `loadEnvironmentalData()` already chooses viewport or global data on its own, and skips the request when the URL is unchanged.
+
 ## [3.7.2] - 2026-09-19
 
 ### Removed

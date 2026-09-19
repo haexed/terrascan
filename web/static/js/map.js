@@ -50,6 +50,9 @@ const VIEWPORT_LOAD_THRESHOLD = 5;
 // Debounce timer for map movement
 let mapMoveTimeout = null;
 
+// Last /api/map-data URL fetched, so an unchanged viewport doesn't refetch
+let lastDataUrl = null;
+
 // Initialize map when page loads
 document.addEventListener('DOMContentLoaded', function () {
     initMap();
@@ -135,12 +138,11 @@ function initMap() {
     map.on('zoomend', updateScanButtonVisibility);
     updateScanButtonVisibility();
 
-    // Reload data when map moves (debounced) - for viewport-based loading
-    const debouncedLoad = debounce(() => {
-        if (map.getZoom() >= VIEWPORT_LOAD_THRESHOLD) {
-            loadEnvironmentalData();
-        }
-    }, 500);  // 500ms debounce
+    // Reload data when map moves (debounced). This has to run at every zoom
+    // level: loadEnvironmentalData() picks viewport or global data itself, and
+    // skipping the call when zoomed out left the map showing only the handful
+    // of markers from the last zoomed-in fetch.
+    const debouncedLoad = debounce(() => loadEnvironmentalData(), 500);
 
     map.on('moveend', debouncedLoad);
 }
@@ -245,6 +247,9 @@ async function scanCurrentArea() {
 
                 // Also add to airData for consistency
                 airData = [...airData, ...result.stations];
+
+                // A scan stores new rows, so the cached URL is stale
+                lastDataUrl = null;
             } else {
                 showScanToast('No new stations found in this area');
             }
@@ -328,7 +333,7 @@ function getViewportBbox() {
  * Uses viewport-based loading when zoomed in for better local coverage
  * @returns {Promise<void>}
  */
-async function loadEnvironmentalData() {
+async function loadEnvironmentalData(force = false) {
     try {
         // Build URL with optional bbox for viewport-based loading
         let url = '/api/map-data';
@@ -336,6 +341,12 @@ async function loadEnvironmentalData() {
             const bbox = getViewportBbox();
             url += `?bbox=${encodeURIComponent(bbox)}`;
         }
+
+        // Panning at world zoom produces the same global URL every time
+        if (url === lastDataUrl && !force) {
+            return;
+        }
+        lastDataUrl = url;
 
         const response = await fetch(url);
         const data = await response.json();
@@ -725,7 +736,7 @@ async function refreshMapData() {
     icon.classList.add('fa-spin');
 
     try {
-        await loadEnvironmentalData();
+        await loadEnvironmentalData(true);
 
         // Also refresh health score
         const response = await fetch('/api/refresh');
