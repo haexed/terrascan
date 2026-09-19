@@ -2,47 +2,53 @@
 
 All notable changes to Terrascan will be documented in this file.
 
+## [3.6.11] - 2026-09-19
+
+### Fixed
+- Task card titles and Task Logs modal title went white-on-white (3.6.10's `:is()` fix beat `.card-title`/`.modal-title`) — pinned both with `!important`
+- `/tasks` "Total Tasks" stat was white-on-white (same root cause, plain `<div class="h3">` caught by the old broad heading rule)
+- Status badges de-screamed: `.upper()` → title case across `/system` and `/system/schema` (OPERATIONAL, NO_DATA, RUNNING, YES/NO, etc.)
+- `/system` recent-runs table showed "0.0s" for a still-running task — `duration_seconds` is NULL until completion, now shows "Running…"
+
 ## [3.6.10] - 2026-09-19
 
 ### Fixed
-- `/system`'s Open-Meteo card always showed 0 records while the "Data Breakdown by Provider" table further down the same page showed the real count for the same provider — `get_provider_stats()` was keyed on `'openmeteo'`, a key nothing ever writes to `metric_data`; the real key (used by `fetch_openmeteo_marine.py`) is `'openmeteo_marine'`. Fixed the hardcoded key list in `web/app.py` and the `providers.openmeteo` references in `system.html`.
-- Aurora data's freshness badge silently used the generic 24h fallback instead of its intended 1h threshold — `FRESHNESS_THRESHOLDS` in `web/app.py` was keyed `'noaa_aurora'`, but the real provider key (`fetch_noaa_aurora.py`) is `'noaa_swpc'`.
-
-Audited every real `provider_key` written anywhere in `tasks/*.py` against every hardcoded provider list in the app (`web/app.py`, `system.html`, `about.html`, `base.html` footer, `map.html`) — findings and fix direction logged in `TODO.md` under "Data providers" (4+ independent hardcoded provider lists, each showing a different subset; `/system`'s cards are missing UCDP and NOAA SWPC/aurora entirely despite both having real data).
+- `/system`'s Open-Meteo card showed 0 records (wrong hardcoded key `openmeteo` vs real `openmeteo_marine`) while the breakdown table below it showed the real count
+- Aurora freshness badge used the wrong key (`noaa_aurora` vs real `noaa_swpc`), silently falling back to a 24h threshold instead of 1h
+- Audited every real `provider_key` against every hardcoded provider list in the app — findings in `TODO.md` under "Data providers"
 
 ## [3.6.9] - 2026-09-19
 
 ### Fixed
-- Heading hierarchy skips (h1→h3→h5, h2→h4/h5) flagged by the W3C Nu Html Checker across `/tasks`, `/system`, and `/about` — every heading now steps down one level at a time (`h2`→`h3`, etc.), keeping the same visual size via Bootstrap's `.h4`/`.h5` utility classes so nothing changes on screen. All four pages now validate with 0 errors.
+- Heading hierarchy skips (h1→h3→h5, h2→h4/h5) on `/tasks`, `/system`, `/about` — all four audited pages now validate with 0 W3C errors
 
 ### Changed
-- Removed all `<!-- ... -->` HTML comments from Jinja templates (`base.html`, `map.html`, `tasks.html`, `system.html`, `system_schema.html`, `index.html`, `dashboard.html`, `about.html`)
+- Stripped all HTML comments from templates
 
 ### Chore
-- Tagged `3.6.8` locally (was committed but never tagged); dropped the stray `v3.7.0` tag (abandoned heatmaps experiment, reverted same-day back in 2025-12-30) both locally and on GitHub
+- Tagged `3.6.8` (was committed but never tagged); dropped the stray `v3.7.0` tag locally and on GitHub
 
 ## [3.6.8] - 2026-09-19
 
 ### Fixed
-- **Heading color specificity bug (site-wide)**: any heading combining an element tag with a Bootstrap size class (e.g. `<h1 class="h2">`, used on `/tasks`) rendered dark forest-green on the green page background instead of white — Bootstrap's `.h1`–`.h6` utility classes (specificity 0,1,0) beat our plain `h1`–`h6` rule (0,0,1) despite ours loading later. Added `.h1`–`.h6` to our white-heading rule.
-- "Task Logs" modal title was white text in a white Bootstrap modal (invisible) — added a `.modal-title` color override
-- `/map` banner stats used Jinja truthiness (`if count else '—'`), so a real `0` (e.g. zero active fires) incorrectly rendered as `—` same as missing data — switched to explicit `is not none` checks, "No data" for genuinely missing values
-- `<div>` nested inside `<label>` on `/map`'s layer toggles (invalid HTML, caught by the W3C Nu Html Checker) — changed to `<span>`, no visual change since the elements are flex items
-- Invalid `<meta http-equiv="Cache-Control">` etc. tags removed from `<head>` — redundant, already set as real HTTP headers via the `no_cache` response decorator
+- Heading-color specificity bug: `<h1 class="h2">`-style headings (Bootstrap's `.h1`-`.h6` beats our plain `h1`-`h6` rule) rendered dark green on the green background instead of white, site-wide
+- "Task Logs" modal title was white-on-white
+- `/map` banner stats used Jinja truthiness, so a real `0` count rendered as `—` same as missing data
+- Invalid HTML from the W3C checker: `<div>` in `<label>` on `/map`, redundant `<meta http-equiv>` cache tags
 
 ### Changed
-- Removed hover animations from `.eco-card`, `.hero-map-container`, `.task-card` (previously three different, inconsistent hover motions)
-- "NO DATA" / "SYSTEM STATUS & DATA PROVIDERS" / "DATABASE SCHEMA DOCUMENTATION" → sentence case (was shouting in all caps)
-- `.data-source` caption color: brown → sage green (`#268257`, on-brand, ~4.76:1 contrast on white)
+- Removed hover animations from `.eco-card`, `.hero-map-container`, `.task-card`
+- "NO DATA" / "SYSTEM STATUS & DATA PROVIDERS" / "DATABASE SCHEMA DOCUMENTATION" → sentence case
+- `.data-source` color: brown → sage green
 
 ## [3.6.7] - 2026-09-19
 
 ### Changed
-- Upgraded Python deps: Flask 2.3.3→3.1.3, gunicorn 21.2.0→26.2.0, requests→>=2.34.2, python-dotenv→>=1.2.3, python-crontab 3.2.0→3.4.0, psycopg2-binary 2.9.7→2.9.13 (now effectively requires Python ≥3.10; tested import + `gunicorn --check-config`)
-- Bumped CDN JS libs in `base.html`: Bootstrap 5.1.3→5.3.8, Font Awesome 6.0.0→7.3.1 (checked every `fa-*` class used in templates resolves in FA7; Leaflet was already current at 1.9.4)
+- Upgraded Python deps: Flask 3.1.3, gunicorn 26.2.0, psycopg2-binary 2.9.13, others (now effectively requires Python ≥3.10)
+- Bumped CDN libs: Bootstrap 5.3.8, Font Awesome 7.3.1
 - Renamed `SECRET_KEY` env var to `FLASK_SECRET_KEY`
-- Rewrote `.env.example`: trimmed to only vars the code actually reads, added `OPENWEATHER_API_KEY`, dropped dead placeholders (`TASK_ENABLED_*`, `FLASK_DEBUG`, `RAILWAY_TOKEN`, `SIMULATION_MODE`, `DEFAULT_TIMEOUT`, `MAX_CONCURRENT_TASKS`, `RAILWAY_API_TOKEN`, `DEPLOY_ENV` — none are referenced anywhere), compact one-line-per-var format
-- Consolidated `DEVELOPMENT.md` into a short section of `README.md`; removed stale `SCAN_ARCHITECTURE.md` (documented an `/api/scan` + regional-caching design that was never wired to the frontend — the live map feature uses the simpler `/api/scan-area`)
+- Rewrote `.env.example` to only the vars the code actually reads
+- Consolidated `DEVELOPMENT.md` into `README.md`; removed stale `SCAN_ARCHITECTURE.md`
 - Fixed README inaccuracies: NASA FIRMS/World AQI rate limits, GBIF/NOAA Aurora freshness TTLs, removed nonexistent `/api/dashboard-data` from the API reference table
 
 ### Fixed

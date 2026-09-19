@@ -48,14 +48,18 @@ h3,
 h4,
 h5,
 h6,
-.h1,
-.h2,
-.h3,
-.h4,
-.h5,
-.h6,
 .lead,
 .text-white {
+    color: #fff;
+}
+
+/* beats Bootstrap .h1-.h6 utility classes without matching non-heading elements */
+:is(h1, h2, h3, h4, h5, h6).h1,
+:is(h1, h2, h3, h4, h5, h6).h2,
+:is(h1, h2, h3, h4, h5, h6).h3,
+:is(h1, h2, h3, h4, h5, h6).h4,
+:is(h1, h2, h3, h4, h5, h6).h5,
+:is(h1, h2, h3, h4, h5, h6).h6 {
     color: #fff;
 }
 
@@ -101,12 +105,11 @@ h6,
 }
 
 .card-title {
-    color: var(--infp-forest);
+    color: var(--infp-forest) !important;
 }
 
-/* Bootstrap modals have a white .modal-content background */
 .modal-title {
-    color: var(--infp-forest);
+    color: var(--infp-forest) !important;
 }
 
 .navbar {

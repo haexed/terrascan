@@ -53,7 +53,7 @@
                     <strong>Status</strong><br>
                     <span
                         class="badge {% if providers.nasa_firms.status == 'operational' %}bg-success{% else %}bg-warning{% endif %}">
-                        {{ providers.nasa_firms.status.upper() }}
+                        {{ providers.nasa_firms.status.replace('_', ' ').title() }}
                     </span>
                 </div>
 
@@ -90,7 +90,7 @@
                     <strong>Status</strong><br>
                     <span
                         class="badge {% if providers.openaq.status == 'operational' %}bg-success{% else %}bg-warning{% endif %}">
-                        {{ providers.openaq.status.upper() }}
+                        {{ providers.openaq.status.replace('_', ' ').title() }}
                     </span>
                 </div>
 
@@ -128,7 +128,7 @@
                     <strong>Status</strong><br>
                     <span
                         class="badge {% if providers.noaa_ocean.status == 'operational' %}bg-success{% else %}bg-warning{% endif %}">
-                        {{ providers.noaa_ocean.status.upper() }}
+                        {{ providers.noaa_ocean.status.replace('_', ' ').title() }}
                     </span>
                 </div>
 
@@ -168,7 +168,7 @@
                     <strong>Status</strong><br>
                     <span
                         class="badge {% if providers.openweather.status == 'operational' %}bg-success{% else %}bg-warning{% endif %}">
-                        {{ providers.openweather.status.upper() }}
+                        {{ providers.openweather.status.replace('_', ' ').title() }}
                     </span>
                 </div>
 
@@ -205,7 +205,7 @@
                     <strong>Status</strong><br>
                     <span
                         class="badge {% if providers.gbif.status == 'operational' %}bg-success{% else %}bg-warning{% endif %}">
-                        {{ providers.gbif.status.upper() }}
+                        {{ providers.gbif.status.replace('_', ' ').title() }}
                     </span>
                 </div>
 
@@ -242,7 +242,7 @@
                     <strong>Status</strong><br>
                     <span
                         class="badge {% if providers.openmeteo_marine.status == 'operational' %}bg-success{% else %}bg-warning{% endif %}">
-                        {{ providers.openmeteo_marine.status.upper() }}
+                        {{ providers.openmeteo_marine.status.replace('_', ' ').title() }}
                     </span>
                 </div>
 
@@ -280,7 +280,7 @@
 
                 <div class="mb-3">
                     <strong>Status</strong><br>
-                    <span class="badge bg-success">OPERATIONAL</span>
+                    <span class="badge bg-success">Operational</span>
                 </div>
 
                 <div class="small">
@@ -320,14 +320,14 @@
                                 <td>
                                     <span
                                         class="badge {% if run.status == 'completed' %}bg-success{% elif run.status == 'failed' %}bg-danger{% else %}bg-warning{% endif %}">
-                                        {{ run.status.upper() }}
+                                        {{ run.status.replace('_', ' ').title() }}
                                     </span>
                                 </td>
                                 <td>
                                     <small>{{ run.started_at }}</small>
                                 </td>
                                 <td>
-                                    <small>{{ "%.1f"|format(run.duration_seconds or 0) }}s</small>
+                                    <small>{% if run.duration_seconds is not none %}{{ "%.1f"|format(run.duration_seconds) }}s{% elif run.status == 'running' %}Running…{% else %}No data{% endif %}</small>
                                 </td>
                                 <td>
                                     <span class="text-success">{{ run.records_processed }}</span>
