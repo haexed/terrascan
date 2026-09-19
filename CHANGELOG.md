@@ -119,7 +119,7 @@ All notable changes to Terrascan will be documented in this file.
 ### Fixed
 - `/system`'s Open-Meteo card showed 0 records (wrong hardcoded key `openmeteo` vs real `openmeteo_marine`) while the breakdown table below it showed the real count
 - Aurora freshness badge used the wrong key (`noaa_aurora` vs real `noaa_swpc`), silently falling back to a 24h threshold instead of 1h
-- Audited every real `provider_key` against every hardcoded provider list in the app — findings in `TODO.md` under "Data providers"
+- Audited every real `provider_key` against every hardcoded provider list in the app
 
 ## [3.6.9] - 2026-09-19
 
