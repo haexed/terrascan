@@ -67,11 +67,6 @@ h6,
     color: var(--infp-forest);
 }
 
-.control-panel h5,
-.health-score-widget h6 {
-    color: var(--infp-forest);
-}
-
 /* eco-card text and links - all use forest green on white background */
 .eco-card,
 .eco-card h1,

@@ -45,13 +45,23 @@
 <div id="map"></div>
 
 <div class="control-panel" id="control-panel">
+    <div class="control-health" onclick="toggleHealthBreakdown()" title="Click for breakdown">
+        <span class="small text-muted">🌍 Planetary Health</span>
+        <div class="health-score status-{{ health_score.status.lower() if health_score else 'unknown' }}">
+            {{ health_score.score if health_score and health_score.score is not none else 'No data' }}/100
+        </div>
+        <div class="small status-{{ health_score.status.lower() if health_score else 'unknown' }}">
+            {{ health_score.status if health_score else 'No data' }}
+        </div>
+        <div class="small text-muted">
+            {{ health_score.sources_used if health_score else 0 }}/{{ health_score.sources_total if health_score else 3 }} sources
+        </div>
+    </div>
     <div class="control-header" onclick="toggleControlPanel()">
-        <h5 class="mb-0"><strong>🌍 Terrascan</strong></h5>
+        <span class="small text-muted">Live Environmental Layers</span>
         <span class="collapse-icon" id="collapse-icon">▼</span>
     </div>
     <div class="control-body" id="control-body">
-        <p class="small mb-2 text-muted">Live Environmental Layers</p>
-
         <label class="layer-toggle">
             <span class="layer-icon">🔥</span>
             <span class="layer-info">
@@ -123,19 +133,6 @@
             <input type="checkbox" id="satellite-view" checked>
             <span class="toggle-switch"></span>
         </label>
-    </div>
-</div>
-
-<div class="health-score-widget" onclick="toggleHealthBreakdown()" style="cursor: pointer;" title="Click for breakdown">
-    <h6 class="mb-2">🌍 Planetary Health</h6>
-    <div class="health-score status-{{ health_score.status.lower() if health_score else 'unknown' }}">
-        {{ health_score.score if health_score else '--' }}/100
-    </div>
-    <div class="mt-1 small status-{{ health_score.status.lower() if health_score else 'unknown' }}">
-        {{ health_score.status if health_score else 'No data' }}
-    </div>
-    <div class="small mt-1 text-muted">
-        {{ health_score.sources_used if health_score else 0 }}/{{ health_score.sources_total if health_score else 3 }} sources
     </div>
 </div>
 

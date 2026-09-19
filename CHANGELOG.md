@@ -2,6 +2,12 @@
 
 All notable changes to Terrascan will be documented in this file.
 
+## [3.6.13] - 2026-09-19
+
+### Changed
+- `/map` control panel redesign: Planetary Health merged into the top of the same panel as the layer toggles (was a separate floating box, could overlap the controls at some viewport sizes — now structurally impossible, only one panel). "Live Environmental Layers" is now the collapsible header, replacing the redundant "🌍 Terrascan" one (already in the navbar)
+- Health breakdown panel repositioned to anchor off the left panel instead of the removed right-side widget
+
 ## [3.6.12] - 2026-09-19
 
 ### Fixed

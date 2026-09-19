@@ -4,7 +4,7 @@ Common utilities for the environmental monitoring platform
 """
 
 # Version information
-VERSION = "3.6.12"
+VERSION = "3.6.13"
 BUILD_DATE = "2026-09-19"
 DESCRIPTION = "Environmental Health Monitoring Dashboard - Python/PostgreSQL Platform"
 

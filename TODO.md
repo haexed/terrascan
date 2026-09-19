@@ -5,7 +5,7 @@ Pending work. When something ships: move to `CHANGELOG.md`, commit, delete from 
 ## Git tags
 
 - Drop `v` prefix from remaining old tags (`v3.6.5` → `3.6.5`, etc.) — needs force-push to `origin`, confirm before running.
-- Push new tags to GitHub: `git push origin 3.6.8 3.6.9 3.6.10 3.6.11` (this sandbox can't reach the remote).
+- Push new tags to GitHub: `git push origin 3.6.8 3.6.9 3.6.10 3.6.11 3.6.12` (this sandbox can't reach the remote).
 
 ## Data sources
 
@@ -37,7 +37,6 @@ Fix direction: one provider-metadata source (small DB table or config), `/system
 
 ## Frontend / UI
 
-- `/map`: "Score Breakdown" panel overlaps health score widget; health score widget overlaps map controls at some viewport sizes.
 - `/map`: page-level scrollbar with nothing to scroll to.
 - `/map` (Leaflet): zooming in/out removes all other `leaflet-interactive` markers until manual refresh.
 - `/tasks`: "All Tasks" cards + "Recent Task Runs" list redundant with `/system`'s table. Merge into one table: per-task row, last-run status/time/records, "View Logs" button.
