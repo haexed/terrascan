@@ -243,7 +243,7 @@
 }
 </script>
 
-<script src="{{ url_for('static', filename='js/tasks.js') }}"></script>
+<script src="{{ url_for('static', filename='js/tasks.js') }}?v={{ version }}"></script>
 <script>
     // Load data from JSON element to avoid linter conflicts
     document.addEventListener('DOMContentLoaded', function () {

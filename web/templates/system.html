@@ -407,15 +407,13 @@
             const result = await response.json();
 
             if (result.success) {
-                alert(`✅ Data collection completed!\n\n` +
-                    `${result.message}\n\n` +
-                    `Page will reload to show new data.`);
-                location.reload();
+                showNotification(`✅ Data collection completed: ${result.message}`, 'success');
+                setTimeout(() => location.reload(), 1500);
             } else {
-                alert('❌ Data collection failed: ' + (result.error || 'Unknown error'));
+                showNotification('❌ Data collection failed: ' + (result.error || 'Unknown error'), 'error');
             }
         } catch (error) {
-            alert('❌ Error: ' + error.message);
+            showNotification('❌ Error: ' + error.message, 'error');
         } finally {
             button.innerHTML = originalText;
             button.disabled = false;
@@ -434,16 +432,13 @@
             const result = await response.json();
 
             if (result.success) {
-                alert(`🦋 Biodiversity data collected!\n\n` +
-                    `${result.message}\n` +
-                    `📊 Records processed: ${result.records_processed}\n\n` +
-                    `Page will reload to show new data.`);
-                location.reload();
+                showNotification(`🦋 Biodiversity data collected: ${result.message} (${result.records_processed} records)`, 'success');
+                setTimeout(() => location.reload(), 1500);
             } else {
-                alert('❌ Biodiversity collection failed: ' + (result.error || 'Unknown error'));
+                showNotification('❌ Biodiversity collection failed: ' + (result.error || 'Unknown error'), 'error');
             }
         } catch (error) {
-            alert('❌ Error: ' + error.message);
+            showNotification('❌ Error: ' + error.message, 'error');
         } finally {
             button.innerHTML = originalText;
             button.disabled = false;

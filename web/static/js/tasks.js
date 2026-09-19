@@ -59,29 +59,7 @@ function setupEventListeners() {
     }
 }
 
-/**
- * Show notification to user
- */
-function showNotification(message, type = 'info') {
-    const alertClass = type === 'success' ? 'alert-success' :
-        type === 'error' ? 'alert-danger' : 'alert-info';
-
-    const alert = document.createElement('div');
-    alert.className = `alert ${alertClass} alert-dismissible fade show toast-notification`;
-    alert.innerHTML = `
-        ${message}
-        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-    `;
-
-    document.body.appendChild(alert);
-
-    // Auto-remove after 5 seconds
-    setTimeout(() => {
-        if (alert.parentNode) {
-            alert.remove();
-        }
-    }, 5000);
-}
+// showNotification() is defined globally in base.html
 
 /**
  * Run a single task (disabled in read-only mode)

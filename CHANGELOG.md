@@ -2,6 +2,14 @@
 
 All notable changes to Terrascan will be documented in this file.
 
+## [3.6.20] - 2026-09-19
+
+### Fixed
+- Replaced 7 blocking `alert()` popups on `/system` and `/system/schema` with the existing toast notification. Moved `showNotification()` into `base.html`, removed the duplicate from `tasks.js`.
+
+### Added
+- `?v={{ version }}` cache-busting query param on all local CSS/JS includes.
+
 ## [3.6.19] - 2026-09-19
 
 ### Fixed
