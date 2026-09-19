@@ -23,7 +23,7 @@ Every message this session prefixed "todo" / "todo:" (plus a couple of other exp
 7. `todo: delete all html comments`
    - done (3.6.9)
 8. `todo drop all "v" prefix in all git tags.`
-   - **open**, needs confirmation (force-push to a real remote)
+   - done locally: all 25 `v`-prefixed tags renamed (`v3.6.5` -> `3.6.5`, etc). Annotated tags stayed annotated with their original message, tagger and date; lightweight ones stayed lightweight. Verified every old tag's target commit is still reachable under the new name. **Remote still has the old names** - this sandbox can't reach `origin` (ssh is blocked), so the GitHub side is left for you, see "Git tags" below.
 9. `todo: check if newest tags are set on commits.`
    - answered + fixed (tagged 3.6.8-3.6.14)
 10. `todo: chlog+commit when applicable in session`
@@ -76,8 +76,15 @@ Every message this session prefixed "todo" / "todo:" (plus a couple of other exp
 
 ## Git tags
 
-- Drop `v` prefix from remaining old tags (`v3.6.5` → `3.6.5`, etc.) — needs force-push to `origin`, confirm before running.
-- Push new tags to GitHub: `git push origin 3.6.8 3.6.9 3.6.10 3.6.11 3.6.12 3.6.13 3.6.14` (this sandbox can't reach the remote). **Note: `git tag -l` on 2026-09-19 shows nothing above `v3.6.5` - the 3.6.8-3.6.14 tags an earlier session recorded as created don't exist in this repo. They need recreating before they can be pushed.**
+Local tags are all unprefixed now (42 of them, `1.0.0` through `3.7.1`). GitHub still has the old `v`-prefixed names and is missing everything from `3.6.8` up. Two commands from a shell that can reach `origin`:
+
+```
+git push origin --tags
+git push origin --delete v1.0.0 v1.1.0 v1.1.1 v1.1.2 v1.1.3 v1.1.4 v1.1.5 v1.1.6 v2.2.0 v2.2.1 v2.2.2 v2.2.3 v2.3.0 v2.4.0 v2.7.0 v3.3.0 v3.4.0 v3.5.0 v3.5.1 v3.6.0 v3.6.1 v3.6.2 v3.6.3 v3.6.4 v3.6.5
+```
+
+The second one deletes published tags - anyone who already fetched them keeps their local copies until they prune.
+
 - WCAG/axe-core audit was run (2026-09-19): violations found and documented, but the auto-applied fixes were reverted per feedback (ask was to report, not change rules). If a real fix pass is wanted, do it as a reviewed, incremental PR-style set of changes instead of a single sweep.
 
 ## Data sources
