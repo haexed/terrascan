@@ -5,7 +5,6 @@
     --infp-yellow: #F6E27A;
     --infp-cream: #F9F6F0;
     --infp-gray: #B0B7B6;
-    --infp-brown: #7C6F57;
     --infp-sage: #268257;
 }
 
@@ -85,11 +84,10 @@ h6,
 }
 
 .eco-card a {
-    text-decoration: underline dotted var(--infp-green);
+    text-decoration: underline solid var(--infp-green);
 }
 
 .eco-card a:hover {
-    color: var(--infp-brown);
     text-decoration: underline solid var(--infp-green);
 }
 
@@ -114,7 +112,6 @@ h6,
     background: rgba(51, 164, 116, 0.97) !important;
     backdrop-filter: blur(10px);
     border-bottom: 2px solid var(--infp-yellow);
-    color: var(--infp-brown);
     padding: 0.5rem 1rem !important;
     min-height: 56px !important;  /* Lock navbar height */
 }
@@ -282,17 +279,12 @@ h6,
 a,
 a:visited {
     color: var(--infp-forest);
-    text-decoration: underline dotted var(--infp-yellow);
+    text-decoration: underline solid var(--infp-green);
 }
 
 a.btn,
 a.btn:visited {
     color: #fff;
-}
-
-a:hover {
-    color: var(--infp-brown);
-    text-decoration: underline solid var(--infp-green);
 }
 
 /* Utility classes */
@@ -322,13 +314,13 @@ a:hover {
 .footer a,
 .footer-bar a {
     color: var(--infp-yellow) !important;
-    text-decoration: underline dotted var(--infp-yellow);
+    text-decoration: underline;
 }
 
 .footer a:hover,
 .footer-bar a:hover {
     color: #fff !important;
-    text-decoration: underline solid #fff;
+    text-decoration: underline;
 }
 
 /* footer text-muted rule removed - no longer needed */

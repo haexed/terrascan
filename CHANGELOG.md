@@ -2,6 +2,12 @@
 
 All notable changes to Terrascan will be documented in this file.
 
+## [3.6.17] - 2026-09-19
+
+### Changed
+- Anchor decoration unified to solid green underline (was a mix of dotted green/yellow); `--infp-brown` removed entirely (navbar fallback color, `a:hover`, `.eco-card a:hover` all dropped it rather than guess a replacement)
+- Footer links: underline no longer hardcoded green (was invisible against the green footer background under yellow text) — follows the link's own text color instead
+
 ## [3.6.16] - 2026-09-19
 
 ### Removed

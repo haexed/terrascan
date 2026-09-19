@@ -2,12 +2,14 @@
 
 Pending work. When something ships: move to `CHANGELOG.md`, commit, delete from here.
 
+**Design/visual status convention (per explicit instruction, 2026-09-19):** Claude does not have visual judgment on this project and must not claim a design/visual fix is "done." Such items get marked **tried fix — needs QA** (a change was made and is functionally verified — page loads, no console/HTTP errors — but whether it looks right is for the human to confirm) instead of "done." Only mechanical/factual fixes (data bugs, dead code removal, doc corrections, etc.) get marked "done."
+
 ## Verbatim todos from session (2026-09-19)
 
 Every message this session prefixed "todo" / "todo:", quoted exactly as written. Status noted after each; still-open ones are also folded into the topical sections below.
 
-1. `todo: "Score Breakdown" overlapping health box.` — done (3.6.13)
-2. `todo: health box overlapping map controls.` — done (3.6.13)
+1. `todo: "Score Breakdown" overlapping health box.` — tried fix, needs QA (3.6.13)
+2. `todo: health box overlapping map controls.` — tried fix, needs QA (3.6.13)
 3. `todo: front page shows scrollbars without effect.` — **open**
 4. `todo remove all "—". e.g. Active Fires. should be 0 (zero) or no data.` — done
 5. `todo: zooming in map and out removes all other leaflet-interactive (dots) until refresh, broken.` — **open**
@@ -20,11 +22,13 @@ Every message this session prefixed "todo" / "todo:", quoted exactly as written.
 12. `todo: fix data sources info: e.g. system open-meteo says 0 records, but also says 6283 records further down.` — done (3.6.10)
 13. `todo: collects data providers in system in a nicer table than the huge 6 cards.` — **open**
 14. `todo: get a hold of the actual data providers, website shows different providers everywhere, make sure none are hardcoded, should be pure data in db.` — **open**, investigated and documented under "Data providers" below
-15. `todo replace ugly data-source brown color to a normal terrascan color` — done (3.6.8, `.data-source` → `var(--infp-sage)`, a new palette color introduced then). This landed in the earlier non-WCAG commit, not the one reverted in 3.6.14, so it's still live — flag if this should've been reverted too as a "forced random color."
-16. `todo move planetary health box above "Live Environmental Layers" and let "Live Environmental Layers" be the pullup, solving the blocking of map-controls. no need for the dupe control-header h5` — done (3.6.13)
-17. `todo: still ugly brown, e.g. on .eco-card a:not(.btn):hover . links have no unity no more` — **open**, folded into the link/hover-color entry below
+15. `todo replace ugly data-source brown color to a normal terrascan color` — tried fix, needs QA (3.6.8, `.data-source` → `var(--infp-sage)`, a new palette color introduced then). This landed in the earlier non-WCAG commit, not the one reverted in 3.6.14, so it's still live.
+16. `todo move planetary health box above "Live Environmental Layers" and let "Live Environmental Layers" be the pullup, solving the blocking of map-controls. no need for the dupe control-header h5` — tried fix, needs QA (3.6.13)
+17. `todo: still ugly brown, e.g. on .eco-card a:not(.btn):hover . links have no unity no more` — tried fix, needs QA (3.6.17: removed `--infp-brown` entirely, dropped the `.eco-card a:hover`/`a:hover` color changes rather than guess a replacement — hover now only changes decoration style, not color)
 18. `todo remove css .pulse` — done: removed `.pulse` class + its two badge usages (`dashboard.html`, `index.html`)
 19. `todo remove css .pulse and its usage` — done: previous pass missed the two other direct users of the `pulse` keyframe (`.task-running .status-badge` in `style.css`, `.stat-item.scan-status` in `map.css`) — removed both rules and both `@keyframes pulse` definitions. `scan-pulse` (different name, map scan button) and `new-marker-pulse` (different name, `map.js`) left alone — not literally "pulse".
+20. `todo remove/replace all dotted decor on anchors. solid green is plenty. infp-brown still in use. continue cleaning.` — tried fix, needs QA (3.6.17): every `text-decoration: underline dotted ...` (was green in `.eco-card`, yellow elsewhere) → `underline solid var(--infp-green)`; `--infp-brown` variable and all its usages (navbar fallback text color, `a:hover`, `.eco-card a:hover`) removed entirely, not replaced with a guessed color.
+21. `tofo footer yellow links on green bg cant have green underline` — fixed: caught a real bug from #20 above, applying solid green underline blindly everywhere put a green underline under yellow footer text on the green footer background (same color as the background, invisible/nonsensical). `.footer a`/`.footer-bar a` now just `text-decoration: underline` with no explicit color, so it follows the link's own `color` (yellow normally, white on hover) instead of a separately-picked color. Checked every other anchor on the site for the same clash — all others sit on white-ish `.eco-card` backgrounds, no clash.
 
 ## Git tags
 
@@ -65,4 +69,4 @@ Fix direction: one provider-metadata source (small DB table or config), `/system
 - `/map`: page-level scrollbar with nothing to scroll to.
 - `/map` (Leaflet): zooming in/out removes all other `leaflet-interactive` markers until manual refresh.
 - `/tasks`: "All Tasks" cards + "Recent Task Runs" list redundant with `/system`'s table. Merge into one table: per-task row, last-run status/time/records, "View Logs" button.
-- Link/hover colors: `--infp-brown` (used for `a:hover`, `.eco-card a:hover`) called out as ugly; link styling generally feels inconsistent. Needs an actual design pass, not a color swap guessed by Claude.
+- Link/hover colors: tried fix, needs QA (3.6.17) — `--infp-brown` removed, anchors now just solid-green-underline with no color change on hover. Whether this reads as "unified" is for a human to judge; needs an actual design pass if not, not another guess from Claude.
