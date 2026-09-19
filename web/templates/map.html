@@ -47,10 +47,10 @@
 <div class="control-panel" id="control-panel">
     <div class="control-health">
         <span class="small text-muted">🌍 Planetary Health</span>
-        <button type="button" class="health-info" id="health-info" onclick="toggleHealthBreakdown()"
-            title="Score breakdown" aria-label="Score breakdown">&#9432;</button>
         <div class="health-score status-{{ health_score.status.lower() if health_score else 'unknown' }}">
-            {{ health_score.score if health_score and health_score.score is not none else 'No data' }}/100
+            {{ health_score.score if health_score and health_score.score is not none else 'No data' }}/100<a
+                href="#" class="health-info" id="health-info" onclick="toggleHealthBreakdown(); return false;"
+                title="Score breakdown" aria-label="Score breakdown">&#9432;</a>
         </div>
         <div class="small status-{{ health_score.status.lower() if health_score else 'unknown' }}">
             {{ health_score.status if health_score else 'No data' }}

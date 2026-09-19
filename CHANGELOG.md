@@ -2,6 +2,12 @@
 
 All notable changes to Terrascan will be documented in this file.
 
+## [3.7.12] - 2026-09-19
+
+### Changed
+- `/map`: the breakdown link is an anchor next to the score itself, not a button next to the "Planetary Health" label.
+- `/map`: `.layer-toggle` loses its padding and its border-radius. Panel 595px to 515px, rows 34px to 24px.
+
 ## [3.7.11] - 2026-09-19
 
 ### Changed
