@@ -2,6 +2,11 @@
 
 All notable changes to Terrascan will be documented in this file.
 
+## [3.7.1] - 2026-09-19
+
+### Changed
+- `/tasks`: dropped the "Running" badge from the Status column. The Result column already shows a running task, so the row said it twice. Status is now just Active/Inactive.
+
 ## [3.7.0] - 2026-09-19
 
 ### Added

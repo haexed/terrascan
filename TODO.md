@@ -71,6 +71,9 @@ Every message this session prefixed "todo" / "todo:" (plus a couple of other exp
 29. `fas fa-spinner fa-spin` is not spinning
     - fixed (3.7.0). Reproduced in headless Chrome: Font Awesome 7 has `@media (prefers-reduced-motion: reduce) { .fa-spin { animation: none !important } }`, so with that preference on, every spinner renders but never moves. (FA 6 used a 1ms animation; 7 kills it outright.) Added a later `!important` rule in `style.css` keeping `.fa-spin` at a slow 3s turn under that preference - a frozen spinner reads as "hung", which is worse than a gentle one. Verified spinning in both modes. Nothing in the app's own CSS was touching it.
 
+30. `todo remove running from status column, it's redundant when running in result column`
+    - done (3.7.1): the Status column on `/tasks` showed an extra "Running" badge alongside Active/Inactive while the Result column said "Running" too. Removed the badge; `tasks.js` only sets the row's `task-running` class, so nothing re-injects it.
+
 ## Git tags
 
 - Drop `v` prefix from remaining old tags (`v3.6.5` → `3.6.5`, etc.) — needs force-push to `origin`, confirm before running.

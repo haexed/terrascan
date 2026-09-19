@@ -98,9 +98,6 @@
                                     {% else %}
                                     <span class="badge bg-secondary">Inactive</span>
                                     {% endif %}
-                                    {% if task.name in (running_tasks | map(attribute='task_name') | list) %}
-                                    <span class="badge bg-warning"><i class="fas fa-spinner fa-spin"></i> Running</span>
-                                    {% endif %}
                                 </td>
                                 <td>
                                     {% if task.cron_schedule == 'on_demand' %}
