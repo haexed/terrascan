@@ -30,9 +30,9 @@ from utils.regional_fetcher import get_regional_fetcher
 def create_app():
     """Create and configure the Flask application"""
     app = Flask(__name__, static_folder='static', static_url_path='/static')
-    secret_key = os.environ.get('SECRET_KEY')
+    secret_key = os.environ.get('FLASK_SECRET_KEY')
     if not secret_key:
-        raise ValueError("SECRET_KEY environment variable is required for production security")
+        raise ValueError("FLASK_SECRET_KEY environment variable is required for production security")
     app.config['SECRET_KEY'] = secret_key
     
     # Initialize database on startup

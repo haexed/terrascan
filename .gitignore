@@ -68,3 +68,7 @@ instance/
 # Testing
 .pytest_cache/
 .hypothesis/
+
+# Private local tooling
+CLAUDE.md
+claude-bwrap

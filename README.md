@@ -2,7 +2,7 @@
 
 **Monitor Earth's environmental health in real-time**
 
-![Version](https://img.shields.io/badge/version-3.6.6-blue)
+![Version](https://img.shields.io/badge/version-3.6.7-blue)
 ![Database](https://img.shields.io/badge/database-PostgreSQL-green)
 ![License](https://img.shields.io/badge/license-MIT-blue)
 ![Status](https://img.shields.io/badge/status-production-green)
@@ -68,8 +68,8 @@
 
 | Provider | API Key Required | Free Tier | Sign Up Link |
 |----------|------------------|-----------|--------------|
-| 🔥 NASA FIRMS | **Required** | 1000/day | [NASA FIRMS](https://firms.modaps.eosdis.nasa.gov/api/) |
-| 🌬️ World AQI (Primary) | **Recommended** | 10,000/day | [AQICN](https://aqicn.org/api/) |
+| 🔥 NASA FIRMS | **Required** | 5,000 transactions/10 min | [NASA FIRMS](https://firms.modaps.eosdis.nasa.gov/api/) |
+| 🌬️ World AQI (Primary) | **Recommended** | 1,000 requests/sec | [AQICN](https://aqicn.org/api/) |
 | 🌬️ OpenAQ (Fallback) | Optional | Limited | [OpenAQ](https://openaq.org/) |
 | 🌊 NOAA | **Free** | Unlimited | No key needed |
 | 🌐 Open-Meteo | **Free** | Unlimited | No key needed (CC-BY 4.0) |
@@ -130,8 +130,8 @@ This approach minimizes costs for low-traffic deployments (serverless-friendly).
 | 🌬️ OpenAQ | Air quality stations | 12 hours |
 | 🌊 Open-Meteo Marine | Sea surface temperature | 24 hours |
 | 🌡️ OpenWeatherMap | Current conditions | 6 hours |
-| 🦋 GBIF Biodiversity | Species observations | 48 hours |
-| ⚡ NOAA Aurora | Aurora forecast | 6 hours |
+| 🦋 GBIF Biodiversity | Species observations | 168 hours |
+| ⚡ NOAA Aurora | Aurora forecast | 1 hour |
 | ⚔️ UCDP Conflicts | Armed conflicts (monthly candidate release) | 168 hours |
 
 ---
@@ -148,15 +148,7 @@ DATABASE_URL=postgresql://user:pass@host:port/db
 
 ### Database Schema
 
-```sql
--- Core tables
-CREATE TABLE metric_data (...)     -- Environmental measurements
-CREATE TABLE task (...)           -- Task definitions  
-CREATE TABLE task_log (...)       -- Execution history
-CREATE TABLE system_config (...)  -- Application settings
-```
-
-For complete schema details, see: [database/schema.sql](database/schema.sql)
+see: [database/schema.sql](database/schema.sql)
 
 ### Data Integrity Implementation
 
@@ -189,31 +181,31 @@ The server startup logs can be misleading - just because it prints "Running on l
 
 ---
 
-## 🛠️ Local Development Setup
+## 🛠️ PostgreSQL Setup
 
-### Requirements
-
-- Python 3.8+
-- pip package manager
-- Internet connection (for API calls)
-
-### PostgreSQL Development
+Terrascan requires PostgreSQL for both dev and prod (`DATABASE_URL` in `.env`, see Quick Start above).
 
 ```bash
-# 1. Clone and setup
-git clone https://github.com/haexed/terrascan.git
-cd terrascan
-pip install -r requirements.txt
+# Create a local database + user (psql)
+sudo -u postgres psql -c "CREATE DATABASE terrascan_dev;"
+sudo -u postgres psql -c "CREATE USER terrascan_user WITH PASSWORD 'your_secure_password';"
+sudo -u postgres psql -c "GRANT ALL PRIVILEGES ON DATABASE terrascan_dev TO terrascan_user;"
 
-# 2. Configure environment
-cp .env.example .env
-# Edit .env with your API keys and DATABASE_URL
+echo 'DATABASE_URL=postgresql://terrascan_user:your_secure_password@localhost/terrascan_dev' >> .env
 
-# 3. Run application
-python run.py
+# Create schema
+python3 setup_production_railway.py
 ```
 
-**Note**: Terrascan requires PostgreSQL. For detailed local PostgreSQL setup, see: [DEVELOPMENT.md](DEVELOPMENT.md)
+### Running tasks
+
+```bash
+python3 tasks/runner.py list                # list all tasks
+python3 tasks/runner.py run nasa_fires_global  # run one task manually
+python3 tasks/runner.py status              # recent run status
+```
+
+Or via the web UI at `/tasks` — runs tasks manually and shows live logs.
 
 ---
 
@@ -233,11 +225,13 @@ python run.py
 
 | Endpoint | Method | Description |
 |----------|--------|-------------|
-| `/api/dashboard-data` | GET | Dashboard metrics |
 | `/api/map-data` | GET | Map markers data |
+| `/api/freshness` | GET | Data freshness status per source |
 | `/api/refresh` | POST | Trigger data collection |
+| `/api/smart-refresh` | POST | Refresh only stale sources |
 | `/api/tasks` | GET | Task list and status |
 | `/api/tasks/<name>/logs` | GET | Task execution logs |
+| `/api/health` | GET | Health check |
 
 ### Administrative APIs
 

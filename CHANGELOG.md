@@ -2,6 +2,20 @@
 
 All notable changes to Terrascan will be documented in this file.
 
+## [3.6.7] - 2026-09-19
+
+### Changed
+- Upgraded Python deps: Flask 2.3.3→3.1.3, gunicorn 21.2.0→26.2.0, requests→>=2.34.2, python-dotenv→>=1.2.3, python-crontab 3.2.0→3.4.0, psycopg2-binary 2.9.7→2.9.13 (now effectively requires Python ≥3.10; tested import + `gunicorn --check-config`)
+- Bumped CDN JS libs in `base.html`: Bootstrap 5.1.3→5.3.8, Font Awesome 6.0.0→7.3.1 (checked every `fa-*` class used in templates resolves in FA7; Leaflet was already current at 1.9.4)
+- Renamed `SECRET_KEY` env var to `FLASK_SECRET_KEY`
+- Rewrote `.env.example`: trimmed to only vars the code actually reads, added `OPENWEATHER_API_KEY`, dropped dead placeholders (`TASK_ENABLED_*`, `FLASK_DEBUG`, `RAILWAY_TOKEN`, `SIMULATION_MODE`, `DEFAULT_TIMEOUT`, `MAX_CONCURRENT_TASKS`, `RAILWAY_API_TOKEN`, `DEPLOY_ENV` — none are referenced anywhere), compact one-line-per-var format
+- Consolidated `DEVELOPMENT.md` into a short section of `README.md`; removed stale `SCAN_ARCHITECTURE.md` (documented an `/api/scan` + regional-caching design that was never wired to the frontend — the live map feature uses the simpler `/api/scan-area`)
+- Fixed README inaccuracies: NASA FIRMS/World AQI rate limits, GBIF/NOAA Aurora freshness TTLs, removed nonexistent `/api/dashboard-data` from the API reference table
+
+### Fixed
+- Local dev was silently broken: `.env` had no secret-key var at all, so `python run.py` always crashed on startup despite production (Railway) working fine
+- Rebuilt local `.venv` (was built against Python 3.13, which no longer exists on this machine)
+
 ## [3.6.6] - 2026-04-06
 
 ### Added
