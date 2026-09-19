@@ -239,10 +239,6 @@ h6,
     color: var(--infp-forest);
 }
 
-.pulse {
-    animation: pulse 2s infinite;
-}
-
 @keyframes pulse {
     0% {
         opacity: 1;

@@ -2,6 +2,11 @@
 
 All notable changes to Terrascan will be documented in this file.
 
+## [3.6.15] - 2026-09-19
+
+### Removed
+- `.pulse` CSS class and its two badge usages (`dashboard.html`, `index.html`); `@keyframes pulse` kept, still used directly by `.task-running .status-badge`
+
 ## [3.6.14] - 2026-09-19
 
 ### Reverted
