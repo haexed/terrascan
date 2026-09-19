@@ -2,6 +2,11 @@
 
 All notable changes to Terrascan will be documented in this file.
 
+## [3.7.6] - 2026-09-19
+
+### Changed
+- `/map`: neighbour cells prefetch one at a time instead of in parallel. Four parallel prefetches queued ahead of the next visible fetch, which turned a 435ms request into 2.3s.
+
 ## [3.7.5] - 2026-09-19
 
 ### Changed

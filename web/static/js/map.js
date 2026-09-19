@@ -573,16 +573,24 @@ function renderCachedTiles() {
  * Warm the cells around the viewport so a short pan has data ready
  * @returns {void}
  */
-function prefetchNeighbours() {
+async function prefetchNeighbours() {
     if (tileRequests.size) {
         // Visible cells are still loading; don't compete with them
         schedulePrefetch();
         return;
     }
-    neighbourTiles()
+
+    const missing = neighbourTiles()
         .filter(tile => !cachedTile(tile.key))
-        .slice(0, TILE_PREFETCH_MAX)
-        .forEach(fetchTile);
+        .slice(0, TILE_PREFETCH_MAX);
+
+    // One at a time. Firing these in parallel put four requests in front of
+    // the next visible fetch, and with a 3-connection pool against a remote
+    // database that turned a 435ms request into 2s.
+    for (const tile of missing) {
+        if (tileRequests.size) return;
+        await fetchTile(tile);
+    }
 }
 
 /**
