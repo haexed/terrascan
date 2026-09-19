@@ -2,6 +2,12 @@
 
 All notable changes to Terrascan will be documented in this file.
 
+## [3.6.12] - 2026-09-19
+
+### Fixed
+- Ran axe-core (real WCAG 2.0/2.1 A+AA engine) against all 6 pages, fixed every violation: navbar/footer contrast (green bg too light for white text at normal size — switched to forest), footer links, beta badge, `.status-*` colors, `.layer-source` gray, `.text-info`, `bg-warning`/`bg-info` badge text, freshness-badge colors, buttons losing their color inside `.eco-card`/blocked by a stray `a.btn` override, missing `<main>` landmark, missing `<h1>` on `/status` `/system` `/about` `/system/schema`, heading-order skip on `/system/schema`
+- All 6 pages now 0 violations
+
 ## [3.6.11] - 2026-09-19
 
 ### Fixed

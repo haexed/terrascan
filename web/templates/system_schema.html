@@ -8,7 +8,7 @@
     <div class="row mb-4">
         <div class="col-12">
             <div class="eco-card text-center p-4">
-                <h2 class="mb-3">🗄️ Database Schema Documentation</h2>
+                <h1 class="mb-3">🗄️ Database Schema Documentation</h1>
                 <div class="row">
                     <div class="col-md-3">
                         <div class="metric-value text-primary">{{ schema.database_info.database }}</div>
@@ -81,7 +81,7 @@
                     <div class="eco-card p-4">
                         <div class="d-flex justify-content-between align-items-center mb-3">
                             <div>
-                                <h4 class="mb-1">📋 {{ table.table_name }}</h4>
+                                <h2 class="h4 mb-1">📋 {{ table.table_name }}</h2>
                                 {% if table.purpose %}
                                 <div class="data-source">{{ table.purpose }}</div>
                                 {% endif %}
@@ -105,7 +105,7 @@
                         <div class="row mb-3">
                             {% if table.key_features %}
                             <div class="col-md-6">
-                                <h6>🔑 Key Features</h6>
+                                <h3 class="h6">🔑 Key Features</h3>
                                 <ul class="list-unstyled">
                                     {% for feature in table.key_features %}
                                     <li class="small mb-1">✅ {{ feature }}</li>
@@ -115,7 +115,7 @@
                             {% endif %}
                             {% if table.data_sources %}
                             <div class="col-md-6">
-                                <h6>🌍 Data Sources</h6>
+                                <h3 class="h6">🌍 Data Sources</h3>
                                 <ul class="list-unstyled">
                                     {% for source in table.data_sources %}
                                     <li class="small mb-1">📡 {{ source }}</li>
@@ -180,13 +180,13 @@
             <div class="row mb-4">
                 <div class="col-12">
                     <div class="eco-card p-4">
-                        <h4 class="mb-3">🛡️ {{ table_name }} Constraints</h4>
+                        <h2 class="h4 mb-3">🛡️ {{ table_name }} Constraints</h2>
                         <div class="row">
                             {% for constraint in table_constraints %}
                             <div class="col-md-6 mb-3">
                                 <div class="card h-100">
                                     <div class="card-body">
-                                        <h6 class="card-title">
+                                        <h3 class="h6 card-title">
                                             {% if constraint.constraint_type == 'PRIMARY KEY' %}
                                             <span class="badge bg-primary">🔑 PRIMARY KEY</span>
                                             {% elif constraint.constraint_type == 'FOREIGN KEY' %}
@@ -196,7 +196,7 @@
                                             {% else %}
                                             <span class="badge bg-info">{{ constraint.constraint_type }}</span>
                                             {% endif %}
-                                        </h6>
+                                        </h3>
                                         <p class="card-text small mb-1"><strong>Name:</strong> {{
                                             constraint.constraint_name }}</p>
                                         {% if constraint.column_name %}
@@ -227,13 +227,13 @@
             <div class="row mb-4">
                 <div class="col-12">
                     <div class="eco-card p-4">
-                        <h4 class="mb-3">🔗 {{ table_name }} Indexes</h4>
+                        <h2 class="h4 mb-3">🔗 {{ table_name }} Indexes</h2>
                         {% for index in table_indexes %}
                         <div class="card mb-3">
                             <div class="card-body">
                                 <div class="row align-items-center">
                                     <div class="col-md-8">
-                                        <h6 class="card-title">📊 {{ index.indexname }}</h6>
+                                        <h3 class="h6 card-title">📊 {{ index.indexname }}</h3>
                                         <div class="bg-light p-3 rounded">
                                             <code class="small">{{ index.indexdef }}</code>
                                         </div>
@@ -263,7 +263,7 @@
             <div class="row mb-4">
                 <div class="col-12">
                     <div class="eco-card p-4">
-                        <h4 class="mb-3">📊 Table Statistics</h4>
+                        <h2 class="h4 mb-3">📊 Table Statistics</h2>
                         <div class="row">
                             {% for stat in schema.data_statistics.table_stats %}
                             <div class="col-md-4 mb-3">
@@ -290,7 +290,7 @@
             <div class="row mb-4">
                 <div class="col-12">
                     <div class="eco-card p-4">
-                        <h4 class="mb-3">🌍 Data Provider Statistics</h4>
+                        <h2 class="h4 mb-3">🌍 Data Provider Statistics</h2>
                         <div class="table-responsive">
                             <table class="table table-striped">
                                 <thead class="table-dark">
@@ -335,7 +335,7 @@
             <div class="row mb-4">
                 <div class="col-12">
                     <div class="eco-card p-4">
-                        <h4 class="mb-3">📈 Recent Activity (Last 7 Days)</h4>
+                        <h2 class="h4 mb-3">📈 Recent Activity (Last 7 Days)</h2>
                         <div class="table-responsive">
                             <table class="table table-striped">
                                 <thead class="table-dark">
@@ -366,7 +366,7 @@
     <div class="row mb-4">
         <div class="col-12">
             <div class="eco-card p-4 text-center">
-                <h5 class="mb-3">🚀 Schema Tools</h5>
+                <h2 class="h5 mb-3">🚀 Schema Tools</h2>
                 <button class="btn btn-primary me-2" onclick="window.location.reload()">
                     <i class="fas fa-sync-alt"></i> Refresh Schema
                 </button>

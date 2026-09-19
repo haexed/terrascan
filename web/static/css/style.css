@@ -26,8 +26,8 @@ body {
     display: inline-block;
     font-size: 0.45rem;
     font-weight: 500;
-    background: rgba(255, 255, 255, 0.2);
-    color: rgba(255, 255, 255, 0.8);
+    background: #1B5E42;
+    color: #fff;
     padding: 2px 5px;
     border-radius: 3px;
     margin-left: 5px;
@@ -81,16 +81,16 @@ h6,
 .eco-card h5,
 .eco-card h6,
 .eco-card .lead,
-.eco-card a,
-.eco-card a:visited {
+.eco-card a:not(.btn),
+.eco-card a:not(.btn):visited {
     color: var(--infp-forest);
 }
 
-.eco-card a {
+.eco-card a:not(.btn) {
     text-decoration: underline dotted var(--infp-green);
 }
 
-.eco-card a:hover {
+.eco-card a:not(.btn):hover {
     color: var(--infp-brown);
     text-decoration: underline solid var(--infp-green);
 }
@@ -113,7 +113,7 @@ h6,
 }
 
 .navbar {
-    background: rgba(51, 164, 116, 0.97) !important;
+    background: rgba(46, 125, 90, 0.97) !important;
     backdrop-filter: blur(10px);
     border-bottom: 2px solid var(--infp-yellow);
     color: var(--infp-brown);
@@ -143,7 +143,7 @@ h6,
     align-items: center !important;
     gap: 0.4rem;
     padding: 0.5rem 0.75rem !important;
-    color: rgba(255, 255, 255, 0.85);
+    color: #fff;
     text-decoration: none;
     border-radius: 6px;
     transition: background 0.2s, color 0.2s;  /* Only transition colors, not layout */
@@ -151,7 +151,7 @@ h6,
 
 .navbar .nav-link:hover,
 .navbar .nav-link.active {
-    background: rgba(255, 255, 255, 0.15);
+    background: rgba(0, 0, 0, 0.15);
     color: #fff;
 }
 
@@ -216,19 +216,19 @@ h6,
 }
 
 .status-excellent {
-    color: var(--infp-green);
+    color: #1F7A52;
 }
 
 .status-good {
-    color: #8B9A1B; /* Darker yellow-green for readability */
+    color: #6B7815;
 }
 
 .status-moderate {
-    color: #D4820E; /* Darker orange for readability */
+    color: #A6650B;
 }
 
 .status-poor {
-    color: #E57373;
+    color: #C1454A;
 }
 
 .status-critical {
@@ -294,6 +294,15 @@ h6,
     font-weight: 500;
 }
 
+.badge.bg-warning,
+.badge.bg-info {
+    color: #212529;
+}
+
+.text-info {
+    color: #0c7793 !important;
+}
+
 .last-update {
     font-size: 0.7rem;
     color: var(--infp-gray);
@@ -303,11 +312,6 @@ a,
 a:visited {
     color: var(--infp-forest);
     text-decoration: underline dotted var(--infp-yellow);
-}
-
-a.btn,
-a.btn:visited {
-    color: #fff;
 }
 
 a:hover {
@@ -336,19 +340,19 @@ a:hover {
 .footer,
 .footer-bar {
     color: #fff !important;
-    background: var(--infp-green) !important;
+    background: var(--infp-forest) !important;
 }
 
 .footer a,
 .footer-bar a {
-    color: var(--infp-yellow) !important;
+    color: #fff !important;
     text-decoration: underline dotted var(--infp-yellow);
 }
 
 .footer a:hover,
 .footer-bar a:hover {
-    color: #fff !important;
-    text-decoration: underline solid #fff;
+    color: var(--infp-yellow) !important;
+    text-decoration: underline solid var(--infp-yellow);
 }
 
 /* footer text-muted rule removed - no longer needed */

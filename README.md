@@ -2,7 +2,7 @@
 
 **Monitor Earth's environmental health in real-time**
 
-![Version](https://img.shields.io/badge/version-3.6.11-blue)
+![Version](https://img.shields.io/badge/version-3.6.12-blue)
 ![Database](https://img.shields.io/badge/database-PostgreSQL-green)
 ![License](https://img.shields.io/badge/license-MIT-blue)
 ![Status](https://img.shields.io/badge/status-production-green)
