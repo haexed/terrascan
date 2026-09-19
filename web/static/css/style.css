@@ -652,17 +652,12 @@ a.btn:visited {
     background: #555;
 }
 
-/* Font Awesome 7 kills fa-spin with `animation: none !important` under
-   prefers-reduced-motion, which leaves loading spinners frozen mid-page and
-   reading as "hung". Keep them turning, slowly. */
 @media (prefers-reduced-motion: reduce) {
     .fa-spin {
         animation: fa-spin 3s linear infinite !important;
     }
 }
 
-/* "No data" stands in for a number inside .metric-value and similar, where the
-   font size is set for a figure and the words end up shouting. */
 .no-data {
     font-size: 1rem;
 }
