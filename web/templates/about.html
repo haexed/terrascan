@@ -17,7 +17,7 @@
                     understanding our planet's health should be as easy as checking the weather.
                 </p>
                 <p>
-                    By combining real-time data from NASA, NOAA, and OpenAQ, we provide a unified view
+                    By combining real-time data from {{ site_providers | map(attribute='name') | join(', ') }}, we provide a unified view
                     of global environmental conditions - from active fires and air quality to ocean
                     temperatures and climate indicators.
                 </p>
@@ -64,63 +64,13 @@
                 <h2 class="text-center mb-4">🛰️ Trusted Data Sources</h2>
 
                 <div class="row">
+                    {% for provider in site_providers %}
                     <div class="col-md-4 text-center mb-4">
-                        <div class="fs-1 mb-3">🔥</div>
-                        <h3 class="h5"><a href="https://firms.modaps.eosdis.nasa.gov/" target="_blank">NASA FIRMS</a></h3>
-                        <p class="small">Fire Information for Resource Management System provides real-time fire
-                            detection from MODIS and VIIRS satellites.</p>
+                        <div class="fs-1 mb-3">{{ provider.icon }}</div>
+                        <h3 class="h5"><a href="{{ provider.url }}" target="_blank">{{ provider.name }}</a></h3>
+                        <p class="small">{{ provider.tagline }}. {{ provider.description }}</p>
                     </div>
-
-                    <div class="col-md-4 text-center mb-4">
-                        <div class="fs-1 mb-3">🌬️</div>
-                        <h3 class="h5"><a href="https://openaq.org/" target="_blank">OpenAQ</a></h3>
-                        <p class="small">Open Air Quality Platform aggregates air pollution data from 10,000+
-                            monitoring stations in 100+ countries.</p>
-                    </div>
-
-                    <div class="col-md-4 text-center mb-4">
-                        <div class="fs-1 mb-3">🌊</div>
-                        <h3 class="h5"><a href="https://tidesandcurrents.noaa.gov/" target="_blank">NOAA Ocean Service</a></h3>
-                        <p class="small">Tides and Currents provides real-time water levels and temperatures from
-                            coastal monitoring stations.</p>
-                    </div>
-                </div>
-                <div class="row">
-                    <div class="col-md-4 text-center mb-4">
-                        <div class="fs-1 mb-3">🌐</div>
-                        <h3 class="h5"><a href="https://open-meteo.com/" target="_blank">Open-Meteo</a></h3>
-                        <p class="small">Free weather and marine API providing global ocean data including sea surface
-                            temperature, waves, and currents. Licensed under CC-BY 4.0.</p>
-                    </div>
-
-                    <div class="col-md-4 text-center mb-4">
-                        <div class="fs-1 mb-3">⛈️</div>
-                        <h3 class="h5"><a href="https://openweathermap.org/" target="_blank">OpenWeatherMap</a></h3>
-                        <p class="small">Global weather data network providing temperature, humidity, wind, pressure,
-                            and weather alerts from cities worldwide.</p>
-                    </div>
-
-                    <div class="col-md-4 text-center mb-4">
-                        <div class="fs-1 mb-3">🦋</div>
-                        <h3 class="h5"><a href="https://www.gbif.org/" target="_blank">GBIF</a></h3>
-                        <p class="small">Global Biodiversity Information Facility provides species observation data
-                            from biodiversity hotspots around the world.</p>
-                    </div>
-                </div>
-                <div class="row">
-                    <div class="col-md-4 text-center mb-4">
-                        <div class="fs-1 mb-3">🌌</div>
-                        <h3 class="h5"><a href="https://www.swpc.noaa.gov/" target="_blank">NOAA Space Weather</a></h3>
-                        <p class="small">Space Weather Prediction Center provides aurora forecasts and geomagnetic
-                            activity data via the OVATION model.</p>
-                    </div>
-
-                    <div class="col-md-4 text-center mb-4">
-                        <div class="fs-1 mb-3">⚔️</div>
-                        <h3 class="h5"><a href="https://ucdp.uu.se/" target="_blank">UCDP</a></h3>
-                        <p class="small">Uppsala Conflict Data Program provides georeferenced data on armed conflicts
-                            and organized violence worldwide.</p>
-                    </div>
+                    {% endfor %}
                 </div>
             </div>
         </div>

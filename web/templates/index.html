@@ -38,7 +38,7 @@
                     <div>
                         <h4 class="mb-0">Global Fires</h4>
                         <div class="data-source">
-                            NASA FIRMS
+                            {{ site_provider.nasa_firms.name }}
                             {% if freshness.nasa_firms %}
                             <span class="freshness-badge" style="background: {{ freshness.nasa_firms.color }};" title="{{ freshness.nasa_firms.age_hours }}h ago">
                                 {{ freshness.nasa_firms.status }}
@@ -84,7 +84,7 @@
                     <div>
                         <h4 class="mb-0">Air Quality</h4>
                         <div class="data-source">
-                            OpenAQ
+                            {{ site_provider.openaq.name }}
                             {% if freshness.openaq %}
                             <span class="freshness-badge" style="background: {{ freshness.openaq.color }};" title="{{ freshness.openaq.age_hours }}h ago">
                                 {{ freshness.openaq.status }}
@@ -130,7 +130,7 @@
                     <div>
                         <h4 class="mb-0">Ocean Health</h4>
                         <div class="data-source">
-                            Open-Meteo
+                            {{ site_provider.openmeteo_marine.name }}
                             {% if freshness.openmeteo_marine %}
                             <span class="freshness-badge" style="background: {{ freshness.openmeteo_marine.color }};" title="{{ freshness.openmeteo_marine.age_hours }}h ago">
                                 {{ freshness.openmeteo_marine.status }}
@@ -177,7 +177,7 @@
                     <span class="fs-1 me-3">🌡️</span>
                     <div>
                         <h4 class="mb-0">Global Weather</h4>
-                        <div class="data-source">OpenWeatherMap Network</div>
+                        <div class="data-source">{{ site_provider.openweather.name }}</div>
                     </div>
                 </div>
 
@@ -223,7 +223,7 @@
                     <span class="fs-1 me-3">🚨</span>
                     <div>
                         <h4 class="mb-0">Weather Alerts</h4>
-                        <div class="data-source">Government Weather Services</div>
+                        <div class="data-source">{{ site_provider.openweather.name }}</div>
                     </div>
                 </div>
 
@@ -267,7 +267,7 @@
                     <span class="fs-1 me-3">🦋</span>
                     <div>
                         <h4 class="mb-0">Species Diversity</h4>
-                        <div class="data-source">GBIF Global Network</div>
+                        <div class="data-source">{{ site_provider.gbif.name }}</div>
                     </div>
                 </div>
 
@@ -316,7 +316,7 @@
                     <span class="fs-1 me-3">🌿</span>
                     <div>
                         <h4 class="mb-0">Ecosystem Health</h4>
-                        <div class="data-source">Global Biodiversity Monitoring</div>
+                        <div class="data-source">{{ site_provider.gbif.name }}</div>
                     </div>
                 </div>
 
@@ -364,7 +364,7 @@
                 <h4 class="mb-3">🌱 Environmental Awareness for Everyone</h4>
                 <p class="mb-3">
                     Terrascan makes complex environmental data accessible to everyone.
-                    Monitor our planet's health in real-time with data from NASA, NOAA, and OpenAQ.
+                    Monitor our planet's health in real-time with data from {{ site_providers | map(attribute='name') | join(', ') }}.
                 </p>
                 <div class="d-flex justify-content-center gap-3 flex-wrap">
                     <a href="/map" class="btn btn-success">

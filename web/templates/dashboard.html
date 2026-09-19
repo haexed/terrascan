@@ -28,7 +28,7 @@
                     <span class="fs-1 me-3">🔥</span>
                     <div>
                         <h4 class="mb-0">Global Fires</h4>
-                        <div class="data-source">NASA FIRMS Satellite Data</div>
+                        <div class="data-source">{{ site_provider.nasa_firms.name }} · {{ site_provider.nasa_firms.metrics }}</div>
                     </div>
                 </div>
 
@@ -65,7 +65,7 @@
                     <span class="fs-1 me-3">🌬️</span>
                     <div>
                         <h4 class="mb-0">Air Quality</h4>
-                        <div class="data-source">OpenAQ Global Network</div>
+                        <div class="data-source">{{ site_provider.openaq.name }} · {{ site_provider.openaq.metrics }}</div>
                     </div>
                 </div>
 
@@ -102,7 +102,7 @@
                     <span class="fs-1 me-3">🌊</span>
                     <div>
                         <h4 class="mb-0">Ocean Health</h4>
-                        <div class="data-source">NOAA Ocean Service</div>
+                        <div class="data-source">{{ site_provider.noaa_ocean.name }} · {{ site_provider.noaa_ocean.metrics }}</div>
                     </div>
                 </div>
 
@@ -139,43 +139,17 @@
             <div class="eco-card p-4">
                 <h4 class="mb-3">📡 Live Data Sources</h4>
                 <div class="row text-center">
-                    <div class="col-md-4">
-                        <div class="border-end border-secondary pe-3">
-                            <h5>🛰️ <a href="https://firms.modaps.eosdis.nasa.gov/" target="_blank"
-                                    class="text-decoration-none text-success">NASA FIRMS</a></h5>
-                            <div class="small">
-                                Fire Information for Resource Management<br>
-                                MODIS/VIIRS satellite data<br>
-                                Global coverage • 2hr updates<br>
-                                <a href="https://firms.modaps.eosdis.nasa.gov/api/" target="_blank"
-                                    class="text-info small">API Documentation</a>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-4">
-                        <div class="border-end border-secondary pe-3">
-                            <h5>🌬️ <a href="https://openaq.org/" target="_blank"
-                                    class="text-decoration-none text-success">OpenAQ</a></h5>
-                            <div class="small">
-                                Open Air Quality Platform<br>
-                                10,000+ stations worldwide<br>
-                                100+ countries • Hourly updates<br>
-                                <a href="https://docs.openaq.org/" target="_blank" class="text-info small">API
-                                    Documentation</a>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-4">
-                        <h5>🌊 <a href="https://tidesandcurrents.noaa.gov/" target="_blank"
-                                class="text-decoration-none text-success">NOAA Ocean</a></h5>
+                    {% for provider in site_providers %}
+                    <div class="col-md-4 mb-3">
+                        <h5>{{ provider.icon }} <a href="{{ provider.url }}" target="_blank"
+                                class="text-decoration-none text-success">{{ provider.name }}</a></h5>
                         <div class="small">
-                            Tides and Currents Service<br>
-                            US coastal monitoring stations<br>
-                            Water levels & temperature • 3hr updates<br>
-                            <a href="https://api.tidesandcurrents.noaa.gov/api/" target="_blank"
-                                class="text-info small">API Documentation</a>
+                            {{ provider.tagline }}<br>
+                            {{ provider.metrics }}<br>
+                            {{ provider.coverage }} • {{ provider.update_frequency }}
                         </div>
                     </div>
+                    {% endfor %}
                 </div>
             </div>
         </div>

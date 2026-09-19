@@ -20,6 +20,10 @@ from database.db import (
     init_database, execute_query, execute_insert, get_running_tasks,
     get_recent_task_runs, get_task_by_name, get_tasks_with_last_run
 )
+from database.providers import (
+    get_provider_metadata, get_provider_tasks, get_collection_tasks,
+    get_freshness_thresholds, DEFAULT_FRESHNESS_HOURS
+)
 from database.schema_inspector import get_schema_documentation
 from tasks.runner import TaskRunner
 from utils import get_version, register_template_filters
@@ -44,6 +48,15 @@ def create_app():
     @app.context_processor
     def inject_version():
         return {'version': get_version()}
+
+    @app.context_processor
+    def inject_providers():
+        """Provider metadata for the footer and any page that names a source"""
+        providers = get_cached_provider_metadata()
+        return {
+            'site_providers': providers,
+            'site_provider': {p['provider_key']: p for p in providers}
+        }
     
     # Simple no-cache decorator
     def no_cache(f):
@@ -184,19 +197,14 @@ def create_app():
             providers = get_provider_stats()
             timings['provider_stats'] = time.time() - t0
 
-            # Recent runs
+            # Provider keys with data but no metadata - a task writing an
+            # unregistered provider_key would otherwise be invisible here
             t0 = time.time()
-            recent_runs = execute_query("""
-                SELECT tl.*, t.name as task_name, t.description as task_description
-                FROM task_log tl
-                JOIN task t ON tl.task_id = t.id
-                ORDER BY tl.started_at DESC LIMIT 20
-            """)
-            timings['recent_runs'] = time.time() - t0
-
-            # Data breakdown (cached)
-            t0 = time.time()
-            data_breakdown = get_data_breakdown()
+            known_keys = {p['provider_key'] for p in providers}
+            unknown_providers = [
+                row for row in get_data_breakdown()
+                if row['provider_key'] not in known_keys
+            ]
             timings['data_breakdown'] = time.time() - t0
 
             # Get database size
@@ -216,8 +224,7 @@ def create_app():
             return render_template('system.html',
                                  system_status=system_status,
                                  providers=providers,
-                                 recent_runs=recent_runs,
-                                 data_breakdown=data_breakdown,
+                                 unknown_providers=unknown_providers,
                                  database_size=database_size,
                                  simulation_mode=False,
                                  version=get_version())
@@ -427,14 +434,26 @@ def create_app():
         except Exception as e:
             return jsonify({'success': False, 'error': str(e)})
 
+    @app.route('/api/providers')
+    @no_cache
+    def api_providers():
+        """Provider metadata - the same source the pages render from"""
+        try:
+            return jsonify({
+                'success': True,
+                'providers': get_cached_provider_metadata()
+            })
+        except Exception as e:
+            return jsonify({'success': False, 'error': str(e)}), 500
+
     @app.route('/api/refresh')
     def api_refresh():
         """Refresh environmental data"""
         try:
             runner = TaskRunner()
             
-            # Run key tasks
-            tasks = ['nasa_fires_global', 'openaq_latest', 'noaa_ocean_water_level', 'noaa_ocean_temperature', 'openmeteo_marine', 'ucdp_conflicts', 'noaa_aurora']
+            # Every collection task, straight from provider metadata
+            tasks = get_collection_tasks()
             results = []
             
             for task_name in tasks:
@@ -629,8 +648,7 @@ def create_app():
         """Run all data collection tasks"""
         try:
             runner = TaskRunner()
-            tasks = ['nasa_fires_global', 'openaq_latest', 'noaa_ocean_water_level',
-                     'noaa_ocean_temperature', 'openmeteo_marine', 'ucdp_conflicts', 'noaa_aurora']
+            tasks = get_collection_tasks()
             results = []
 
             for task_name in tasks:
@@ -829,21 +847,14 @@ def create_app():
 
             freshness = get_data_freshness()
 
-            # Map providers to task names
-            PROVIDER_TO_TASK = {
-                'nasa_firms': 'nasa_fires_global',
-                'openaq': 'openaq_latest',
-                'openmeteo_marine': 'openmeteo_marine',
-                'noaa_swpc': 'noaa_aurora',
-                'gbif': 'gbif_biodiversity',
-                'ucdp': 'ucdp_conflicts',
-                'openweather': 'openweather_global'
-            }
+            # Provider -> collecting task, straight from provider metadata
+            provider_tasks = get_provider_tasks()
 
             refreshed = []
+            failed = []
             skipped = []
 
-            for provider, task_name in PROVIDER_TO_TASK.items():
+            for provider, task_name in provider_tasks.items():
                 provider_freshness = freshness.get(provider, {})
                 status = provider_freshness.get('status', 'stale')
 
@@ -857,7 +868,7 @@ def create_app():
                             'records': result.get('records_processed', 0)
                         })
                     else:
-                        refreshed.append({
+                        failed.append({
                             'provider': provider,
                             'task': task_name,
                             'error': result.get('error', 'Unknown error')
@@ -872,11 +883,16 @@ def create_app():
             if refreshed:
                 invalidate_cache()
 
+            message = f'Refreshed {len(refreshed)} sources, skipped {len(skipped)} fresh sources'
+            if failed:
+                message += f', {len(failed)} failed'
+
             return jsonify({
                 'success': True,
                 'refreshed': refreshed,
+                'failed': failed,
                 'skipped': skipped,
-                'message': f'Refreshed {len(refreshed)} sources, skipped {len(skipped)} fresh sources'
+                'message': message
             })
         except Exception as e:
             traceback.print_exc()
@@ -1115,10 +1131,15 @@ def invalidate_cache(key=None):
     else:
         _cache = {}
 
+def get_cached_provider_metadata():
+    """Provider metadata from the database - cached for 5 min"""
+    return _get_cached('provider_metadata', get_provider_metadata)
+
 def get_provider_stats():
-    """Get simplified provider statistics - cached for 5 min"""
+    """Provider metadata joined with live record counts - cached for 5 min"""
     def fetch():
-        provider_keys = ['nasa_firms', 'openaq', 'noaa_ocean', 'openweather', 'gbif', 'openmeteo_marine', 'ucdp', 'noaa_swpc']
+        metadata = get_provider_metadata()
+        provider_keys = [p['provider_key'] for p in metadata]
 
         stats = execute_query("""
             SELECT provider_key, COUNT(*) as total_records, MAX(timestamp) as last_run
@@ -1127,23 +1148,18 @@ def get_provider_stats():
             GROUP BY provider_key
         """, (provider_keys,))
 
-        providers = {}
         stats_dict = {row['provider_key']: row for row in (stats or [])}
 
-        for key in provider_keys:
-            if key in stats_dict:
-                row = stats_dict[key]
-                providers[key] = {
-                    'total_records': row['total_records'] or 0,
-                    'last_run': row['last_run'] or 'Never',
-                    'status': 'operational' if (row['total_records'] or 0) > 0 else 'no_data'
-                }
-            else:
-                providers[key] = {
-                    'total_records': 0,
-                    'last_run': 'Never',
-                    'status': 'no_data'
-                }
+        providers = []
+        for meta in metadata:
+            row = stats_dict.get(meta['provider_key'])
+            total_records = (row['total_records'] or 0) if row else 0
+            providers.append({
+                **meta,
+                'total_records': total_records,
+                'last_run': (row['last_run'] if row else None) or None,
+                'status': 'operational' if total_records > 0 else 'no_data'
+            })
         return providers
 
     return _get_cached('provider_stats', fetch)
@@ -1423,16 +1439,8 @@ def get_data_freshness():
 
 def _fetch_data_freshness():
     """Actually fetch freshness data from DB"""
-    # Define ideal refresh intervals (hours)
-    FRESHNESS_THRESHOLDS = {
-        'nasa_firms': 3,        # Fires: 3 hours
-        'openaq': 12,           # Air quality: 12 hours
-        'openmeteo_marine': 24, # Ocean: 24 hours
-        'noaa_swpc': 1,         # Aurora: 1 hour
-        'ucdp': 168,            # Conflicts: weekly
-        'gbif': 168,            # Biodiversity: weekly
-        'openweather': 6        # Weather: 6 hours
-    }
+    # Ideal refresh intervals (hours), per provider metadata
+    FRESHNESS_THRESHOLDS = get_freshness_thresholds()
 
     try:
         freshness = execute_query("""
@@ -1452,7 +1460,7 @@ def _fetch_data_freshness():
         for row in (freshness or []):
             provider = row['provider_key']
             last_fetched = row['last_fetched']
-            threshold_hours = FRESHNESS_THRESHOLDS.get(provider, 24)
+            threshold_hours = FRESHNESS_THRESHOLDS.get(provider, DEFAULT_FRESHNESS_HOURS)
 
             if last_fetched:
                 age_hours = (now - last_fetched).total_seconds() / 3600

@@ -7,6 +7,7 @@ import os
 import sys
 from database.config_manager import set_system_config, get_system_config
 from database.db import init_database, get_database_info
+from setup_providers import setup_provider_metadata
 
 def setup_system_configs():
     """Set up initial system configurations"""
@@ -29,6 +30,10 @@ def setup_system_configs():
         platform_info = f"{sys.platform} ({os.name})"
         set_system_config('platform', platform_info, 'str', 'Operating system platform')
         print(f"✅ Platform info: {platform_info}")
+
+        # Provider display metadata - single source read back by every page
+        if not setup_provider_metadata():
+            return False
         
         print("\n🎉 System configurations completed successfully!")
         print("\n📋 Configuration Summary:")

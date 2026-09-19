@@ -19,7 +19,7 @@ Every message this session prefixed "todo" / "todo:" (plus a couple of other exp
 5. `todo: zooming in map and out removes all other leaflet-interactive (dots) until refresh, broken.`
    - **open**
 6. `todo: tasks: combine "all tasks" and recents tasks into one table, where some columns contain info on last run (per task), with logs button. system shows last tasks run its redundant`
-   - **open**
+   - done: the `/tasks` half shipped in 3.6.23; 3.7.0 removed the redundant "Recent Task Executions" table from `/system`.
 7. `todo: delete all html comments`
    - done (3.6.9)
 8. `todo drop all "v" prefix in all git tags.`
@@ -33,9 +33,9 @@ Every message this session prefixed "todo" / "todo:" (plus a couple of other exp
 12. `todo: fix data sources info: e.g. system open-meteo says 0 records, but also says 6283 records further down.`
     - done (3.6.10)
 13. `todo: collects data providers in system in a nicer table than the huge 6 cards.`
-    - **open**
+    - tried fix, needs QA (3.7.0): the 6 cards are one table, one row per provider, all 8 providers. Columns: Provider (icon + linked name + tagline), Status, Records, Latest Data, Coverage, Update Frequency.
 14. `todo: get a hold of the actual data providers, website shows different providers everywhere, make sure none are hardcoded, should be pure data in db.`
-    - **open**, investigated and documented under "Data providers" below
+    - done (3.7.0): provider metadata is one JSON row per provider in `provider_config`, seeded from `setup_providers.py` on startup and read back through `database/providers.py`. Footer (was 5), `/system` (was 6), `/about` (was 8), `/dashboard` (was 3) and `/map` labels all render the same 8 from the DB, as do the freshness thresholds and the collect-all task lists. Remaining hardcoded names: `web/static/js/hero-map.js` popups ("Source: NASA FIRMS", "Source: OpenAQ") - `/api/providers` exists for these, not wired up.
 15. `todo replace ugly data-source brown color to a normal terrascan color`
     - tried fix, needs QA (3.6.8, `.data-source` → `var(--infp-sage)`, a new palette color). Landed in the earlier non-WCAG commit, not the one reverted in 3.6.14, so it's still live.
 16. `todo move planetary health box above "Live Environmental Layers" and let "Live Environmental Layers" be the pullup, solving the blocking of map-controls. no need for the dupe control-header h5`
@@ -68,10 +68,13 @@ Every message this session prefixed "todo" / "todo:" (plus a couple of other exp
     - along the way, fixed two response-building bugs that would've swallowed the new error message before it reached the user: `/api/collect-biodiversity` and `/api/tasks/<name>/run` both hardcoded a "completed" message regardless of actual success/failure and never included `result['error']`.
     - the 2 pre-existing stuck `openaq_latest` runs from earlier in this session are untouched — they'll clear via the existing 30-min stale cleanup once they cross the threshold, didn't intervene manually.
 
+29. `fas fa-spinner fa-spin` is not spinning
+    - fixed (3.7.0). Reproduced in headless Chrome: Font Awesome 7 has `@media (prefers-reduced-motion: reduce) { .fa-spin { animation: none !important } }`, so with that preference on, every spinner renders but never moves. (FA 6 used a 1ms animation; 7 kills it outright.) Added a later `!important` rule in `style.css` keeping `.fa-spin` at a slow 3s turn under that preference - a frozen spinner reads as "hung", which is worse than a gentle one. Verified spinning in both modes. Nothing in the app's own CSS was touching it.
+
 ## Git tags
 
 - Drop `v` prefix from remaining old tags (`v3.6.5` → `3.6.5`, etc.) — needs force-push to `origin`, confirm before running.
-- Push new tags to GitHub: `git push origin 3.6.8 3.6.9 3.6.10 3.6.11 3.6.12 3.6.13 3.6.14` (this sandbox can't reach the remote).
+- Push new tags to GitHub: `git push origin 3.6.8 3.6.9 3.6.10 3.6.11 3.6.12 3.6.13 3.6.14` (this sandbox can't reach the remote). **Note: `git tag -l` on 2026-09-19 shows nothing above `v3.6.5` - the 3.6.8-3.6.14 tags an earlier session recorded as created don't exist in this repo. They need recreating before they can be pushed.**
 - WCAG/axe-core audit was run (2026-09-19): violations found and documented, but the auto-applied fixes were reverted per feedback (ask was to report, not change rules). If a real fix pass is wanted, do it as a reviewed, incremental PR-style set of changes instead of a single sweep.
 
 ## Data sources

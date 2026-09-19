@@ -2,6 +2,25 @@
 
 All notable changes to Terrascan will be documented in this file.
 
+## [3.7.0] - 2026-09-19
+
+### Added
+- `database/providers.py` + `setup_providers.py`: provider metadata (name, icon, URL, tagline, description, coverage, update frequency, metrics, record label, collection tasks, freshness threshold) now lives as one JSON row per provider in `provider_config`, seeded on startup from `setup_configs.py`. Nothing outside `setup_providers.py` hardcodes provider names, icons, URLs, task names or freshness thresholds.
+- `/api/providers`: the same metadata as JSON, for JS consumers.
+- `/system`: an "Unrecognized Providers" card, shown only when `metric_data` holds a `provider_key` with no metadata.
+- `fix_task_commands.py`: diagnoses (and can repair) `task.command` values pointing at modules that don't exist. Not run - the repair is opt-in.
+
+### Changed
+- `/system`: the 6 provider cards are one table, all 8 providers, one row each. "Active Data Sources" counts operational providers instead of a hardcoded 6.
+- `/system`: dropped the "Recent Task Executions" table - redundant with the `/tasks` table. Also drops one query per page load.
+- Footer, `/about`, `/status`, `/dashboard`, `/map` layer labels: every provider name/URL/icon now comes from the metadata. The footer listed 5, `/system` 6, `/about` 8, `/dashboard` 3 - all now list the same 8.
+- `/api/refresh` and `/api/collect-all-data` run the task list from provider metadata instead of two separately hardcoded lists (both of which omitted gbif and openweather).
+
+### Fixed
+- `fa-spin` was frozen for anyone with `prefers-reduced-motion: reduce`: Font Awesome 7 sets `animation: none !important` for it, so every loading spinner rendered but never moved. Now keeps turning at 3s under that preference.
+- `/api/smart-refresh` counted failed task runs as refreshed ones - "Refreshed 7 sources" even when a task didn't exist. Failures now report separately under `failed`.
+- `PROVIDER_TO_TASK` in `/api/smart-refresh` mapped gbif to `gbif_biodiversity` and openweather to `openweather_global`; neither task exists, so both always failed silently.
+
 ## [3.6.23] - 2026-09-19
 
 ### Added

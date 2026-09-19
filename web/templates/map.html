@@ -66,7 +66,7 @@
             <span class="layer-icon">🔥</span>
             <span class="layer-info">
                 <strong>Active Fires</strong>
-                <span class="layer-source">NASA FIRMS</span>
+                <span class="layer-source">{{ site_provider.nasa_firms.name }}</span>
             </span>
             <input type="checkbox" id="fire-layer" checked>
             <span class="toggle-switch"></span>
@@ -76,7 +76,7 @@
             <span class="layer-icon">🌬️</span>
             <span class="layer-info">
                 <strong>Air Quality</strong>
-                <span class="layer-source">OpenAQ PM2.5</span>
+                <span class="layer-source">{{ site_provider.openaq.name }} PM2.5</span>
             </span>
             <input type="checkbox" id="air-layer" checked>
             <span class="toggle-switch"></span>
@@ -86,7 +86,7 @@
             <span class="layer-icon">🌊</span>
             <span class="layer-info">
                 <strong>Ocean Temp</strong>
-                <span class="layer-source">Open-Meteo SST</span>
+                <span class="layer-source">{{ site_provider.openmeteo_marine.name }} SST</span>
             </span>
             <input type="checkbox" id="ocean-layer" checked>
             <span class="toggle-switch"></span>
@@ -96,7 +96,7 @@
             <span class="layer-icon">⚔️</span>
             <span class="layer-info">
                 <strong>Conflicts</strong>
-                <span class="layer-source">UCDP Events</span>
+                <span class="layer-source">{{ site_provider.ucdp.name }} Events</span>
             </span>
             <input type="checkbox" id="conflict-layer" checked>
             <span class="toggle-switch"></span>
@@ -106,7 +106,7 @@
             <span class="layer-icon">🦋</span>
             <span class="layer-info">
                 <strong>Biodiversity</strong>
-                <span class="layer-source">GBIF Hotspots</span>
+                <span class="layer-source">{{ site_provider.gbif.name }} Hotspots</span>
             </span>
             <input type="checkbox" id="biodiversity-layer" checked>
             <span class="toggle-switch"></span>
@@ -116,7 +116,7 @@
             <span class="layer-icon">🌌</span>
             <span class="layer-info">
                 <strong>Aurora</strong>
-                <span class="layer-source" id="kp-status">NOAA SWPC</span>
+                <span class="layer-source" id="kp-status">{{ site_provider.noaa_swpc.name }}</span>
             </span>
             <input type="checkbox" id="aurora-layer" checked>
             <span class="toggle-switch"></span>

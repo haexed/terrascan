@@ -651,3 +651,12 @@ a.btn:visited {
 .modal-body::-webkit-scrollbar-thumb:hover {
     background: #555;
 }
+
+/* Font Awesome 7 kills fa-spin with `animation: none !important` under
+   prefers-reduced-motion, which leaves loading spinners frozen mid-page and
+   reading as "hung". Keep them turning, slowly. */
+@media (prefers-reduced-motion: reduce) {
+    .fa-spin {
+        animation: fa-spin 3s linear infinite !important;
+    }
+}

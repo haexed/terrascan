@@ -26,231 +26,48 @@
         </div>
     </div>
 
-    <div class="row g-4 mb-4">
-        <div class="col-lg-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h2 class="h4 mb-3">🛰️ Data Providers</h2>
             <div class="eco-card p-4">
-                <div class="d-flex align-items-center mb-3">
-                    <span class="fs-1 me-3">🔥</span>
-                    <div>
-                        <h3 class="h4 mb-0">NASA FIRMS</h3>
-                        <div class="data-source">Fire Information for Resource Management</div>
-                    </div>
-                </div>
-
-                <div class="mb-3">
-                    <strong>Latest Data Collection</strong><br>
-                    <span class="small">{{ providers.nasa_firms.last_run if providers.nasa_firms.last_run else 'Never'
-                        }}</span>
-                </div>
-
-                <div class="mb-3">
-                    <strong>Records Collected</strong><br>
-                    <span class="metric-value text-danger">{{ providers.nasa_firms.total_records }}</span>
-                    <span class="small"> fire detections</span>
-                </div>
-
-                <div class="mb-3">
-                    <strong>Status</strong><br>
-                    <span
-                        class="badge {% if providers.nasa_firms.status == 'operational' %}bg-success{% else %}bg-warning{% endif %}">
-                        {{ providers.nasa_firms.status.replace('_', ' ').title() }}
-                    </span>
-                </div>
-
-                <div class="small">
-                    <strong>Coverage:</strong> Global satellite monitoring<br>
-                    <strong>Update Frequency:</strong> Every 2 hours<br>
-                    <strong>Data Source:</strong> MODIS/VIIRS satellites
-                </div>
-            </div>
-        </div>
-
-        <div class="col-lg-4">
-            <div class="eco-card p-4">
-                <div class="d-flex align-items-center mb-3">
-                    <span class="fs-1 me-3">🌬️</span>
-                    <div>
-                        <h3 class="h4 mb-0">OpenAQ</h3>
-                        <div class="data-source">Open Air Quality Data Platform</div>
-                    </div>
-                </div>
-
-                <div class="mb-3">
-                    <strong>Latest Data Collection</strong><br>
-                    <span class="small">{{ providers.openaq.last_run if providers.openaq.last_run else 'Never' }}</span>
-                </div>
-
-                <div class="mb-3">
-                    <strong>Records Collected</strong><br>
-                    <span class="metric-value text-warning">{{ providers.openaq.total_records }}</span>
-                    <span class="small"> air quality measurements</span>
-                </div>
-
-                <div class="mb-3">
-                    <strong>Status</strong><br>
-                    <span
-                        class="badge {% if providers.openaq.status == 'operational' %}bg-success{% else %}bg-warning{% endif %}">
-                        {{ providers.openaq.status.replace('_', ' ').title() }}
-                    </span>
-                </div>
-
-                <div class="small">
-                    <strong>Coverage:</strong> 65+ major cities worldwide<br>
-                    <strong>Update Frequency:</strong> Every hour<br>
-                    <strong>Metrics:</strong> PM2.5, PM10, NO2, O3
-                </div>
-            </div>
-        </div>
-
-        <div class="col-lg-4">
-            <div class="eco-card p-4">
-                <div class="d-flex align-items-center mb-3">
-                    <span class="fs-1 me-3">🌊</span>
-                    <div>
-                        <h3 class="h4 mb-0">NOAA Ocean Service</h3>
-                        <div class="data-source">Ocean and Coastal Data</div>
-                    </div>
-                </div>
-
-                <div class="mb-3">
-                    <strong>Latest Data Collection</strong><br>
-                    <span class="small">{{ providers.noaa_ocean.last_run if providers.noaa_ocean.last_run else 'Never'
-                        }}</span>
-                </div>
-
-                <div class="mb-3">
-                    <strong>Records Collected</strong><br>
-                    <span class="metric-value text-info">{{ providers.noaa_ocean.total_records }}</span>
-                    <span class="small"> oceanographic measurements</span>
-                </div>
-
-                <div class="mb-3">
-                    <strong>Status</strong><br>
-                    <span
-                        class="badge {% if providers.noaa_ocean.status == 'operational' %}bg-success{% else %}bg-warning{% endif %}">
-                        {{ providers.noaa_ocean.status.replace('_', ' ').title() }}
-                    </span>
-                </div>
-
-                <div class="small">
-                    <strong>Coverage:</strong> 12 major coastal stations<br>
-                    <strong>Update Frequency:</strong> Every 3 hours<br>
-                    <strong>Metrics:</strong> Water temperature, water level
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="row g-4 mb-4">
-        <div class="col-lg-4">
-            <div class="eco-card p-4">
-                <div class="d-flex align-items-center mb-3">
-                    <span class="fs-1 me-3">⛈️</span>
-                    <div>
-                        <h3 class="h4 mb-0">OpenWeatherMap</h3>
-                        <div class="data-source">Global Weather Data Network</div>
-                    </div>
-                </div>
-
-                <div class="mb-3">
-                    <strong>Latest Data Collection</strong><br>
-                    <span class="small">{{ providers.openweather.last_run if providers.openweather.last_run else 'Never'
-                        }}</span>
-                </div>
-
-                <div class="mb-3">
-                    <strong>Records Collected</strong><br>
-                    <span class="metric-value text-primary">{{ providers.openweather.total_records }}</span>
-                    <span class="small"> weather measurements</span>
-                </div>
-
-                <div class="mb-3">
-                    <strong>Status</strong><br>
-                    <span
-                        class="badge {% if providers.openweather.status == 'operational' %}bg-success{% else %}bg-warning{% endif %}">
-                        {{ providers.openweather.status.replace('_', ' ').title() }}
-                    </span>
-                </div>
-
-                <div class="small">
-                    <strong>Coverage:</strong> 24 major cities worldwide<br>
-                    <strong>Update Frequency:</strong> Every 2 hours<br>
-                    <strong>Metrics:</strong> Temperature, humidity, wind, pressure, alerts
-                </div>
-            </div>
-        </div>
-
-        <div class="col-lg-4">
-            <div class="eco-card p-4">
-                <div class="d-flex align-items-center mb-3">
-                    <span class="fs-1 me-3">🦋</span>
-                    <div>
-                        <h3 class="h4 mb-0">GBIF</h3>
-                        <div class="data-source">Global Biodiversity Information Facility</div>
-                    </div>
-                </div>
-
-                <div class="mb-3">
-                    <strong>Latest Data Collection</strong><br>
-                    <span class="small">{{ providers.gbif.last_run if providers.gbif.last_run else 'Never' }}</span>
-                </div>
-
-                <div class="mb-3">
-                    <strong>Records Collected</strong><br>
-                    <span class="metric-value text-success">{{ providers.gbif.total_records }}</span>
-                    <span class="small"> biodiversity records</span>
-                </div>
-
-                <div class="mb-3">
-                    <strong>Status</strong><br>
-                    <span
-                        class="badge {% if providers.gbif.status == 'operational' %}bg-success{% else %}bg-warning{% endif %}">
-                        {{ providers.gbif.status.replace('_', ' ').title() }}
-                    </span>
-                </div>
-
-                <div class="small">
-                    <strong>Coverage:</strong> 18 biodiversity hotspots<br>
-                    <strong>Update Frequency:</strong> Every 6 hours<br>
-                    <strong>Metrics:</strong> Species observations, diversity indices
-                </div>
-            </div>
-        </div>
-
-        <div class="col-lg-4">
-            <div class="eco-card p-4">
-                <div class="d-flex align-items-center mb-3">
-                    <span class="fs-1 me-3">🌐</span>
-                    <div>
-                        <h3 class="h4 mb-0">Open-Meteo</h3>
-                        <div class="data-source">Free Weather & Marine API</div>
-                    </div>
-                </div>
-
-                <div class="mb-3">
-                    <strong>Latest Data Collection</strong><br>
-                    <span class="small">{{ providers.openmeteo_marine.last_run if providers.openmeteo_marine.last_run else 'Never' }}</span>
-                </div>
-
-                <div class="mb-3">
-                    <strong>Records Collected</strong><br>
-                    <span class="metric-value text-info">{{ providers.openmeteo_marine.total_records }}</span>
-                    <span class="small"> marine measurements</span>
-                </div>
-
-                <div class="mb-3">
-                    <strong>Status</strong><br>
-                    <span
-                        class="badge {% if providers.openmeteo_marine.status == 'operational' %}bg-success{% else %}bg-warning{% endif %}">
-                        {{ providers.openmeteo_marine.status.replace('_', ' ').title() }}
-                    </span>
-                </div>
-
-                <div class="small">
-                    <strong>Coverage:</strong> 20 global ocean points<br>
-                    <strong>Update Frequency:</strong> Every 3 hours<br>
-                    <strong>Metrics:</strong> Sea surface temp, waves, currents<br>
-                    <strong>License:</strong> CC-BY 4.0
+                <div class="table-responsive">
+                    <table class="table table-sm align-middle">
+                        <thead>
+                            <tr>
+                                <th>Provider</th>
+                                <th>Status</th>
+                                <th>Records</th>
+                                <th>Latest Data</th>
+                                <th>Coverage</th>
+                                <th>Update Frequency</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for p in providers %}
+                            <tr>
+                                <td>
+                                    <span class="me-2">{{ p.icon }}</span>
+                                    <strong><a href="{{ p.url }}" target="_blank">{{ p.name }}</a></strong><br>
+                                    <small class="data-source">{{ p.tagline }}</small>
+                                </td>
+                                <td>
+                                    <span class="badge {% if p.status == 'operational' %}bg-success{% else %}bg-warning{% endif %}">
+                                        {{ p.status.replace('_', ' ').title() }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <strong>{{ p.total_records }}</strong><br>
+                                    <small>{{ p.record_label }}</small>
+                                </td>
+                                <td>
+                                    <small>{{ p.last_run | format_dt if p.last_run else 'Never' }}</small>
+                                </td>
+                                <td><small>{{ p.coverage }}</small></td>
+                                <td><small>{{ p.update_frequency }}</small></td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>
@@ -268,14 +85,14 @@
                 </div>
 
                 <div class="mb-3">
-                    <strong>Database Type</strong><br>
+                    <strong>Database Size</strong><br>
                     <span class="small">{{ database_size }}</span>
                 </div>
 
                 <div class="mb-3">
                     <strong>Active Data Sources</strong><br>
-                    <span class="metric-value text-info">6</span>
-                    <span class="small"> environmental APIs</span>
+                    <span class="metric-value text-info">{{ providers | selectattr('status', 'equalto', 'operational') | list | length }}</span>
+                    <span class="small"> of {{ providers | length }} environmental APIs</span>
                 </div>
 
                 <div class="mb-3">
@@ -292,63 +109,27 @@
         </div>
     </div>
 
-
-
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="eco-card p-4">
-                <h3 class="h4 mb-3">📊 Recent Task Executions</h3>
-                <div class="table-responsive">
-                    <table class="table table-sm">
-                        <thead>
-                            <tr>
-                                <th>Task Name</th>
-                                <th>Status</th>
-                                <th>Started</th>
-                                <th>Duration</th>
-                                <th>Records</th>
-                                <th>Triggered By</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for run in recent_runs %}
-                            <tr>
-                                <td>
-                                    <strong>{{ run.task_name }}</strong><br>
-                                    <small>{{ run.task_description }}</small>
-                                </td>
-                                <td>
-                                    <span
-                                        class="badge {% if run.status == 'completed' %}bg-success{% elif run.status == 'failed' %}bg-danger{% else %}bg-warning{% endif %}">
-                                        {{ run.status.replace('_', ' ').title() }}
-                                    </span>
-                                </td>
-                                <td>
-                                    <small>{{ run.started_at }}</small>
-                                </td>
-                                <td>
-                                    <small>{{ "%.1f"|format(run.duration_seconds or 0) }}s</small>
-                                </td>
-                                <td>
-                                    <span class="text-success">{{ run.records_processed }}</span>
-                                </td>
-                                <td>
-                                    <small>{{ run.triggered_by }}</small>
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-    </div>
-
     <div class="row mb-4">
         <div class="col-md-6">
             <div class="eco-card p-4">
-                <h3 class="h5 mb-3">📈 Data Breakdown by Provider</h3>
-                {% for provider in data_breakdown %}
+                <h3 class="h5 mb-3">🔧 System Configuration</h3>
+                <div class="small">
+                    <strong>Version:</strong> {{ version }}<br>
+                    <strong>Database:</strong> PostgreSQL<br>
+                    <strong>Data Sources:</strong> {{ providers | map(attribute='name') | join(', ') }}<br>
+                    <strong>Auto-refresh:</strong> Every 15 minutes<br>
+                    <strong>Data Retention:</strong> 30 days<br>
+                </div>
+            </div>
+        </div>
+
+        {% if unknown_providers %}
+        <div class="col-md-6">
+            <div class="eco-card p-4">
+                <h3 class="h5 mb-3">⚠️ Unrecognized Providers</h3>
+                <p class="small">These provider keys have rows in <code>metric_data</code> but no metadata.
+                    Add them to <code>setup_providers.py</code>.</p>
+                {% for provider in unknown_providers %}
                 <div class="d-flex justify-content-between mb-2">
                     <span>{{ provider.provider_key }}</span>
                     <span class="badge bg-secondary">{{ provider.record_count }} records</span>
@@ -356,19 +137,7 @@
                 {% endfor %}
             </div>
         </div>
-
-        <div class="col-md-6">
-            <div class="eco-card p-4">
-                <h3 class="h5 mb-3">🔧 System Configuration</h3>
-                <div class="small">
-                    <strong>Version:</strong> {{ version }}<br>
-                    <strong>Database:</strong> PostgreSQL<br>
-                    <strong>Data Sources:</strong> NASA FIRMS, OpenAQ, NOAA<br>
-                    <strong>Auto-refresh:</strong> Every 15 minutes<br>
-                    <strong>Data Retention:</strong> 30 days<br>
-                </div>
-            </div>
-        </div>
+        {% endif %}
     </div>
 
     <div class="row mb-4">
