@@ -5,7 +5,7 @@ All notable changes to Terrascan will be documented in this file.
 ## [3.7.2] - 2026-09-19
 
 ### Removed
-- `/system`: the permanently-disabled "Clear Old Data" button ("Coming in future update"). No handler existed for it.
+- `/system`: "Clear Old Data" button.
 
 ### Fixed
 - Main page showed a horizontal and a vertical scrollbar with nothing to scroll to. `map.html` overrode `{% block footer_container %}` to empty, so the footer's Bootstrap `.row` had no container padding to cancel its `-12px` gutter margins and hung 12px past the viewport. The resulting horizontal scrollbar then ate 15px of height, which pushed the 100vh layout into a vertical scrollbar too. Restored the `container-fluid` wrapper. Verified 0px overflow on all 6 pages at 1400px, 1024px and 390px wide.
