@@ -23,7 +23,8 @@ Every message this session prefixed "todo" / "todo:", quoted exactly as written.
 15. `todo replace ugly data-source brown color to a normal terrascan color` — done (3.6.8, `.data-source` → `var(--infp-sage)`, a new palette color introduced then). This landed in the earlier non-WCAG commit, not the one reverted in 3.6.14, so it's still live — flag if this should've been reverted too as a "forced random color."
 16. `todo move planetary health box above "Live Environmental Layers" and let "Live Environmental Layers" be the pullup, solving the blocking of map-controls. no need for the dupe control-header h5` — done (3.6.13)
 17. `todo: still ugly brown, e.g. on .eco-card a:not(.btn):hover . links have no unity no more` — **open**, folded into the link/hover-color entry below
-18. `todo remove css .pulse` — done: removed `.pulse` class + its two badge usages (`dashboard.html`, `index.html`); kept `@keyframes pulse` since `.task-running .status-badge` on `/tasks` still legitimately uses it directly
+18. `todo remove css .pulse` — done: removed `.pulse` class + its two badge usages (`dashboard.html`, `index.html`)
+19. `todo remove css .pulse and its usage` — done: previous pass missed the two other direct users of the `pulse` keyframe (`.task-running .status-badge` in `style.css`, `.stat-item.scan-status` in `map.css`) — removed both rules and both `@keyframes pulse` definitions. `scan-pulse` (different name, map scan button) and `new-marker-pulse` (different name, `map.js`) left alone — not literally "pulse".
 
 ## Git tags
 

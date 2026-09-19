@@ -239,20 +239,6 @@ h6,
     color: var(--infp-forest);
 }
 
-@keyframes pulse {
-    0% {
-        opacity: 1;
-    }
-
-    50% {
-        opacity: 0.5;
-    }
-
-    100% {
-        opacity: 1;
-    }
-}
-
 .refresh-btn {
     position: fixed;
     bottom: 30px;
@@ -610,11 +596,6 @@ a:hover {
     .task-controls .btn {
         width: 100%;
     }
-}
-
-/* Status indicator animations */
-.task-running .status-badge {
-    animation: pulse 2s infinite;
 }
 
 /* Log entry hover effects */

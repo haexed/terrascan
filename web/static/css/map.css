@@ -37,10 +37,6 @@
     min-width: 80px;
 }
 
-.stat-item.scan-status {
-    animation: pulse 1.5s ease-in-out infinite;
-}
-
 .stat-icon {
     font-size: 1.5rem;
     margin-bottom: 4px;
@@ -61,14 +57,6 @@
     margin-top: 2px;
 }
 
-@keyframes pulse {
-    0%, 100% {
-        opacity: 1;
-    }
-    50% {
-        opacity: 0.6;
-    }
-}
 
 /* Mobile responsiveness */
 @media (max-width: 768px) {

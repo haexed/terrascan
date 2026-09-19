@@ -2,6 +2,11 @@
 
 All notable changes to Terrascan will be documented in this file.
 
+## [3.6.16] - 2026-09-19
+
+### Removed
+- Remaining direct users of `@keyframes pulse`: `.task-running .status-badge` (`style.css`), `.stat-item.scan-status` (`map.css`, was dead code anyway — nothing ever cleared its `display:none`). Both `@keyframes pulse` definitions removed too.
+
 ## [3.6.15] - 2026-09-19
 
 ### Removed
