@@ -49,7 +49,7 @@
                 </div>
 
                 <div class="text-center">
-                    <div class="metric-value {{ fire_data.active_fires.css_class }}">
+                    <div class="metric-value {{ fire_data.active_fires.css_class }} {{ fire_data.active_fires.no_data_class }}">
                         {{ fire_data.active_fires }}
                     </div>
                     <div class="mb-2">Active Fires (24h)</div>
@@ -95,7 +95,7 @@
                 </div>
 
                 <div class="text-center">
-                    <div class="metric-value {{ air_data.avg_pm25.css_class }}">
+                    <div class="metric-value {{ air_data.avg_pm25.css_class }} {{ air_data.avg_pm25.no_data_class }}">
                         {{ air_data.avg_pm25 }}
                     </div>
                     <div class="mb-2">PM2.5 (Global Avg)</div>
@@ -141,7 +141,7 @@
                 </div>
 
                 <div class="text-center">
-                    <div class="metric-value {{ ocean_data.avg_temp.css_class }}" id="ocean-temp-display">
+                    <div class="metric-value {{ ocean_data.avg_temp.css_class }} {{ ocean_data.avg_temp.no_data_class }}" id="ocean-temp-display">
                         {{ ocean_data.avg_temp }}
                     </div>
                     <div class="mb-2">{{ ocean_data.metric_name }}</div>
@@ -183,22 +183,22 @@
 
                 <div class="row text-center">
                     <div class="col-6">
-                        <div class="metric-value text-primary">{{ weather_data.avg_temp }}</div>
+                        <div class="metric-value text-primary {{ weather_data.avg_temp.no_data_class }}">{{ weather_data.avg_temp }}</div>
                         <div class="small">Average Temperature</div>
                     </div>
                     <div class="col-6">
-                        <div class="metric-value text-info">{{ weather_data.avg_humidity }}</div>
+                        <div class="metric-value text-info {{ weather_data.avg_humidity.no_data_class }}">{{ weather_data.avg_humidity }}</div>
                         <div class="small">Average Humidity</div>
                     </div>
                 </div>
 
                 <div class="row text-center mt-3">
                     <div class="col-6">
-                        <div class="metric-value text-secondary">{{ weather_data.avg_wind_speed }}</div>
+                        <div class="metric-value text-secondary {{ weather_data.avg_wind_speed.no_data_class }}">{{ weather_data.avg_wind_speed }}</div>
                         <div class="small">Average Wind Speed</div>
                     </div>
                     <div class="col-6">
-                        <div class="metric-value text-dark">{{ weather_data.avg_pressure }}</div>
+                        <div class="metric-value text-dark {{ weather_data.avg_pressure.no_data_class }}">{{ weather_data.avg_pressure }}</div>
                         <div class="small">Average Pressure</div>
                     </div>
                 </div>
@@ -229,7 +229,7 @@
 
                 <div class="text-center">
                     <div
-                        class="metric-value {{ weather_data.alert_count.css_class }}">
+                        class="metric-value {{ weather_data.alert_count.css_class }} {{ weather_data.alert_count.no_data_class }}">
                         {{ weather_data.alert_count }}
                     </div>
                     <div class="mb-2">Active Weather Alerts</div>
@@ -273,18 +273,18 @@
 
                 <div class="row text-center">
                     <div class="col-6">
-                        <div class="metric-value text-success">{{ biodiversity_data.total_observations }}</div>
+                        <div class="metric-value text-success {{ biodiversity_data.total_observations.no_data_class }}">{{ biodiversity_data.total_observations }}</div>
                         <div class="small">Total Species Observations</div>
                     </div>
                     <div class="col-6">
-                        <div class="metric-value text-info">{{ biodiversity_data.avg_diversity }}</div>
+                        <div class="metric-value text-info {{ biodiversity_data.avg_diversity.no_data_class }}">{{ biodiversity_data.avg_diversity }}</div>
                         <div class="small">Average Species per Region</div>
                     </div>
                 </div>
 
                 <div class="row text-center mt-3">
                     <div class="col-12">
-                        <div class="metric-value text-primary">{{ biodiversity_data.region_count }}</div>
+                        <div class="metric-value text-primary {{ biodiversity_data.region_count.no_data_class }}">{{ biodiversity_data.region_count }}</div>
                         <div class="small">Biodiversity Hotspots Monitored</div>
                     </div>
                 </div>
@@ -322,7 +322,7 @@
 
                 <div class="text-center">
                     <div
-                        class="metric-value {{ biodiversity_data.avg_observations.css_class }}">
+                        class="metric-value {{ biodiversity_data.avg_observations.css_class }} {{ biodiversity_data.avg_observations.no_data_class }}">
                         {{ biodiversity_data.avg_observations }}
                     </div>
                     <div class="mb-2">Average Observations per Region</div>

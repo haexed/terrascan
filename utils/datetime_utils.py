@@ -154,22 +154,6 @@ def current_utc_formatted(include_timezone: bool = True) -> str:
 
 
 # Data display utilities
-def _no_data_markup(emoji, no_data_text):
-    """Wrap the no-data marker so it can be sized independently
-
-    It lands in elements sized for a number, where it reads as shouting.
-
-    Args:
-        emoji: Emoji shown with the text
-        no_data_text: The text itself
-
-    Returns:
-        Markup: safe span markup
-    """
-    from markupsafe import Markup, escape
-
-    return Markup(f'<span class="no-data">{escape(emoji)} {escape(no_data_text)}</span>')
-
 def format_nullable_display(value, no_data_text="No data", emoji="🤷"):
     """
     Format nullable values for display with consistent 'no data' indicators
@@ -183,7 +167,7 @@ def format_nullable_display(value, no_data_text="No data", emoji="🤷"):
         Formatted string for display
     """
     if value is None:
-        return _no_data_markup(emoji, no_data_text)
+        return f"{emoji} {no_data_text}"
     return str(value)
 
 def format_metric_display(value, unit="", decimal_places=1, no_data_text="No data", emoji="🤷"):
@@ -201,7 +185,7 @@ def format_metric_display(value, unit="", decimal_places=1, no_data_text="No dat
         Formatted string with units or no-data indicator
     """
     if value is None:
-        return _no_data_markup(emoji, no_data_text)
+        return f"{emoji} {no_data_text}"
 
     if isinstance(value, (int, float)):
         if decimal_places == 0:

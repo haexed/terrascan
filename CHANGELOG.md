@@ -2,6 +2,11 @@
 
 All notable changes to Terrascan will be documented in this file.
 
+## [3.7.9] - 2026-09-19
+
+### Fixed
+- 3.7.8 put the 1rem on a span inside `.metric-value`, leaving the div at 40px with a 60px line box around 16px text. The class goes on the div itself now, so the box is 24px tall.
+
 ## [3.7.8] - 2026-09-19
 
 ### Changed
