@@ -50,15 +50,31 @@ const VIEWPORT_LOAD_THRESHOLD = 5;
 // Debounce timer for map movement
 let mapMoveTimeout = null;
 
-// Cache of /api/map-data responses, keyed by request URL. The underlying data
-// refreshes on the order of hours (see the freshness TTLs), so returning to a
-// viewport already fetched shouldn't cost another round trip.
-const MAP_DATA_CACHE_TTL = 5 * 60 * 1000;
-const MAP_DATA_CACHE_MAX = 20;
-const mapDataCache = new Map();
+// Viewport data is fetched in whole grid cells rather than by the exact
+// viewport bbox. An exact bbox is a continuous value, so panning never
+// produced the same key twice and every drag paid a fresh round trip. Cells
+// are aligned to a per-zoom grid, so panning around an area reuses what is
+// already loaded and only the newly exposed cells are fetched.
+const TILE_CACHE_TTL = 5 * 60 * 1000;
+const TILE_CACHE_MAX = 250;
 
-// URL currently drawn on the map, so an unchanged viewport doesn't redraw
-let renderedDataUrl = null;
+// Cell size in degrees at a given zoom: 45deg at z=6, halving each level in.
+const TILE_BASE_ZOOM = 3;
+
+// Don't fan out into an unbounded number of requests for one viewport
+const TILE_MAX_PER_VIEW = 9;
+
+// Neighbour cells are warmed after the visible ones are drawn, and kept few:
+// the backend runs one worker, so prefetches compete with the visible fetch.
+const TILE_PREFETCH_MAX = 4;
+const TILE_PREFETCH_DELAY = 400;
+
+const tileCache = new Map();     // cache key -> {data, time}
+const tileRequests = new Map();  // cache key -> in-flight Promise
+let prefetchTimeout = null;
+
+// Cell keys currently drawn, so an unchanged viewport doesn't redraw
+let renderedKeys = '';
 
 // Initialize map when page loads
 document.addEventListener('DOMContentLoaded', function () {
@@ -68,6 +84,17 @@ document.addEventListener('DOMContentLoaded', function () {
     // Create toast element for scan notifications
     createScanToast();
 });
+
+// Throttle utility for continuous map movement
+function throttle(func, wait) {
+    let last = 0;
+    return function throttled(...args) {
+        const now = Date.now();
+        if (now - last < wait) return;
+        last = now;
+        func(...args);
+    };
+}
 
 // Debounce utility for map movement
 function debounce(func, wait) {
@@ -145,11 +172,17 @@ function initMap() {
     map.on('zoomend', updateScanButtonVisibility);
     updateScanButtonVisibility();
 
-    // Reload data when map moves (debounced). This has to run at every zoom
-    // level: loadEnvironmentalData() picks viewport or global data itself, and
+    // Reload when the map moves. This has to run at every zoom level:
+    // loadEnvironmentalData() picks viewport or global data itself, and
     // skipping the call when zoomed out left the map showing only the handful
-    // of markers from the last zoomed-in fetch.
-    const debouncedLoad = debounce(() => loadEnvironmentalData(), 500);
+    // of markers from the last zoomed-in fetch. The debounce is short because
+    // cells already held render without touching the network.
+    const debouncedLoad = debounce(() => loadEnvironmentalData(), 120);
+
+    // While a drag is in progress, fill the leading edge from cells already
+    // held. Waiting for the drag to be released left newly exposed ground
+    // blank until then. Cache-only: this never touches the network.
+    map.on('move', throttle(renderCachedTiles, 200));
 
     map.on('moveend', debouncedLoad);
 }
@@ -255,9 +288,9 @@ async function scanCurrentArea() {
                 // Also add to airData for consistency
                 airData = [...airData, ...result.stations];
 
-                // A scan stores new rows, so every cached response is stale
-                mapDataCache.clear();
-                renderedDataUrl = null;
+                // A scan stores new rows, so every cached cell is stale
+                tileCache.clear();
+                renderedKeys = '';
             } else {
                 showScanToast('No new stations found in this area');
             }
@@ -337,72 +370,250 @@ function getViewportBbox() {
 }
 
 /**
- * Load environmental data from API
- * Uses viewport-based loading when zoomed in for better local coverage
+ * Cell size in degrees for a zoom level
+ * @param {number} zoom - Leaflet zoom level
+ * @returns {number} cell width and height in degrees
+ */
+function tileSize(zoom) {
+    return 360 / Math.pow(2, Math.max(0, zoom - TILE_BASE_ZOOM));
+}
+
+/**
+ * Grid cells covering the current viewport
+ * @returns {{key: string, bbox: string}[]} cells, or [] when zoomed out
+ */
+function viewportTiles() {
+    if (!map) return [];
+
+    const zoom = map.getZoom();
+    const size = tileSize(zoom);
+    const bounds = map.getBounds();
+
+    const south = Math.max(-90, bounds.getSouth());
+    const north = Math.min(90, bounds.getNorth());
+    const west = Math.max(-180, bounds.getWest());
+    const east = Math.min(180, bounds.getEast());
+
+    const tiles = [];
+    const x0 = Math.floor((west + 180) / size);
+    const x1 = Math.floor((east + 180) / size);
+    const y0 = Math.floor((south + 90) / size);
+    const y1 = Math.floor((north + 90) / size);
+
+    for (let x = x0; x <= x1; x++) {
+        for (let y = y0; y <= y1; y++) {
+            tiles.push(makeTile(zoom, x, y, size));
+            if (tiles.length > TILE_MAX_PER_VIEW) return tiles.slice(0, TILE_MAX_PER_VIEW);
+        }
+    }
+    return tiles;
+}
+
+/**
+ * Build a cell descriptor from its grid coordinates
+ * @param {number} zoom - Zoom level the grid belongs to
+ * @param {number} x - Cell column
+ * @param {number} y - Cell row
+ * @param {number} size - Cell size in degrees
+ * @returns {{key: string, bbox: string}}
+ */
+function makeTile(zoom, x, y, size) {
+    const tileWest = Math.max(-180, x * size - 180);
+    const tileEast = Math.min(180, (x + 1) * size - 180);
+    const tileSouth = Math.max(-90, y * size - 90);
+    const tileNorth = Math.min(90, (y + 1) * size - 90);
+    return {
+        key: `${zoom}/${x}/${y}`,
+        bbox: `${tileSouth},${tileWest},${tileNorth},${tileEast}`
+    };
+}
+
+/**
+ * Cells immediately around the viewport, for prefetching
+ * @returns {{key: string, bbox: string}[]}
+ */
+function neighbourTiles() {
+    if (!map) return [];
+
+    const zoom = map.getZoom();
+    const size = tileSize(zoom);
+    const bounds = map.getBounds();
+    const inView = new Set(viewportTiles().map(t => t.key));
+
+    const x0 = Math.floor((Math.max(-180, bounds.getWest()) + 180) / size) - 1;
+    const x1 = Math.floor((Math.min(180, bounds.getEast()) + 180) / size) + 1;
+    const y0 = Math.floor((Math.max(-90, bounds.getSouth()) + 90) / size) - 1;
+    const y1 = Math.floor((Math.min(90, bounds.getNorth()) + 90) / size) + 1;
+
+    const maxIndex = Math.pow(2, Math.max(0, zoom - TILE_BASE_ZOOM));
+    const tiles = [];
+    for (let x = Math.max(0, x0); x <= Math.min(maxIndex - 1, x1); x++) {
+        for (let y = Math.max(0, y0); y <= Math.min(maxIndex - 1, y1); y++) {
+            const tile = makeTile(zoom, x, y, size);
+            if (!inView.has(tile.key)) tiles.push(tile);
+        }
+    }
+    return tiles;
+}
+
+/**
+ * Read a cell from cache if it hasn't expired
+ * @param {string} key - Cache key
+ * @returns {object|null} cached response, or null
+ */
+function cachedTile(key) {
+    const entry = tileCache.get(key);
+    if (!entry) return null;
+    if (Date.now() - entry.time > TILE_CACHE_TTL) {
+        tileCache.delete(key);
+        return null;
+    }
+    return entry.data;
+}
+
+/**
+ * Fetch one cell, reusing an in-flight request for the same cell
+ * @param {{key: string, bbox: string}} tile - Cell to fetch
+ * @returns {Promise<object|null>} the response, or null on failure
+ */
+function fetchTile(tile) {
+    const pending = tileRequests.get(tile.key);
+    if (pending) return pending;
+
+    const url = tile.bbox
+        ? `/api/map-data?bbox=${encodeURIComponent(tile.bbox)}`
+        : '/api/map-data';
+
+    const request = fetch(url)
+        .then(response => response.json())
+        .then(data => {
+            if (!data.success) return null;
+            tileCache.delete(tile.key);
+            tileCache.set(tile.key, { data, time: Date.now() });
+            while (tileCache.size > TILE_CACHE_MAX) {
+                tileCache.delete(tileCache.keys().next().value);
+            }
+            return data;
+        })
+        .catch(error => {
+            console.error(`Error loading map data for ${tile.key}:`, error);
+            return null;
+        })
+        .finally(() => tileRequests.delete(tile.key));
+
+    tileRequests.set(tile.key, request);
+    return request;
+}
+
+/**
+ * Load environmental data for the current view
+ *
+ * Renders whatever is already cached straight away, then fills in the cells
+ * that are missing and renders again. Panning back to somewhere already seen
+ * therefore draws without waiting on the network.
+ *
+ * @param {boolean} force - Ignore and refill the cache
  * @returns {Promise<void>}
  */
 async function loadEnvironmentalData(force = false) {
-    try {
-        // Build URL with optional bbox for viewport-based loading
-        let url = '/api/map-data';
-        if (map && map.getZoom() >= VIEWPORT_LOAD_THRESHOLD) {
-            const bbox = getViewportBbox();
-            url += `?bbox=${encodeURIComponent(bbox)}`;
-        }
+    const zoomedIn = map && map.getZoom() >= VIEWPORT_LOAD_THRESHOLD;
+    const tiles = zoomedIn ? viewportTiles() : [{ key: 'global', bbox: '' }];
 
-        // Already on screen - nothing to fetch, nothing to redraw
-        if (url === renderedDataUrl && !force) {
-            return;
-        }
-
-        // Zooming back out returns to a viewport we already have. Draw it
-        // straight from cache instead of waiting on the round trip.
-        if (!force) {
-            const cached = mapDataCache.get(url);
-            if (cached && Date.now() - cached.time < MAP_DATA_CACHE_TTL) {
-                renderMapData(url, cached.data);
-                return;
-            }
-        }
-
-        const response = await fetch(url);
-        const data = await response.json();
-
-        if (data.success) {
-            cacheMapData(url, data);
-            renderMapData(url, data);
-        }
-    } catch (error) {
-        console.error('Error loading environmental data:', error);
+    if (force) {
+        tiles.forEach(tile => tileCache.delete(tile.key));
+        renderedKeys = '';
     }
+
+    const signature = tiles.map(t => t.key).join('|');
+    const cached = tiles.map(tile => cachedTile(tile.key));
+    const missing = tiles.filter((tile, i) => cached[i] === null);
+
+    // Draw what we already have before going to the network
+    if (cached.some(Boolean) && signature !== renderedKeys) {
+        renderTiles(signature, cached.filter(Boolean));
+    }
+
+    if (missing.length) {
+        await Promise.all(missing.map(fetchTile));
+        renderTiles(signature, tiles.map(tile => cachedTile(tile.key)).filter(Boolean));
+    } else if (signature !== renderedKeys) {
+        renderTiles(signature, cached.filter(Boolean));
+    }
+
+    if (zoomedIn) schedulePrefetch();
 }
 
 /**
- * Store a map-data response, evicting the oldest entry past the cap
- * @param {string} url - Request URL the response came from
- * @param {object} data - Parsed API response
+ * Queue a neighbour prefetch once the visible cells have settled
+ * @returns {void}
  */
-function cacheMapData(url, data) {
-    mapDataCache.delete(url);
-    mapDataCache.set(url, { data, time: Date.now() });
-
-    while (mapDataCache.size > MAP_DATA_CACHE_MAX) {
-        mapDataCache.delete(mapDataCache.keys().next().value);
-    }
+function schedulePrefetch() {
+    clearTimeout(prefetchTimeout);
+    prefetchTimeout = setTimeout(prefetchNeighbours, TILE_PREFETCH_DELAY);
 }
 
 /**
- * Draw a map-data response onto the layers
- * @param {string} url - Request URL the response came from
- * @param {object} data - Parsed API response
+ * Redraw from cache alone, for use while the map is still moving
+ * @returns {void}
  */
-function renderMapData(url, data) {
-    fireData = validateFireData(data.fires || []);
-    airData = validateAirData(data.air_quality || []);
-    oceanData = validateOceanData(data.ocean || []);
-    conflictData = data.conflicts || [];
-    biodiversityData = data.biodiversity || [];
-    auroraData = data.aurora || { points: [], kp_index: null };
+function renderCachedTiles() {
+    if (!map || map.getZoom() < VIEWPORT_LOAD_THRESHOLD) return;
+
+    const tiles = viewportTiles();
+    const signature = tiles.map(t => t.key).join('|');
+    if (signature === renderedKeys) return;
+
+    const responses = tiles.map(tile => cachedTile(tile.key));
+    if (responses.some(response => response === null)) return;
+
+    renderTiles(signature, responses);
+}
+
+/**
+ * Warm the cells around the viewport so a short pan has data ready
+ * @returns {void}
+ */
+function prefetchNeighbours() {
+    if (tileRequests.size) {
+        // Visible cells are still loading; don't compete with them
+        schedulePrefetch();
+        return;
+    }
+    neighbourTiles()
+        .filter(tile => !cachedTile(tile.key))
+        .slice(0, TILE_PREFETCH_MAX)
+        .forEach(fetchTile);
+}
+
+/**
+ * Merge cell responses and draw them
+ * @param {string} signature - Key list identifying what is being drawn
+ * @param {object[]} responses - Cell responses to merge
+ * @returns {void}
+ */
+function renderTiles(signature, responses) {
+    if (!responses.length) return;
+
+    fireData = validateFireData(mergeRecords(responses, 'fires', f => `${f.lat},${f.lng},${f.brightness}`));
+    airData = validateAirData(mergeRecords(responses, 'air_quality', a => `${a.lat},${a.lng},${a.pm25}`));
+    oceanData = validateOceanData(mergeRecords(responses, 'ocean', o => `${o.latitude},${o.longitude},${o.name}`));
+    conflictData = mergeRecords(responses, 'conflicts', c => `${c.latitude},${c.longitude},${c.date},${c.conflict_name}`);
+    biodiversityData = mergeRecords(responses, 'biodiversity', b => `${b.latitude},${b.longitude},${b.ecosystem}`);
+
+    const auroraPoints = [];
+    const seenAurora = new Set();
+    let kpIndex = null;
+    for (const response of responses) {
+        const aurora = response.aurora || {};
+        if (kpIndex === null && aurora.kp_index) kpIndex = aurora.kp_index;
+        for (const point of aurora.points || []) {
+            const id = `${point.latitude},${point.longitude}`;
+            if (seenAurora.has(id)) continue;
+            seenAurora.add(id);
+            auroraPoints.push(point);
+        }
+    }
+    auroraData = { points: auroraPoints, kp_index: kpIndex };
 
     updateFireLayer();
     updateAirLayer();
@@ -411,7 +622,32 @@ function renderMapData(url, data) {
     updateBiodiversityLayer();
     updateAuroraLayer();
 
-    renderedDataUrl = url;
+    renderedKeys = signature;
+}
+
+/**
+ * Concatenate one field across cell responses, dropping duplicates
+ *
+ * A record sitting exactly on a cell boundary comes back from both
+ * neighbours, since the API's bbox filter includes both edges.
+ *
+ * @param {object[]} responses - Cell responses
+ * @param {string} field - Response field to merge
+ * @param {function(object): string} identify - Record identity
+ * @returns {object[]} merged records
+ */
+function mergeRecords(responses, field, identify) {
+    const seen = new Set();
+    const merged = [];
+    for (const response of responses) {
+        for (const record of response[field] || []) {
+            const id = identify(record);
+            if (seen.has(id)) continue;
+            seen.add(id);
+            merged.push(record);
+        }
+    }
+    return merged;
 }
 
 /**

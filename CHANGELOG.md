@@ -2,6 +2,13 @@
 
 All notable changes to Terrascan will be documented in this file.
 
+## [3.7.5] - 2026-09-19
+
+### Changed
+- `/map`: viewport data is fetched in whole grid cells aligned to a per-zoom grid, replacing the exact-bbox request. A bbox is a continuous value, so the 3.7.4 cache only hit when a viewport was reproduced to the pixel and every pan paid a fresh ~500ms round trip. Cells are cached by zoom and grid position, so panning reuses what is loaded and fetches only newly exposed cells. Returning to somewhere already visited renders in ~1ms with no request.
+- `/map`: cells next to the viewport are prefetched in the background, 400ms after the visible ones are drawn and never while a visible fetch is in flight.
+- `/map`: moving the map redraws from cached cells during the drag rather than only on release, so newly exposed ground isn't blank until the mouse comes up. The redraw never fetches. Reload debounce 500ms to 120ms.
+
 ## [3.7.4] - 2026-09-19
 
 ### Changed
