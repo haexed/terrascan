@@ -2,47 +2,57 @@
 
 All notable changes to Terrascan will be documented in this file.
 
+## [3.6.19] - 2026-09-19
+
+### Fixed
+- `.btn` anchors inside `.eco-card` showed an underline (Explore Map, System Status, Learn More, View Task Logs, View on GitHub). Restored `:not(.btn)` on `.eco-card a`.
+
+## [3.6.18] - 2026-09-19
+
+### Reverted
+- `/system` recent-runs duration: always a number + "s" again.
+
 ## [3.6.17] - 2026-09-19
 
 ### Changed
-- Anchor decoration unified to solid green underline (was a mix of dotted green/yellow); `--infp-brown` removed entirely (navbar fallback color, `a:hover`, `.eco-card a:hover` all dropped it rather than guess a replacement)
-- Footer links: underline no longer hardcoded green (was invisible against the green footer background under yellow text) — follows the link's own text color instead
+- Anchor decoration: solid green underline everywhere.
+- Removed `--infp-brown`.
+- Footer link underline follows the link's own color instead of a fixed color.
 
 ## [3.6.16] - 2026-09-19
 
 ### Removed
-- Remaining direct users of `@keyframes pulse`: `.task-running .status-badge` (`style.css`), `.stat-item.scan-status` (`map.css`, was dead code anyway — nothing ever cleared its `display:none`). Both `@keyframes pulse` definitions removed too.
+- `.task-running .status-badge` and `.stat-item.scan-status` pulse animations. Both `@keyframes pulse` definitions.
 
 ## [3.6.15] - 2026-09-19
 
 ### Removed
-- `.pulse` CSS class and its two badge usages (`dashboard.html`, `index.html`); `@keyframes pulse` kept, still used directly by `.task-running .status-badge`
+- `.pulse` CSS class and its two badge usages.
 
 ## [3.6.14] - 2026-09-19
 
 ### Reverted
-- 3.6.12's axe-core color/markup fixes, per feedback: the ask was to run WCAG tooling and report, not change or add rules. Navbar/footer back to `--infp-green`, `.status-*`/`.text-info`/badge/`.layer-source`/`.beta-badge`/freshness-badge colors back to original, `.eco-card a`/`a.btn` back to original, `<main>`/`<footer>` landmarks and `<h1>` promotions on `/status` `/system` `/about` `/system/schema` reverted
-- Kept: the map control panel redesign (3.6.13, separately requested) and the navbar logo fix below
+- 3.6.12's axe-core color/markup changes. Navbar/footer/status colors, badge colors, `.eco-card a`/`a.btn`, `<main>`/`<footer>` landmarks, `<h1>` promotions all back to prior state. Kept the 3.6.13 map panel redesign.
 
 ### Fixed
-- Navbar "Terrascan" brand: pinned white + no underline directly on `.logo`/`.logo:hover`/`.logo:visited` (was losing to the generic `a`/`a:hover` rules once navbar bg happened to match `--infp-forest`)
+- Navbar "Terrascan" brand pinned to white, no underline, on `.logo`.
 
 ## [3.6.13] - 2026-09-19
 
 ### Changed
-- `/map` control panel redesign: Planetary Health merged into the top of the same panel as the layer toggles (was a separate floating box, could overlap the controls at some viewport sizes — now structurally impossible, only one panel). "Live Environmental Layers" is now the collapsible header, replacing the redundant "🌍 Terrascan" one (already in the navbar)
-- Health breakdown panel repositioned to anchor off the left panel instead of the removed right-side widget
+- `/map` control panel: Planetary Health merged into the top of the layer-toggle panel. "Live Environmental Layers" is the collapsible header. Removed the duplicate "🌍 Terrascan" header.
+- Health breakdown panel repositioned to the left panel.
 
 ## [3.6.12] - 2026-09-19
 
 ### Fixed
-- Ran axe-core (WCAG 2.0/2.1 A+AA engine) against all 6 pages, fixed every violation found — reverted in 3.6.14, see that entry
+- Ran axe-core against all 6 pages, fixed every violation. Reverted in 3.6.14.
 
 ## [3.6.11] - 2026-09-19
 
 ### Fixed
-- Task card titles and Task Logs modal title went white-on-white (3.6.10's `:is()` fix beat `.card-title`/`.modal-title`) — pinned both with `!important`
-- `/tasks` "Total Tasks" stat was white-on-white (same root cause, plain `<div class="h3">` caught by the old broad heading rule)
+- Task card titles and Task Logs modal title: pinned color with `!important`.
+- `/tasks` "Total Tasks" stat: fixed white-on-white.
 - Status badges de-screamed: `.upper()` → title case across `/system` and `/system/schema` (OPERATIONAL, NO_DATA, RUNNING, YES/NO, etc.)
 - `/system` recent-runs table showed "0.0s" for a still-running task — `duration_seconds` is NULL until completion, now shows "Running…"
 

@@ -327,7 +327,7 @@
                                     <small>{{ run.started_at }}</small>
                                 </td>
                                 <td>
-                                    <small>{% if run.duration_seconds is not none %}{{ "%.1f"|format(run.duration_seconds) }}s{% elif run.status == 'running' %}Running…{% else %}No data{% endif %}</small>
+                                    <small>{{ "%.1f"|format(run.duration_seconds or 0) }}s</small>
                                 </td>
                                 <td>
                                     <span class="text-success">{{ run.records_processed }}</span>

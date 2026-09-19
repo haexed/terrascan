@@ -78,16 +78,16 @@ h6,
 .eco-card h5,
 .eco-card h6,
 .eco-card .lead,
-.eco-card a,
-.eco-card a:visited {
+.eco-card a:not(.btn),
+.eco-card a:not(.btn):visited {
     color: var(--infp-forest);
 }
 
-.eco-card a {
+.eco-card a:not(.btn) {
     text-decoration: underline solid var(--infp-green);
 }
 
-.eco-card a:hover {
+.eco-card a:not(.btn):hover {
     text-decoration: underline solid var(--infp-green);
 }
 
