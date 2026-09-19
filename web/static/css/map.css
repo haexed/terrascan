@@ -240,9 +240,9 @@
 .layer-toggle {
     display: flex;
     align-items: center;
-    margin: 6px 0;
-    padding: 10px 12px;
-    border-radius: 10px;
+    margin: 1px 0;
+    padding: 5px 12px;
+    border-radius: 8px;
     cursor: pointer;
     transition: all 0.2s ease;
     user-select: none;
@@ -289,10 +289,6 @@
     color: var(--infp-green);
 }
 
-.layer-toggle-all {
-    border-bottom: 1px solid rgba(0, 0, 0, 0.12);
-    margin-bottom: 4px;
-}
 
 /* Hide actual checkbox */
 .layer-toggle input[type="checkbox"] {

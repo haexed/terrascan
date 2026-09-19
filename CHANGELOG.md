@@ -2,6 +2,11 @@
 
 All notable changes to Terrascan will be documented in this file.
 
+## [3.7.11] - 2026-09-19
+
+### Changed
+- `/map`: `<hr>` under "All sources" instead of a border, no icon on that row, and layer rows condensed from 10px/6px to 5px/1px padding and margin. Panel 716px to 595px.
+
 ## [3.7.10] - 2026-09-19
 
 ### Added
