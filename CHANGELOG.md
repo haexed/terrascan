@@ -2,6 +2,14 @@
 
 All notable changes to Terrascan will be documented in this file.
 
+## [3.7.2] - 2026-09-19
+
+### Removed
+- `/system`: the permanently-disabled "Clear Old Data" button ("Coming in future update"). No handler existed for it.
+
+### Fixed
+- Main page showed a horizontal and a vertical scrollbar with nothing to scroll to. `map.html` overrode `{% block footer_container %}` to empty, so the footer's Bootstrap `.row` had no container padding to cancel its `-12px` gutter margins and hung 12px past the viewport. The resulting horizontal scrollbar then ate 15px of height, which pushed the 100vh layout into a vertical scrollbar too. Restored the `container-fluid` wrapper. Verified 0px overflow on all 6 pages at 1400px, 1024px and 390px wide.
+
 ## [3.7.1] - 2026-09-19
 
 ### Changed
@@ -59,10 +67,8 @@ All notable changes to Terrascan will be documented in this file.
 ### Fixed
 - `.btn` anchors inside `.eco-card` showed an underline (Explore Map, System Status, Learn More, View Task Logs, View on GitHub). Restored `:not(.btn)` on `.eco-card a`.
 
-## [3.6.18] - 2026-09-19
-
 ### Reverted
-- `/system` recent-runs duration: always a number + "s" again.
+- `/system` recent-runs duration: always a number + "s" again. (Was logged as 3.6.18, but no commit ever carried that version - the revert shipped inside the 3.6.19 commit.)
 
 ## [3.6.17] - 2026-09-19
 

@@ -13,7 +13,7 @@ Every message this session prefixed "todo" / "todo:" (plus a couple of other exp
 2. `todo: health box overlapping map controls.`
    - tried fix, needs QA (3.6.13)
 3. `todo: front page shows scrollbars without effect.`
-   - **open**
+   - fixed (3.7.2). Root cause: `map.html` overrode `{% block footer_container %}` to empty, so the footer's Bootstrap `.row` sat in a plain `<div>` with no padding to cancel its `-12px` gutter margins - the row hung 12px past the viewport on each side. That horizontal scrollbar then consumed 15px of viewport height, which tipped the 100vh layout into a vertical scrollbar as well. Both scrolled to nothing. Restored the `container-fluid` wrapper; measured 0px overflow on all 6 pages at 1400/1024/390px wide, and `/` now has zero scrollable height at every width.
 4. `todo remove all "—". e.g. Active Fires. should be 0 (zero) or no data.`
    - done
 5. `todo: zooming in map and out removes all other leaflet-interactive (dots) until refresh, broken.`
@@ -74,6 +74,18 @@ Every message this session prefixed "todo" / "todo:" (plus a couple of other exp
 30. `todo remove running from status column, it's redundant when running in result column`
     - done (3.7.1): the Status column on `/tasks` showed an extra "Running" badge alongside Active/Inactive while the Result column said "Running" too. Removed the badge; `tasks.js` only sets the row's `task-running` class, so nothing re-injects it.
 
+31. `and remove unused btn: " Clear Old Data"`
+    - done (3.7.2): the button on `/system`'s Quick Actions was `disabled` with `title="Coming in future update"` and had no handler anywhere. Removed.
+
+## Deploy prep notes (2026-09-19)
+
+- **`railway.json` and the `Procfile` disagree on how the app starts.** `Procfile` runs gunicorn (`gunicorn --workers 1 --threads 2 ... wsgi:app`); `railway.json`'s `startCommand` runs `python run.py`, which is Flask's **development server** (`app.run()`). A `startCommand` in `railway.json` overrides the Procfile, so production is likely on the dev server: single process, no real concurrency, and Werkzeug's own warning says not to. Left alone - switching the start command changes deploy behaviour and can't be tested from here. Decide before or right after this deploy.
+- `railway.json` health-checks `/` while `railway.toml` health-checks `/api/health`. Both return 200, but the two files should agree on one.
+- Provider metadata seeding is on both start paths: `wsgi.py` calls `setup_system_configs()` on import and `run.py` calls it in `main()`, so a fresh deploy seeds `provider_config` either way. No manual step needed.
+- Backfilled the two missing release tags: `3.6.6` on `871fb5c` (last commit carrying that version) and `3.6.7` on `0b40a2c`.
+- `CHANGELOG.md` had a phantom `[3.6.18]`: no commit ever set `VERSION = "3.6.18"`, and that revert actually shipped inside the 3.6.19 commit. Merged the entry into 3.6.19.
+- Added `.claude/` to `.gitignore` (local permissions file, same category as the already-ignored `CLAUDE.md` and `claude-bwrap`).
+
 ## Git tags
 
 Local tags are all unprefixed now (42 of them, `1.0.0` through `3.7.1`). GitHub still has the old `v`-prefixed names and is missing everything from `3.6.8` up. Two commands from a shell that can reach `origin`:
@@ -117,6 +129,5 @@ Fix direction: one provider-metadata source (small DB table or config), `/system
 
 ## Frontend / UI
 
-- `/map`: page-level scrollbar with nothing to scroll to.
 - `/map` (Leaflet): zooming in/out removes all other `leaflet-interactive` markers until manual refresh.
 - Link/hover colors: tried fix, needs QA (3.6.17) — `--infp-brown` removed, anchors now just solid-green-underline with no color change on hover. Whether this reads as "unified" is for a human to judge; needs an actual design pass if not, not another guess from Claude.

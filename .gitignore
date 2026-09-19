@@ -72,3 +72,4 @@ instance/
 # Private local tooling
 CLAUDE.md
 claude-bwrap
+.claude/
