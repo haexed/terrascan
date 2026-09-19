@@ -8,31 +8,31 @@ All notable changes to Terrascan will be documented in this file.
 - `/system`: "Clear Old Data" button.
 
 ### Fixed
-- Main page showed a horizontal and a vertical scrollbar with nothing to scroll to. `map.html` overrode `{% block footer_container %}` to empty, so the footer's Bootstrap `.row` had no container padding to cancel its `-12px` gutter margins and hung 12px past the viewport. The resulting horizontal scrollbar then ate 15px of height, which pushed the 100vh layout into a vertical scrollbar too. Restored the `container-fluid` wrapper. Verified 0px overflow on all 6 pages at 1400px, 1024px and 390px wide.
+- Main page had a horizontal and a vertical scrollbar with nothing to scroll to: `map.html` blanked `{% block footer_container %}`, so the footer `.row`'s `-12px` gutter margins had no container padding to cancel them and overhung the viewport by 12px. Restored the `container-fluid` wrapper.
 
 ## [3.7.1] - 2026-09-19
 
 ### Changed
-- `/tasks`: dropped the "Running" badge from the Status column. The Result column already shows a running task, so the row said it twice. Status is now just Active/Inactive.
+- `/tasks`: "Running" badge dropped from the Status column, the Result column already shows it.
 
 ## [3.7.0] - 2026-09-19
 
 ### Added
-- `database/providers.py` + `setup_providers.py`: provider metadata (name, icon, URL, tagline, description, coverage, update frequency, metrics, record label, collection tasks, freshness threshold) now lives as one JSON row per provider in `provider_config`, seeded on startup from `setup_configs.py`. Nothing outside `setup_providers.py` hardcodes provider names, icons, URLs, task names or freshness thresholds.
-- `/api/providers`: the same metadata as JSON, for JS consumers.
-- `/system`: an "Unrecognized Providers" card, shown only when `metric_data` holds a `provider_key` with no metadata.
-- `fix_task_commands.py`: diagnoses (and can repair) `task.command` values pointing at modules that don't exist. Not run - the repair is opt-in.
+- Provider metadata (name, icon, URL, coverage, tasks, freshness) as one JSON row per provider in `provider_config`, seeded by `setup_providers.py`, read through `database/providers.py`.
+- `/api/providers`.
+- `/system`: "Unrecognized Providers" card, listing `provider_key`s in `metric_data` with no metadata.
+- `fix_task_commands.py`: reports `task.command` values whose module doesn't import. Repair is opt-in, not run.
 
 ### Changed
-- `/system`: the 6 provider cards are one table, all 8 providers, one row each. "Active Data Sources" counts operational providers instead of a hardcoded 6.
-- `/system`: dropped the "Recent Task Executions" table - redundant with the `/tasks` table. Also drops one query per page load.
-- Footer, `/about`, `/status`, `/dashboard`, `/map` layer labels: every provider name/URL/icon now comes from the metadata. The footer listed 5, `/system` 6, `/about` 8, `/dashboard` 3 - all now list the same 8.
-- `/api/refresh` and `/api/collect-all-data` run the task list from provider metadata instead of two separately hardcoded lists (both of which omitted gbif and openweather).
+- `/system`: 6 provider cards → one table of all 8. "Active Data Sources" counts operational providers instead of a hardcoded 6.
+- `/system`: removed the "Recent Task Executions" table.
+- Footer, `/about`, `/status`, `/dashboard` and `/map` labels read provider names/URLs/icons from the metadata. Footer listed 5, `/system` 6, `/about` 8, `/dashboard` 3; all now list 8.
+- `/api/refresh` and `/api/collect-all-data` take their task list from provider metadata.
 
 ### Fixed
-- `fa-spin` was frozen for anyone with `prefers-reduced-motion: reduce`: Font Awesome 7 sets `animation: none !important` for it, so every loading spinner rendered but never moved. Now keeps turning at 3s under that preference.
-- `/api/smart-refresh` counted failed task runs as refreshed ones - "Refreshed 7 sources" even when a task didn't exist. Failures now report separately under `failed`.
-- `PROVIDER_TO_TASK` in `/api/smart-refresh` mapped gbif to `gbif_biodiversity` and openweather to `openweather_global`; neither task exists, so both always failed silently.
+- `fa-spin` was frozen under `prefers-reduced-motion: reduce` — Font Awesome 7 sets `animation: none !important` on it. Now turns at 3s.
+- `/api/smart-refresh` counted failed task runs as refreshed ones. Failures report under `failed`.
+- `/api/smart-refresh` mapped gbif to `gbif_biodiversity` and openweather to `openweather_global`; neither task exists.
 
 ## [3.6.23] - 2026-09-19
 
@@ -68,7 +68,7 @@ All notable changes to Terrascan will be documented in this file.
 - `.btn` anchors inside `.eco-card` showed an underline (Explore Map, System Status, Learn More, View Task Logs, View on GitHub). Restored `:not(.btn)` on `.eco-card a`.
 
 ### Reverted
-- `/system` recent-runs duration: always a number + "s" again. (Was logged as 3.6.18, but no commit ever carried that version - the revert shipped inside the 3.6.19 commit.)
+- `/system` recent-runs duration: always a number + "s" again. (Logged as 3.6.18; no commit carried that version.)
 
 ## [3.6.17] - 2026-09-19
 
