@@ -154,7 +154,7 @@ def current_utc_formatted(include_timezone: bool = True) -> str:
 
 
 # Data display utilities
-def format_nullable_display(value, no_data_text="NO DATA", emoji="🤷"):
+def format_nullable_display(value, no_data_text="No data", emoji="🤷"):
     """
     Format nullable values for display with consistent 'no data' indicators
 
@@ -170,7 +170,7 @@ def format_nullable_display(value, no_data_text="NO DATA", emoji="🤷"):
         return f"{emoji} {no_data_text}"
     return str(value)
 
-def format_metric_display(value, unit="", decimal_places=1, no_data_text="NO DATA", emoji="🤷"):
+def format_metric_display(value, unit="", decimal_places=1, no_data_text="No data", emoji="🤷"):
     """
     Format metric values with proper NULL handling and units
 

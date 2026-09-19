@@ -18,22 +18,22 @@
     <div class="stats-banner-content">
         <div class="stat-item">
             <span class="stat-icon">🔥</span>
-            <span class="stat-value" id="banner-fires">{{ health_data.fires.count if health_data.fires.count else '—' }}</span>
+            <span class="stat-value" id="banner-fires">{{ health_data.fires.count if health_data.fires.count is not none else 'No data' }}</span>
             <span class="stat-label">Active Fires</span>
         </div>
         <div class="stat-item">
             <span class="stat-icon">🌬️</span>
-            <span class="stat-value" id="banner-air">{{ health_data.air_quality.avg_pm25 if health_data.air_quality.avg_pm25 else '—' }}{{ ' μg/m³' if health_data.air_quality.avg_pm25 else '' }}</span>
+            <span class="stat-value" id="banner-air">{{ health_data.air_quality.avg_pm25 if health_data.air_quality.avg_pm25 is not none else 'No data' }}{{ ' μg/m³' if health_data.air_quality.avg_pm25 is not none else '' }}</span>
             <span class="stat-label">Global AQI</span>
         </div>
         <div class="stat-item">
             <span class="stat-icon">🌊</span>
-            <span class="stat-value" id="banner-ocean">{{ health_data.ocean_temperature.avg_temp if health_data.ocean_temperature.avg_temp else '—' }}{{ '°C' if health_data.ocean_temperature.avg_temp else '' }}</span>
+            <span class="stat-value" id="banner-ocean">{{ health_data.ocean_temperature.avg_temp if health_data.ocean_temperature.avg_temp is not none else 'No data' }}{{ '°C' if health_data.ocean_temperature.avg_temp is not none else '' }}</span>
             <span class="stat-label">Ocean Temp</span>
         </div>
         <div class="stat-item">
             <span class="stat-icon">🌍</span>
-            <span class="stat-value" id="banner-health">{{ health_score.score if health_score.score else '—' }}/100</span>
+            <span class="stat-value" id="banner-health">{{ health_score.score if health_score.score is not none else 'No data' }}/100</span>
             <span class="stat-label">Health Score</span>
         </div>
         <div class="stat-item scan-status" id="scan-status-banner" style="display: none;">
@@ -58,10 +58,10 @@
         <!-- Fire Layer Toggle -->
         <label class="layer-toggle">
             <span class="layer-icon">🔥</span>
-            <div class="layer-info">
+            <span class="layer-info">
                 <strong>Active Fires</strong>
                 <span class="layer-source">NASA FIRMS</span>
-            </div>
+            </span>
             <input type="checkbox" id="fire-layer" checked>
             <span class="toggle-switch"></span>
         </label>
@@ -69,10 +69,10 @@
         <!-- Air Quality Layer Toggle -->
         <label class="layer-toggle">
             <span class="layer-icon">🌬️</span>
-            <div class="layer-info">
+            <span class="layer-info">
                 <strong>Air Quality</strong>
                 <span class="layer-source">OpenAQ PM2.5</span>
-            </div>
+            </span>
             <input type="checkbox" id="air-layer" checked>
             <span class="toggle-switch"></span>
         </label>
@@ -80,10 +80,10 @@
         <!-- Ocean Layer Toggle -->
         <label class="layer-toggle">
             <span class="layer-icon">🌊</span>
-            <div class="layer-info">
+            <span class="layer-info">
                 <strong>Ocean Temp</strong>
                 <span class="layer-source">Open-Meteo SST</span>
-            </div>
+            </span>
             <input type="checkbox" id="ocean-layer" checked>
             <span class="toggle-switch"></span>
         </label>
@@ -91,10 +91,10 @@
         <!-- Conflict Layer Toggle -->
         <label class="layer-toggle">
             <span class="layer-icon">⚔️</span>
-            <div class="layer-info">
+            <span class="layer-info">
                 <strong>Conflicts</strong>
                 <span class="layer-source">UCDP Events</span>
-            </div>
+            </span>
             <input type="checkbox" id="conflict-layer" checked>
             <span class="toggle-switch"></span>
         </label>
@@ -102,10 +102,10 @@
         <!-- Biodiversity Layer Toggle -->
         <label class="layer-toggle">
             <span class="layer-icon">🦋</span>
-            <div class="layer-info">
+            <span class="layer-info">
                 <strong>Biodiversity</strong>
                 <span class="layer-source">GBIF Hotspots</span>
-            </div>
+            </span>
             <input type="checkbox" id="biodiversity-layer" checked>
             <span class="toggle-switch"></span>
         </label>
@@ -113,10 +113,10 @@
         <!-- Aurora Layer Toggle -->
         <label class="layer-toggle">
             <span class="layer-icon">🌌</span>
-            <div class="layer-info">
+            <span class="layer-info">
                 <strong>Aurora</strong>
                 <span class="layer-source" id="kp-status">NOAA SWPC</span>
-            </div>
+            </span>
             <input type="checkbox" id="aurora-layer" checked>
             <span class="toggle-switch"></span>
         </label>
@@ -126,10 +126,10 @@
         <!-- Map Style Toggle -->
         <label class="layer-toggle">
             <span class="layer-icon">🛰️</span>
-            <div class="layer-info">
+            <span class="layer-info">
                 <strong>Satellite View</strong>
                 <span class="layer-source">High Resolution</span>
-            </div>
+            </span>
             <input type="checkbox" id="satellite-view" checked>
             <span class="toggle-switch"></span>
         </label>
@@ -143,7 +143,7 @@
         {{ health_score.score if health_score else '--' }}/100
     </div>
     <div class="mt-1 small status-{{ health_score.status.lower() if health_score else 'unknown' }}">
-        {{ health_score.status if health_score else 'No Data' }}
+        {{ health_score.status if health_score else 'No data' }}
     </div>
     <div class="small mt-1 text-muted">
         {{ health_score.sources_used if health_score else 0 }}/{{ health_score.sources_total if health_score else 3 }} sources

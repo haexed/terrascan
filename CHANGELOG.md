@@ -2,6 +2,20 @@
 
 All notable changes to Terrascan will be documented in this file.
 
+## [3.6.8] - 2026-09-19
+
+### Fixed
+- **Heading color specificity bug (site-wide)**: any heading combining an element tag with a Bootstrap size class (e.g. `<h1 class="h2">`, used on `/tasks`) rendered dark forest-green on the green page background instead of white — Bootstrap's `.h1`–`.h6` utility classes (specificity 0,1,0) beat our plain `h1`–`h6` rule (0,0,1) despite ours loading later. Added `.h1`–`.h6` to our white-heading rule.
+- "Task Logs" modal title was white text in a white Bootstrap modal (invisible) — added a `.modal-title` color override
+- `/map` banner stats used Jinja truthiness (`if count else '—'`), so a real `0` (e.g. zero active fires) incorrectly rendered as `—` same as missing data — switched to explicit `is not none` checks, "No data" for genuinely missing values
+- `<div>` nested inside `<label>` on `/map`'s layer toggles (invalid HTML, caught by the W3C Nu Html Checker) — changed to `<span>`, no visual change since the elements are flex items
+- Invalid `<meta http-equiv="Cache-Control">` etc. tags removed from `<head>` — redundant, already set as real HTTP headers via the `no_cache` response decorator
+
+### Changed
+- Removed hover animations from `.eco-card`, `.hero-map-container`, `.task-card` (previously three different, inconsistent hover motions)
+- "NO DATA" / "SYSTEM STATUS & DATA PROVIDERS" / "DATABASE SCHEMA DOCUMENTATION" → sentence case (was shouting in all caps)
+- `.data-source` caption color: brown → sage green (`#268257`, on-brand, ~4.76:1 contrast on white)
+
 ## [3.6.7] - 2026-09-19
 
 ### Changed

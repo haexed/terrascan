@@ -6,6 +6,7 @@
     --infp-cream: #F9F6F0;
     --infp-gray: #B0B7B6;
     --infp-brown: #7C6F57;
+    --infp-sage: #268257;
 }
 
 body {
@@ -47,6 +48,12 @@ h3,
 h4,
 h5,
 h6,
+.h1,
+.h2,
+.h3,
+.h4,
+.h5,
+.h6,
 .lead,
 .text-white {
     color: #fff;
@@ -94,6 +101,11 @@ h6,
 }
 
 .card-title {
+    color: var(--infp-forest);
+}
+
+/* Bootstrap modals have a white .modal-content background */
+.modal-title {
     color: var(--infp-forest);
 }
 
@@ -191,13 +203,6 @@ h6,
     border-radius: 18px;
     box-shadow: 0 4px 24px rgba(51, 164, 116, 0.08);
     color: var(--infp-forest);
-    transition: all 0.3s ease;
-}
-
-.eco-card:hover {
-    transform: translateY(-4px) scale(1.01);
-    border-color: var(--infp-green);
-    box-shadow: 0 8px 32px rgba(51, 164, 116, 0.18);
 }
 
 .health-score {
@@ -271,7 +276,7 @@ h6,
 
 .data-source {
     font-size: 0.8rem;
-    color: var(--infp-brown);
+    color: var(--infp-sage);
 }
 
 .freshness-badge {
@@ -354,12 +359,6 @@ a:hover {
     border-radius: 18px;
     overflow: hidden;
     box-shadow: 0 4px 24px rgba(51, 164, 116, 0.08);
-    transition: all 0.3s ease;
-}
-
-.hero-map-container:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 32px rgba(51, 164, 116, 0.15);
 }
 
 /* Hero map header */
@@ -509,16 +508,10 @@ a:hover {
 /* === TASKS PAGE STYLES === */
 
 .task-card {
-    transition: all 0.3s ease;
     border: 1px solid #ddd;
     border-radius: 8px;
     background: white;
     margin-bottom: 1rem;
-}
-
-.task-card:hover {
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-    transform: translateY(-2px);
 }
 
 .task-active {

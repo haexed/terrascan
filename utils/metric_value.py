@@ -14,12 +14,12 @@ class MetricValue:
         temp.status  # "warning"
 
         missing = MetricValue(None)
-        print(missing)  # "🤷 NO DATA"
+        print(missing)  # "🤷 No data"
         missing.status  # "no_data"
     """
 
     def __init__(self, value, unit="", decimal_places=1,
-                 thresholds=None, no_data_emoji="🤷", no_data_text="NO DATA"):
+                 thresholds=None, no_data_emoji="🤷", no_data_text="No data"):
         self.raw_value = value
         self.unit = unit
         self.decimal_places = decimal_places
