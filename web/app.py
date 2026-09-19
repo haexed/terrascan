@@ -1458,13 +1458,13 @@ def _fetch_data_freshness():
 
                 if age_hours < threshold_hours:
                     status = 'fresh'
-                    color = '#1e7e34'  # Green (white-text contrast ≥4.5:1)
+                    color = '#28a745'  # Green
                 elif age_hours < threshold_hours * 2:
                     status = 'aging'
-                    color = '#8a6d00'  # Amber (white-text contrast ≥4.5:1)
+                    color = '#ffc107'  # Yellow
                 else:
                     status = 'stale'
-                    color = '#c9302c'  # Red (white-text contrast ≥4.5:1)
+                    color = '#dc3545'  # Red
 
                 result[provider] = {
                     'last_fetched': last_fetched.isoformat() if last_fetched else None,

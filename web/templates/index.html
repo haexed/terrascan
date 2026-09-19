@@ -16,13 +16,13 @@
     <div class="row mb-4">
         <div class="col-12">
             <div class="eco-card text-center p-4">
-                <h1 class="h2 mb-3">🌍 Planetary Health</h1>
+                <h2 class="mb-3">🌍 Planetary Health</h2>
                 <div class="health-score status-{{ health_score.status.lower().replace('_', '-') }}">
                     {% if health_score.score is not none %}{{ health_score.score }}/100{% else %}No data{% endif %}
                 </div>
-                <h2 class="h3 mt-2 status-{{ health_score.status.lower().replace('_', '-') }}">
+                <h3 class="mt-2 status-{{ health_score.status.lower().replace('_', '-') }}">
                     {{ health_score.status.replace('_', ' ') }}
-                </h2>
+                </h3>
                 <p class="mt-3">
                     Based on current fire activity, air quality, and ocean conditions
                 </p>
@@ -36,7 +36,7 @@
                 <div class="d-flex align-items-center mb-3">
                     <span class="fs-1 me-3">🔥</span>
                     <div>
-                        <h3 class="h4 mb-0">Global Fires</h3>
+                        <h4 class="mb-0">Global Fires</h4>
                         <div class="data-source">
                             NASA FIRMS
                             {% if freshness.nasa_firms %}
@@ -82,7 +82,7 @@
                 <div class="d-flex align-items-center mb-3">
                     <span class="fs-1 me-3">🌬️</span>
                     <div>
-                        <h3 class="h4 mb-0">Air Quality</h3>
+                        <h4 class="mb-0">Air Quality</h4>
                         <div class="data-source">
                             OpenAQ
                             {% if freshness.openaq %}
@@ -128,7 +128,7 @@
                 <div class="d-flex align-items-center mb-3">
                     <span class="fs-1 me-3">🌊</span>
                     <div>
-                        <h3 class="h4 mb-0">Ocean Health</h3>
+                        <h4 class="mb-0">Ocean Health</h4>
                         <div class="data-source">
                             Open-Meteo
                             {% if freshness.openmeteo_marine %}
@@ -176,7 +176,7 @@
                 <div class="d-flex align-items-center mb-3">
                     <span class="fs-1 me-3">🌡️</span>
                     <div>
-                        <h3 class="h4 mb-0">Global Weather</h3>
+                        <h4 class="mb-0">Global Weather</h4>
                         <div class="data-source">OpenWeatherMap Network</div>
                     </div>
                 </div>
@@ -222,7 +222,7 @@
                 <div class="d-flex align-items-center mb-3">
                     <span class="fs-1 me-3">🚨</span>
                     <div>
-                        <h3 class="h4 mb-0">Weather Alerts</h3>
+                        <h4 class="mb-0">Weather Alerts</h4>
                         <div class="data-source">Government Weather Services</div>
                     </div>
                 </div>
@@ -266,7 +266,7 @@
                 <div class="d-flex align-items-center mb-3">
                     <span class="fs-1 me-3">🦋</span>
                     <div>
-                        <h3 class="h4 mb-0">Species Diversity</h3>
+                        <h4 class="mb-0">Species Diversity</h4>
                         <div class="data-source">GBIF Global Network</div>
                     </div>
                 </div>
@@ -315,7 +315,7 @@
                 <div class="d-flex align-items-center mb-3">
                     <span class="fs-1 me-3">🌿</span>
                     <div>
-                        <h3 class="h4 mb-0">Ecosystem Health</h3>
+                        <h4 class="mb-0">Ecosystem Health</h4>
                         <div class="data-source">Global Biodiversity Monitoring</div>
                     </div>
                 </div>
@@ -361,7 +361,7 @@
     <div class="row mb-4">
         <div class="col-12">
             <div class="eco-card text-center p-4">
-                <h3 class="h4 mb-3">🌱 Environmental Awareness for Everyone</h3>
+                <h4 class="mb-3">🌱 Environmental Awareness for Everyone</h4>
                 <p class="mb-3">
                     Terrascan makes complex environmental data accessible to everyone.
                     Monitor our planet's health in real-time with data from NASA, NOAA, and OpenAQ.

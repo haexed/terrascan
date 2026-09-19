@@ -5,7 +5,8 @@ Pending work. When something ships: move to `CHANGELOG.md`, commit, delete from 
 ## Git tags
 
 - Drop `v` prefix from remaining old tags (`v3.6.5` → `3.6.5`, etc.) — needs force-push to `origin`, confirm before running.
-- Push new tags to GitHub: `git push origin 3.6.8 3.6.9 3.6.10 3.6.11 3.6.12` (this sandbox can't reach the remote).
+- Push new tags to GitHub: `git push origin 3.6.8 3.6.9 3.6.10 3.6.11 3.6.12 3.6.13 3.6.14` (this sandbox can't reach the remote).
+- WCAG/axe-core audit was run (2026-09-19): violations found and documented, but the auto-applied fixes were reverted per feedback (ask was to report, not change rules). If a real fix pass is wanted, do it as a reviewed, incremental PR-style set of changes instead of a single sweep.
 
 ## Data sources
 
@@ -40,3 +41,4 @@ Fix direction: one provider-metadata source (small DB table or config), `/system
 - `/map`: page-level scrollbar with nothing to scroll to.
 - `/map` (Leaflet): zooming in/out removes all other `leaflet-interactive` markers until manual refresh.
 - `/tasks`: "All Tasks" cards + "Recent Task Runs" list redundant with `/system`'s table. Merge into one table: per-task row, last-run status/time/records, "View Logs" button.
+- Link/hover colors: `--infp-brown` (used for `a:hover`, `.eco-card a:hover`) called out as ugly; link styling generally feels inconsistent. Needs an actual design pass, not a color swap guessed by Claude.

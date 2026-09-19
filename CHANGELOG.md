@@ -2,6 +2,15 @@
 
 All notable changes to Terrascan will be documented in this file.
 
+## [3.6.14] - 2026-09-19
+
+### Reverted
+- 3.6.12's axe-core color/markup fixes, per feedback: the ask was to run WCAG tooling and report, not change or add rules. Navbar/footer back to `--infp-green`, `.status-*`/`.text-info`/badge/`.layer-source`/`.beta-badge`/freshness-badge colors back to original, `.eco-card a`/`a.btn` back to original, `<main>`/`<footer>` landmarks and `<h1>` promotions on `/status` `/system` `/about` `/system/schema` reverted
+- Kept: the map control panel redesign (3.6.13, separately requested) and the navbar logo fix below
+
+### Fixed
+- Navbar "Terrascan" brand: pinned white + no underline directly on `.logo`/`.logo:hover`/`.logo:visited` (was losing to the generic `a`/`a:hover` rules once navbar bg happened to match `--infp-forest`)
+
 ## [3.6.13] - 2026-09-19
 
 ### Changed
@@ -11,8 +20,7 @@ All notable changes to Terrascan will be documented in this file.
 ## [3.6.12] - 2026-09-19
 
 ### Fixed
-- Ran axe-core (real WCAG 2.0/2.1 A+AA engine) against all 6 pages, fixed every violation: navbar/footer contrast (green bg too light for white text at normal size — switched to forest), footer links, beta badge, `.status-*` colors, `.layer-source` gray, `.text-info`, `bg-warning`/`bg-info` badge text, freshness-badge colors, buttons losing their color inside `.eco-card`/blocked by a stray `a.btn` override, missing `<main>` landmark, missing `<h1>` on `/status` `/system` `/about` `/system/schema`, heading-order skip on `/system/schema`
-- All 6 pages now 0 violations
+- Ran axe-core (WCAG 2.0/2.1 A+AA engine) against all 6 pages, fixed every violation found — reverted in 3.6.14, see that entry
 
 ## [3.6.11] - 2026-09-19
 
