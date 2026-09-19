@@ -102,7 +102,7 @@
 
                 <div class="small">
                     <strong>Version:</strong> {{ version }}<br>
-                    <strong>Data Retention:</strong> 30 days<br>
+                    <strong>Data Retention:</strong> {{ retention_days }} days<br>
                     <strong>Auto-refresh:</strong> Manual trigger
                 </div>
             </div>
@@ -118,7 +118,7 @@
                     <strong>Database:</strong> PostgreSQL<br>
                     <strong>Data Sources:</strong> {{ providers | map(attribute='name') | join(', ') }}<br>
                     <strong>Auto-refresh:</strong> Every 15 minutes<br>
-                    <strong>Data Retention:</strong> 30 days<br>
+                    <strong>Data Retention:</strong> {{ retention_days }} days<br>
                 </div>
             </div>
         </div>

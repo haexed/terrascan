@@ -126,7 +126,7 @@ def setup_railway_production():
         
         system_configs = [
             ('simulation_mode', 'false', 'boolean', 'Enable simulation mode for testing'),
-            ('data_retention_days', '30', 'int', 'Number of days to retain environmental data'),
+            ('data_retention_days', '7', 'int', 'Number of days to retain environmental data'),
             ('max_records_per_provider', '10000', 'int', 'Maximum records per data provider'),
             ('auto_refresh_interval', '900', 'int', 'Auto-refresh interval in seconds (15 minutes)'),
         ]

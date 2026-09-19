@@ -24,6 +24,7 @@ from database.providers import (
     get_provider_metadata, get_provider_tasks, get_collection_tasks,
     get_freshness_thresholds, DEFAULT_FRESHNESS_HOURS
 )
+from database.config_manager import get_system_config
 from database.schema_inspector import get_schema_documentation
 from tasks.runner import TaskRunner
 from utils import get_version, register_template_filters
@@ -223,6 +224,7 @@ def create_app():
 
             return render_template('system.html',
                                  system_status=system_status,
+                                 retention_days=get_system_config('data_retention_days', 7),
                                  providers=providers,
                                  unknown_providers=unknown_providers,
                                  database_size=database_size,

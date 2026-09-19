@@ -2,6 +2,17 @@
 
 All notable changes to Terrascan will be documented in this file.
 
+## [3.7.7] - 2026-09-19
+
+### Fixed
+- `nasa_fires_global` collected nothing: NASA FIRMS returns 400 for a wide-area request over 5 days and the task's stored parameter is `days: 7`. Wide-area requests are now capped at 1 day, which is all the map displays.
+- `TaskRunner.run_task()` logged a task as completed when the task returned `success: False`, so a run that collected nothing looked like a run with nothing to collect. Such runs are now recorded as failed with the reason.
+- NASA FIRMS request errors quoted the failing URL, which carries the API key in its path. The key is redacted from the message.
+
+### Changed
+- Data retention 30 days to 7.
+- `/system`: retention is read from `system_config` instead of being written into the template twice.
+
 ## [3.7.6] - 2026-09-19
 
 ### Changed

@@ -10,6 +10,26 @@ from datetime import datetime, timedelta
 from typing import Dict, Any, List
 from database.db import batch_store_metric_data, get_latest_timestamp
 
+# The app only ever displays the last 24 hours of fires, so a wide-area request
+# asks for one day. NASA also rejects wide-area requests over 5 days outright.
+MAX_DAYS_WIDE_AREA = 1
+
+
+def _redact(text: str, api_key: str) -> str:
+    """Keep the API key out of error text
+
+    Request errors quote the failing URL, which carries the key in its path.
+
+    Args:
+        text: Message to clean
+        api_key: Key to remove
+
+    Returns:
+        str: text with the key replaced
+    """
+    return text.replace(api_key, '<api-key>') if api_key else text
+
+
 def fetch_nasa_fires(region: str = 'WORLD', days: int = 7, bbox: Dict[str, float] = None) -> Dict[str, Any]:
     """
     Fetch fire detection data from NASA FIRMS API
@@ -31,9 +51,14 @@ def fetch_nasa_fires(region: str = 'WORLD', days: int = 7, bbox: Dict[str, float
             'records_stored': 0
         }
 
-    # Validate days parameter
+    # Validate days parameter. A wide-area request is capped separately: NASA
+    # returns 400 Bad Request for a world request over 5 days, which is why
+    # this task collected nothing on its stored `days: 7` parameter, and the
+    # map only shows the last 24 hours anyway.
     if days < 1 or days > 10:
         days = 7
+    if not bbox:
+        days = min(days, MAX_DAYS_WIDE_AREA)
 
     # Build URL based on whether bbox is provided
     # NASA FIRMS API supports both region names and bbox coordinates
@@ -181,13 +206,13 @@ def fetch_nasa_fires(region: str = 'WORLD', days: int = 7, bbox: Dict[str, float
     except requests.exceptions.RequestException as e:
         return {
             'success': False,
-            'message': f'Failed to fetch NASA FIRMS data: {str(e)}',
+            'message': f'Failed to fetch NASA FIRMS data: {_redact(str(e), api_key)}',
             'records_stored': 0
         }
     except Exception as e:
         return {
             'success': False,
-            'message': f'Error processing NASA FIRMS data: {str(e)}', 
+            'message': f'Error processing NASA FIRMS data: {_redact(str(e), api_key)}',
             'records_stored': 0
         }
 

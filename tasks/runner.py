@@ -76,26 +76,50 @@ class TaskRunner:
         try:
             # Execute the task
             result = self._execute_task_command(task, trigger_parameters)
-            
-            # Complete successfully  
+
+            records = result.get('records_stored', result.get('records_processed', 0))
+            duration = (datetime.now() - start_time).total_seconds()
+
+            # A task reports its own failure by returning success=False rather
+            # than raising; taking only exceptions as failure logged those runs
+            # green, so a task that collected nothing looked like one that had
+            # nothing to collect. The message key differs between tasks.
+            if not result.get('success', True):
+                error = result.get('error') or result.get('message') or 'Task reported failure'
+                # error_details is the argument complete_task_run persists;
+                # stdout and stderr are accepted and dropped
+                complete_task_run(
+                    run_id,
+                    exit_code=1,
+                    error_details=error,
+                    records_processed=records
+                )
+                print(f"❌ Task failed: {task_name} ({duration:.1f}s) - {error}")
+                return {
+                    'success': False,
+                    'run_id': run_id,
+                    'error': error,
+                    'duration': duration,
+                    'records_processed': records
+                }
+
             complete_task_run(
                 run_id,
                 exit_code=0,
-                stdout=result.get('output', ''),
-                stderr=result.get('error', ''),
+                stdout=result.get('output', result.get('message', '')),
+                stderr='',
                 actual_cost_cents=result.get('cost_cents', 0),
-                records_processed=result.get('records_stored', result.get('records_processed', 0))
+                records_processed=records
             )
-            
-            duration = (datetime.now() - start_time).total_seconds()
-            print(f"✅ Task completed: {task_name} ({duration:.1f}s, {result.get('records_processed', 0)} records)")
-            
+
+            print(f"✅ Task completed: {task_name} ({duration:.1f}s, {records} records)")
+
             return {
                 'success': True,
                 'run_id': run_id,
-                'output': result.get('output', ''),
+                'output': result.get('output', result.get('message', '')),
                 'duration': duration,
-                'records_processed': result.get('records_stored', result.get('records_processed', 0)),
+                'records_processed': records,
                 'cost_cents': result.get('cost_cents', 0)
             }
             

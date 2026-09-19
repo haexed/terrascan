@@ -79,7 +79,7 @@ def drop_redundant_indexes(cursor):
 
 
 def enforce_data_retention(cursor):
-    """Delete metric_data older than data_retention_days (default 30).
+    """Delete metric_data older than data_retention_days (default 7).
     Exempts providers that store historical event dates (e.g. UCDP conflicts)."""
     # Providers that use historical timestamps and need longer retention
     exempt_providers = ('ucdp',)
@@ -89,7 +89,7 @@ def enforce_data_retention(cursor):
         "SELECT value FROM system_config WHERE key = 'data_retention_days'"
     )
     row = cursor.fetchone()
-    retention_days = int(row[0]) if row else 30
+    retention_days = int(row[0]) if row else 7
 
     print(f"\nData retention: {retention_days} days (exempt: {', '.join(exempt_providers)})")
 
