@@ -2,6 +2,11 @@
 
 All notable changes to Terrascan will be documented in this file.
 
+## [3.7.13] - 2026-09-19
+
+### Removed
+- `/map`: `cursor: pointer` and the hover background on `.control-health`, left over from when the whole box opened the breakdown.
+
 ## [3.7.12] - 2026-09-19
 
 ### Changed

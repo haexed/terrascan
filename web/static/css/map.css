@@ -137,13 +137,7 @@
 .control-health {
     padding: 15px 18px;
     text-align: center;
-    cursor: pointer;
     border-bottom: 1px solid rgba(51, 164, 116, 0.2);
-    transition: background 0.2s ease;
-}
-
-.control-health:hover {
-    background: rgba(51, 164, 116, 0.05);
 }
 
 .control-health .health-score {
