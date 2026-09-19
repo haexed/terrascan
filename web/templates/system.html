@@ -229,20 +229,20 @@
 
                 <div class="mb-3">
                     <strong>Latest Data Collection</strong><br>
-                    <span class="small">{{ providers.openmeteo.last_run if providers.openmeteo.last_run else 'Never' }}</span>
+                    <span class="small">{{ providers.openmeteo_marine.last_run if providers.openmeteo_marine.last_run else 'Never' }}</span>
                 </div>
 
                 <div class="mb-3">
                     <strong>Records Collected</strong><br>
-                    <span class="metric-value text-info">{{ providers.openmeteo.total_records }}</span>
+                    <span class="metric-value text-info">{{ providers.openmeteo_marine.total_records }}</span>
                     <span class="small"> marine measurements</span>
                 </div>
 
                 <div class="mb-3">
                     <strong>Status</strong><br>
                     <span
-                        class="badge {% if providers.openmeteo.status == 'operational' %}bg-success{% else %}bg-warning{% endif %}">
-                        {{ providers.openmeteo.status.upper() }}
+                        class="badge {% if providers.openmeteo_marine.status == 'operational' %}bg-success{% else %}bg-warning{% endif %}">
+                        {{ providers.openmeteo_marine.status.upper() }}
                     </span>
                 </div>
 

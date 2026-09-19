@@ -1117,7 +1117,7 @@ def invalidate_cache(key=None):
 def get_provider_stats():
     """Get simplified provider statistics - cached for 5 min"""
     def fetch():
-        provider_keys = ['nasa_firms', 'openaq', 'noaa_ocean', 'openweather', 'gbif', 'openmeteo', 'openmeteo_marine', 'ucdp', 'noaa_swpc']
+        provider_keys = ['nasa_firms', 'openaq', 'noaa_ocean', 'openweather', 'gbif', 'openmeteo_marine', 'ucdp', 'noaa_swpc']
 
         stats = execute_query("""
             SELECT provider_key, COUNT(*) as total_records, MAX(timestamp) as last_run
@@ -1427,7 +1427,7 @@ def _fetch_data_freshness():
         'nasa_firms': 3,        # Fires: 3 hours
         'openaq': 12,           # Air quality: 12 hours
         'openmeteo_marine': 24, # Ocean: 24 hours
-        'noaa_aurora': 1,       # Aurora: 1 hour
+        'noaa_swpc': 1,         # Aurora: 1 hour
         'ucdp': 168,            # Conflicts: weekly
         'gbif': 168,            # Biodiversity: weekly
         'openweather': 6        # Weather: 6 hours

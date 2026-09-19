@@ -2,6 +2,14 @@
 
 All notable changes to Terrascan will be documented in this file.
 
+## [3.6.10] - 2026-09-19
+
+### Fixed
+- `/system`'s Open-Meteo card always showed 0 records while the "Data Breakdown by Provider" table further down the same page showed the real count for the same provider — `get_provider_stats()` was keyed on `'openmeteo'`, a key nothing ever writes to `metric_data`; the real key (used by `fetch_openmeteo_marine.py`) is `'openmeteo_marine'`. Fixed the hardcoded key list in `web/app.py` and the `providers.openmeteo` references in `system.html`.
+- Aurora data's freshness badge silently used the generic 24h fallback instead of its intended 1h threshold — `FRESHNESS_THRESHOLDS` in `web/app.py` was keyed `'noaa_aurora'`, but the real provider key (`fetch_noaa_aurora.py`) is `'noaa_swpc'`.
+
+Audited every real `provider_key` written anywhere in `tasks/*.py` against every hardcoded provider list in the app (`web/app.py`, `system.html`, `about.html`, `base.html` footer, `map.html`) — findings and fix direction logged in `TODO.md` under "Data providers" (4+ independent hardcoded provider lists, each showing a different subset; `/system`'s cards are missing UCDP and NOAA SWPC/aurora entirely despite both having real data).
+
 ## [3.6.9] - 2026-09-19
 
 ### Fixed
