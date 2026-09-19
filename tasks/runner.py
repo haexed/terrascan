@@ -55,7 +55,14 @@ class TaskRunner:
                 'error': f"Task '{task_name}' is disabled",
                 'duration': 0
             }
-        
+
+        if any(r['task_name'] == task_name for r in get_running_tasks()):
+            return {
+                'success': False,
+                'error': f"Task '{task_name}' is already running",
+                'duration': 0
+            }
+
         # Start task run
         run_id = start_task_run(
             task['id'], 

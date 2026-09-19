@@ -2,6 +2,16 @@
 
 All notable changes to Terrascan will be documented in this file.
 
+## [3.6.23] - 2026-09-19
+
+### Added
+- `/tasks`: one table replaces the "All Tasks" cards and the "Recent Task Runs" list. One row per task, with status/schedule/last-run/result columns and a View Logs button.
+- `TaskRunner.run_task()` blocks a task from starting if it's already running.
+
+### Fixed
+- `checkTaskStatus()` in `tasks.js` read `data.status.running_tasks`, the API returns `data.running_tasks` at the top level. Threw a TypeError on every 30s poll.
+- `/api/collect-biodiversity` and `/api/tasks/<name>/run` always returned a hardcoded "completed" message regardless of success/failure, never surfaced `result['error']`.
+
 ## [3.6.22] - 2026-09-19
 
 ### Changed

@@ -61,6 +61,12 @@ Every message this session prefixed "todo" / "todo:" (plus a couple of other exp
     - done: `?v={{ version }}` added to all 4 local static includes.
 26. `keep mine verbatim in todo. add your prose if needed as sub bullets`
     - done: reformatted this whole list to this structure.
+27. `next: fix tasks page table as mentioned earlier`
+    - done: `/tasks` "All Tasks" cards + "Recent Task Runs" list replaced with one table, one row per task (Task, Status, Schedule, Last Run, Result, View Logs). Schedule column now honestly shows "No data" instead of silently hiding the badge — every task in the DB currently has `cron_schedule = null` (matches the README's "on-demand, not cron" design), the old cards version just hid this instead of showing it.
+28. `todo: no single tasks should be able to start while it's already running, creating dupes.`
+    - done: `TaskRunner.run_task()` now checks `get_running_tasks()` before starting a run and returns `{success: false, error: "Task '<name>' is already running"}` instead of calling `start_task_run()`. Verified directly against the DB: `openaq_latest` (which had 2 concurrent stuck runs from earlier in this session) is correctly blocked, `nasa_fires_global` is correctly allowed. Confirmed no new `task_log` row gets created when blocked.
+    - along the way, fixed two response-building bugs that would've swallowed the new error message before it reached the user: `/api/collect-biodiversity` and `/api/tasks/<name>/run` both hardcoded a "completed" message regardless of actual success/failure and never included `result['error']`.
+    - the 2 pre-existing stuck `openaq_latest` runs from earlier in this session are untouched — they'll clear via the existing 30-min stale cleanup once they cross the threshold, didn't intervene manually.
 
 ## Git tags
 
@@ -96,13 +102,8 @@ Replace key-gated weather/air providers with Open-Meteo (free, global, no key). 
 
 Fix direction: one provider-metadata source (small DB table or config), `/system` cards → table read from it, reuse for footer/about/map labels.
 
-## Task execution
-
-- `openaq_latest` observed running twice concurrently (task_log ids 8202 + 8204, started ~15min apart, both still `running`). Nothing currently prevents the same task from being triggered again while an earlier run of it is still in progress. Worth deciding: block a re-trigger while one's already running, or is concurrent execution intentional?
-
 ## Frontend / UI
 
 - `/map`: page-level scrollbar with nothing to scroll to.
 - `/map` (Leaflet): zooming in/out removes all other `leaflet-interactive` markers until manual refresh.
-- `/tasks`: "All Tasks" cards + "Recent Task Runs" list redundant with `/system`'s table. Merge into one table: per-task row, last-run status/time/records, "View Logs" button.
 - Link/hover colors: tried fix, needs QA (3.6.17) — `--infp-brown` removed, anchors now just solid-green-underline with no color change on hover. Whether this reads as "unified" is for a human to judge; needs an actual design pass if not, not another guess from Claude.

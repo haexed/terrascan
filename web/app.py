@@ -140,7 +140,6 @@ def create_app():
 
             return render_template('tasks.html',
                                  tasks=all_tasks,
-                                 recent_runs=recent_runs,
                                  stats=stats,
                                  running_tasks=running_tasks)
         except Exception as e:
@@ -526,7 +525,8 @@ def create_app():
 
             return jsonify({
                 'success': result['success'],
-                'message': f'Task "{task_name}" completed',
+                'message': f'Task "{task_name}" completed' if result['success'] else result.get('error', 'Unknown error'),
+                'error': result.get('error'),
                 'run_id': result.get('run_id'),
                 'records_processed': result.get('records_processed', 0)
             })
@@ -670,7 +670,8 @@ def create_app():
 
             return jsonify({
                 'success': result['success'],
-                'message': f'Biodiversity collection completed',
+                'message': 'Biodiversity collection completed' if result['success'] else result.get('error', 'Unknown error'),
+                'error': result.get('error'),
                 'records_processed': result.get('records_processed', 0)
             })
         except Exception as e:

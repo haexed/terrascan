@@ -350,7 +350,7 @@ function checkTaskStatus() {
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                const currentRunningTasks = data.status.running_tasks || 0;
+                const currentRunningTasks = data.running_tasks || 0;
 
                 // If running tasks count changed, refresh page
                 if (currentRunningTasks !== runningTasksCount) {
