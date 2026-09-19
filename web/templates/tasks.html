@@ -8,7 +8,6 @@
 
 {% block content %}
 <div class="container-fluid py-4" style="margin-top: 100px;">
-    <!-- Page Header -->
     <div class="row mb-4">
         <div class="col-12">
             <div class="d-flex justify-content-between align-items-center">
@@ -30,7 +29,6 @@
         </div>
     </div>
 
-    <!-- Statistics Cards -->
     <div class="row mb-4">
         <div class="col-md-3">
             <div class="stats-card text-center">
@@ -58,7 +56,6 @@
         </div>
     </div>
 
-    <!-- Running Tasks Alert -->
     {% if running_tasks %}
     <div class="alert alert-info alert-dismissible fade show mb-4" role="alert">
         <i class="fas fa-spinner fa-spin me-2"></i>
@@ -70,10 +67,9 @@
     </div>
     {% endif %}
 
-    <!-- Tasks Grid -->
     <div class="row mb-4">
         <div class="col-12">
-            <h3 class="h4 mb-3">📋 All Tasks</h3>
+            <h2 class="h4 mb-3">📋 All Tasks</h2>
             <div class="row" id="tasks-container">
                 {% for task in tasks %}
                 <div class="col-lg-6 col-xl-4 mb-3">
@@ -83,10 +79,9 @@
                         data-task-name="{{ task.name }}" data-task-id="{{ task.id }}">
 
                         <div class="card-body">
-                            <!-- Task Header -->
                             <div class="d-flex justify-content-between align-items-start mb-3">
                                 <div>
-                                    <h5 class="card-title mb-1">{{ task.name }}</h5>
+                                    <h3 class="h5 card-title mb-1">{{ task.name }}</h3>
                                     <p class="small mb-0">{{ task.description or 'Data fetching task' }}</p>
                                 </div>
                                 <div class="task-status-badge">
@@ -98,7 +93,6 @@
                                 </div>
                             </div>
 
-                            <!-- Task Status -->
                             <div class="mb-3">
                                 <div class="d-flex flex-wrap gap-1 mb-2">
                                     {% if task.cron_schedule %}
@@ -118,7 +112,6 @@
                                     {% endif %}
                                 </div>
 
-                                <!-- Last Run Info -->
                                 {% if task.last_run_time %}
                                 <div class="small">
                                     <div><strong>Last run:</strong> {{ task.last_run_time | format_dt }}</div>
@@ -150,7 +143,6 @@
                                 {% endif %}
                             </div>
 
-                            <!-- Action Buttons - Read Only -->
                             <div class="task-controls">
                                 <button class="btn btn-sm btn-outline-secondary"
                                     onclick="showTaskLogs('{{ task.name }}')">
@@ -165,10 +157,9 @@
         </div>
     </div>
 
-    <!-- Recent Task Runs -->
     <div class="row">
         <div class="col-12">
-            <h3 class="h4 mb-3">📊 Recent Task Runs</h3>
+            <h2 class="h4 mb-3">📊 Recent Task Runs</h2>
             <div class="card">
                 <div class="card-body">
                     <div id="recent-runs-container">
@@ -221,12 +212,11 @@
     </div>
 </div>
 
-<!-- Task Logs Modal -->
 <div class="modal fade" id="logsModal" tabindex="-1">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title">Task Logs</h5>
+                <h2 class="h5 modal-title">Task Logs</h2>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
@@ -244,7 +234,6 @@
 {% endblock %}
 
 {% block extra_js %}
-<!-- Hidden data element for JavaScript -->
 <script type="application/json" id="terrascan-tasks-data">
 {
     "runningTasksCount": {{ stats.running_tasks }},

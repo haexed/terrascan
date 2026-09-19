@@ -3,9 +3,7 @@
 {% block title %}🌍 Terrascan - Dashboard{% endblock %}
 
 {% block content %}
-<!-- Main Dashboard -->
 <div class="container-fluid mt-5 pt-4">
-    <!-- Environmental Health Score -->
     <div class="row mb-4">
         <div class="col-12">
             <div class="eco-card text-center p-4">
@@ -23,9 +21,7 @@
         </div>
     </div>
 
-    <!-- Environmental Indicators -->
     <div class="row g-4 mb-4">
-        <!-- Fire Status -->
         <div class="col-lg-4">
             <div class="eco-card p-4">
                 <div class="d-flex align-items-center mb-3">
@@ -63,7 +59,6 @@
             </div>
         </div>
 
-        <!-- Air Quality -->
         <div class="col-lg-4">
             <div class="eco-card p-4">
                 <div class="d-flex align-items-center mb-3">
@@ -101,7 +96,6 @@
             </div>
         </div>
 
-        <!-- Ocean Temperature -->
         <div class="col-lg-4">
             <div class="eco-card p-4">
                 <div class="d-flex align-items-center mb-3">
@@ -140,7 +134,6 @@
         </div>
     </div>
 
-    <!-- Real-time Data Sources -->
     <div class="row mb-4">
         <div class="col-12">
             <div class="eco-card p-4">
@@ -191,7 +184,6 @@
 
 </div>
 
-<!-- Refresh Button -->
 <button class="refresh-btn" onclick="refreshData()" title="Refresh Environmental Data">
     <i class="fas fa-sync-alt text-white fs-4" id="refresh-icon"></i>
 </button>

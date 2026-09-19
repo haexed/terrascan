@@ -3,9 +3,7 @@
 {% block title %}🔧 Terrascan - System Status{% endblock %}
 
 {% block content %}
-<!-- Main Content -->
 <div class="container-fluid mt-5 pt-4">
-    <!-- System Status Header -->
     <div class="row mb-4">
         <div class="col-12">
             <div class="eco-card text-center p-4">
@@ -28,15 +26,13 @@
         </div>
     </div>
 
-    <!-- Data Providers Status -->
     <div class="row g-4 mb-4">
-        <!-- NASA FIRMS -->
         <div class="col-lg-4">
             <div class="eco-card p-4">
                 <div class="d-flex align-items-center mb-3">
                     <span class="fs-1 me-3">🔥</span>
                     <div>
-                        <h4 class="mb-0">NASA FIRMS</h4>
+                        <h3 class="h4 mb-0">NASA FIRMS</h3>
                         <div class="data-source">Fire Information for Resource Management</div>
                     </div>
                 </div>
@@ -69,13 +65,12 @@
             </div>
         </div>
 
-        <!-- OpenAQ -->
         <div class="col-lg-4">
             <div class="eco-card p-4">
                 <div class="d-flex align-items-center mb-3">
                     <span class="fs-1 me-3">🌬️</span>
                     <div>
-                        <h4 class="mb-0">OpenAQ</h4>
+                        <h3 class="h4 mb-0">OpenAQ</h3>
                         <div class="data-source">Open Air Quality Data Platform</div>
                     </div>
                 </div>
@@ -107,13 +102,12 @@
             </div>
         </div>
 
-        <!-- NOAA Ocean -->
         <div class="col-lg-4">
             <div class="eco-card p-4">
                 <div class="d-flex align-items-center mb-3">
                     <span class="fs-1 me-3">🌊</span>
                     <div>
-                        <h4 class="mb-0">NOAA Ocean Service</h4>
+                        <h3 class="h4 mb-0">NOAA Ocean Service</h3>
                         <div class="data-source">Ocean and Coastal Data</div>
                     </div>
                 </div>
@@ -147,15 +141,13 @@
         </div>
     </div>
 
-    <!-- Additional Data Providers -->
     <div class="row g-4 mb-4">
-        <!-- OpenWeatherMap -->
         <div class="col-lg-4">
             <div class="eco-card p-4">
                 <div class="d-flex align-items-center mb-3">
                     <span class="fs-1 me-3">⛈️</span>
                     <div>
-                        <h4 class="mb-0">OpenWeatherMap</h4>
+                        <h3 class="h4 mb-0">OpenWeatherMap</h3>
                         <div class="data-source">Global Weather Data Network</div>
                     </div>
                 </div>
@@ -188,13 +180,12 @@
             </div>
         </div>
 
-        <!-- GBIF Biodiversity -->
         <div class="col-lg-4">
             <div class="eco-card p-4">
                 <div class="d-flex align-items-center mb-3">
                     <span class="fs-1 me-3">🦋</span>
                     <div>
-                        <h4 class="mb-0">GBIF</h4>
+                        <h3 class="h4 mb-0">GBIF</h3>
                         <div class="data-source">Global Biodiversity Information Facility</div>
                     </div>
                 </div>
@@ -226,13 +217,12 @@
             </div>
         </div>
 
-        <!-- Open-Meteo -->
         <div class="col-lg-4">
             <div class="eco-card p-4">
                 <div class="d-flex align-items-center mb-3">
                     <span class="fs-1 me-3">🌐</span>
                     <div>
-                        <h4 class="mb-0">Open-Meteo</h4>
+                        <h3 class="h4 mb-0">Open-Meteo</h3>
                         <div class="data-source">Free Weather & Marine API</div>
                     </div>
                 </div>
@@ -266,15 +256,13 @@
         </div>
     </div>
 
-    <!-- System Health Row -->
     <div class="row g-4 mb-4">
-        <!-- System Health -->
         <div class="col-lg-4">
             <div class="eco-card p-4">
                 <div class="d-flex align-items-center mb-3">
                     <span class="fs-1 me-3">💚</span>
                     <div>
-                        <h4 class="mb-0">System Health</h4>
+                        <h3 class="h4 mb-0">System Health</h3>
                         <div class="data-source">Overall Platform Status</div>
                     </div>
                 </div>
@@ -306,11 +294,10 @@
 
 
 
-    <!-- Recent Task Runs -->
     <div class="row mb-4">
         <div class="col-12">
             <div class="eco-card p-4">
-                <h4 class="mb-3">📊 Recent Task Executions</h4>
+                <h3 class="h4 mb-3">📊 Recent Task Executions</h3>
                 <div class="table-responsive">
                     <table class="table table-sm">
                         <thead>
@@ -357,11 +344,10 @@
         </div>
     </div>
 
-    <!-- Database Statistics -->
     <div class="row mb-4">
         <div class="col-md-6">
             <div class="eco-card p-4">
-                <h5 class="mb-3">📈 Data Breakdown by Provider</h5>
+                <h3 class="h5 mb-3">📈 Data Breakdown by Provider</h3>
                 {% for provider in data_breakdown %}
                 <div class="d-flex justify-content-between mb-2">
                     <span>{{ provider.provider_key }}</span>
@@ -373,7 +359,7 @@
 
         <div class="col-md-6">
             <div class="eco-card p-4">
-                <h5 class="mb-3">🔧 System Configuration</h5>
+                <h3 class="h5 mb-3">🔧 System Configuration</h3>
                 <div class="small">
                     <strong>Version:</strong> {{ version }}<br>
                     <strong>Database:</strong> PostgreSQL<br>
@@ -385,11 +371,10 @@
         </div>
     </div>
 
-    <!-- Quick Actions -->
     <div class="row mb-4">
         <div class="col-12">
             <div class="eco-card p-4 text-center">
-                <h5 class="mb-3">🚀 Quick Actions</h5>
+                <h3 class="h5 mb-3">🚀 Quick Actions</h3>
                 <button class="btn btn-success me-2" onclick="refreshAllData()">
                     <i class="fas fa-sync-alt"></i> Collect All Environmental Data
                 </button>

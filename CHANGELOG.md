@@ -2,6 +2,17 @@
 
 All notable changes to Terrascan will be documented in this file.
 
+## [3.6.9] - 2026-09-19
+
+### Fixed
+- Heading hierarchy skips (h1→h3→h5, h2→h4/h5) flagged by the W3C Nu Html Checker across `/tasks`, `/system`, and `/about` — every heading now steps down one level at a time (`h2`→`h3`, etc.), keeping the same visual size via Bootstrap's `.h4`/`.h5` utility classes so nothing changes on screen. All four pages now validate with 0 errors.
+
+### Changed
+- Removed all `<!-- ... -->` HTML comments from Jinja templates (`base.html`, `map.html`, `tasks.html`, `system.html`, `system_schema.html`, `index.html`, `dashboard.html`, `about.html`)
+
+### Chore
+- Tagged `3.6.8` locally (was committed but never tagged); dropped the stray `v3.7.0` tag (abandoned heatmaps experiment, reverted same-day back in 2025-12-30) both locally and on GitHub
+
 ## [3.6.8] - 2026-09-19
 
 ### Fixed

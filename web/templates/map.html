@@ -13,7 +13,6 @@
 
 
 {% block content %}
-<!-- Aggregate Stats Banner -->
 <div class="stats-banner">
     <div class="stats-banner-content">
         <div class="stat-item">
@@ -43,10 +42,8 @@
     </div>
 </div>
 
-<!-- Main Map Container -->
 <div id="map"></div>
 
-<!-- Control Panel -->
 <div class="control-panel" id="control-panel">
     <div class="control-header" onclick="toggleControlPanel()">
         <h5 class="mb-0"><strong>🌍 Terrascan</strong></h5>
@@ -55,7 +52,6 @@
     <div class="control-body" id="control-body">
         <p class="small mb-2 text-muted">Live Environmental Layers</p>
 
-        <!-- Fire Layer Toggle -->
         <label class="layer-toggle">
             <span class="layer-icon">🔥</span>
             <span class="layer-info">
@@ -66,7 +62,6 @@
             <span class="toggle-switch"></span>
         </label>
 
-        <!-- Air Quality Layer Toggle -->
         <label class="layer-toggle">
             <span class="layer-icon">🌬️</span>
             <span class="layer-info">
@@ -77,7 +72,6 @@
             <span class="toggle-switch"></span>
         </label>
 
-        <!-- Ocean Layer Toggle -->
         <label class="layer-toggle">
             <span class="layer-icon">🌊</span>
             <span class="layer-info">
@@ -88,7 +82,6 @@
             <span class="toggle-switch"></span>
         </label>
 
-        <!-- Conflict Layer Toggle -->
         <label class="layer-toggle">
             <span class="layer-icon">⚔️</span>
             <span class="layer-info">
@@ -99,7 +92,6 @@
             <span class="toggle-switch"></span>
         </label>
 
-        <!-- Biodiversity Layer Toggle -->
         <label class="layer-toggle">
             <span class="layer-icon">🦋</span>
             <span class="layer-info">
@@ -110,7 +102,6 @@
             <span class="toggle-switch"></span>
         </label>
 
-        <!-- Aurora Layer Toggle -->
         <label class="layer-toggle">
             <span class="layer-icon">🌌</span>
             <span class="layer-info">
@@ -123,7 +114,6 @@
 
         <hr class="my-2">
 
-        <!-- Map Style Toggle -->
         <label class="layer-toggle">
             <span class="layer-icon">🛰️</span>
             <span class="layer-info">
@@ -136,7 +126,6 @@
     </div>
 </div>
 
-<!-- Health Score Widget (clickable for breakdown) -->
 <div class="health-score-widget" onclick="toggleHealthBreakdown()" style="cursor: pointer;" title="Click for breakdown">
     <h6 class="mb-2">🌍 Planetary Health</h6>
     <div class="health-score status-{{ health_score.status.lower() if health_score else 'unknown' }}">
@@ -150,7 +139,6 @@
     </div>
 </div>
 
-<!-- Health Score Breakdown Panel -->
 <div class="health-breakdown-panel" id="health-breakdown" style="display: none;">
     <div class="breakdown-header">
         <strong>Score Breakdown</strong>
@@ -177,13 +165,11 @@
     </div>
 </div>
 
-<!-- Scan Area Button (appears when zoomed in) -->
 <button class="scan-btn" id="scan-btn" onclick="scanCurrentArea()" title="Scan this area for more data" style="display: none;">
     <i class="fas fa-search-location text-white fs-4" id="scan-icon"></i>
     <span class="scan-label">Scan Area</span>
 </button>
 
-<!-- Refresh Button -->
 <button class="refresh-btn" onclick="refreshMapData()" title="Refresh Environmental Data">
     <i class="fas fa-sync-alt text-white fs-4" id="refresh-icon"></i>
 </button>
