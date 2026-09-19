@@ -275,9 +275,23 @@
     color: #333;
 }
 
-.layer-source {
-    font-size: 0.75rem;
+.health-info {
+    background: none;
+    border: none;
+    padding: 0 0 0 4px;
+    font-size: 0.9rem;
+    line-height: 1;
     color: #888;
+    cursor: pointer;
+}
+
+.health-info:hover {
+    color: var(--infp-green);
+}
+
+.layer-toggle-all {
+    border-bottom: 1px solid rgba(0, 0, 0, 0.12);
+    margin-bottom: 4px;
 }
 
 /* Hide actual checkbox */
@@ -578,10 +592,6 @@
 
     .layer-info strong {
         font-size: 0.75rem;
-    }
-
-    .layer-source {
-        display: none;
     }
 
     .toggle-switch {

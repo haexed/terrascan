@@ -2,6 +2,17 @@
 
 All notable changes to Terrascan will be documented in this file.
 
+## [3.7.10] - 2026-09-19
+
+### Added
+- `/map`: "All sources" toggle above the layer list, switching the six data layers together. Shows indeterminate when only some are on.
+
+### Changed
+- `/map`: the score breakdown opens from an info icon next to "Planetary Health" instead of anywhere in the health box.
+
+### Removed
+- `/map`: every `.layer-source` line under the layer names, and the CSS and Kp-index label update that fed them.
+
 ## [3.7.9] - 2026-09-19
 
 ### Fixed

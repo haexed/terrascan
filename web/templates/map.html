@@ -45,8 +45,10 @@
 <div id="map"></div>
 
 <div class="control-panel" id="control-panel">
-    <div class="control-health" onclick="toggleHealthBreakdown()" title="Click for breakdown">
+    <div class="control-health">
         <span class="small text-muted">🌍 Planetary Health</span>
+        <button type="button" class="health-info" id="health-info" onclick="toggleHealthBreakdown()"
+            title="Score breakdown" aria-label="Score breakdown">&#9432;</button>
         <div class="health-score status-{{ health_score.status.lower() if health_score else 'unknown' }}">
             {{ health_score.score if health_score and health_score.score is not none else 'No data' }}/100
         </div>
@@ -62,11 +64,19 @@
         <span class="collapse-icon" id="collapse-icon">▼</span>
     </div>
     <div class="control-body" id="control-body">
+        <label class="layer-toggle layer-toggle-all">
+            <span class="layer-icon">◉</span>
+            <span class="layer-info">
+                <strong>All sources</strong>
+            </span>
+            <input type="checkbox" id="all-layers" checked>
+            <span class="toggle-switch"></span>
+        </label>
+
         <label class="layer-toggle">
             <span class="layer-icon">🔥</span>
             <span class="layer-info">
                 <strong>Active Fires</strong>
-                <span class="layer-source">{{ site_provider.nasa_firms.name }}</span>
             </span>
             <input type="checkbox" id="fire-layer" checked>
             <span class="toggle-switch"></span>
@@ -76,7 +86,6 @@
             <span class="layer-icon">🌬️</span>
             <span class="layer-info">
                 <strong>Air Quality</strong>
-                <span class="layer-source">{{ site_provider.openaq.name }} PM2.5</span>
             </span>
             <input type="checkbox" id="air-layer" checked>
             <span class="toggle-switch"></span>
@@ -86,7 +95,6 @@
             <span class="layer-icon">🌊</span>
             <span class="layer-info">
                 <strong>Ocean Temp</strong>
-                <span class="layer-source">{{ site_provider.openmeteo_marine.name }} SST</span>
             </span>
             <input type="checkbox" id="ocean-layer" checked>
             <span class="toggle-switch"></span>
@@ -96,7 +104,6 @@
             <span class="layer-icon">⚔️</span>
             <span class="layer-info">
                 <strong>Conflicts</strong>
-                <span class="layer-source">{{ site_provider.ucdp.name }} Events</span>
             </span>
             <input type="checkbox" id="conflict-layer" checked>
             <span class="toggle-switch"></span>
@@ -106,7 +113,6 @@
             <span class="layer-icon">🦋</span>
             <span class="layer-info">
                 <strong>Biodiversity</strong>
-                <span class="layer-source">{{ site_provider.gbif.name }} Hotspots</span>
             </span>
             <input type="checkbox" id="biodiversity-layer" checked>
             <span class="toggle-switch"></span>
@@ -116,7 +122,6 @@
             <span class="layer-icon">🌌</span>
             <span class="layer-info">
                 <strong>Aurora</strong>
-                <span class="layer-source" id="kp-status">{{ site_provider.noaa_swpc.name }}</span>
             </span>
             <input type="checkbox" id="aurora-layer" checked>
             <span class="toggle-switch"></span>
@@ -128,7 +133,6 @@
             <span class="layer-icon">🛰️</span>
             <span class="layer-info">
                 <strong>Satellite View</strong>
-                <span class="layer-source">High Resolution</span>
             </span>
             <input type="checkbox" id="satellite-view" checked>
             <span class="toggle-switch"></span>

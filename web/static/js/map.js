@@ -156,6 +156,7 @@ function initMap() {
 
     // Set up layer toggles
     setupLayerToggles();
+    setupAllLayersToggle();
 
     // Set up satellite view toggle
     document.getElementById('satellite-view').addEventListener('change', function () {
@@ -309,6 +310,43 @@ async function scanCurrentArea() {
 }
 
 // Setup layer toggle controls
+const SOURCE_LAYER_IDS = ['fire-layer', 'air-layer', 'ocean-layer', 'conflict-layer',
+    'biodiversity-layer', 'aurora-layer'];
+
+function setupAllLayersToggle() {
+    const master = document.getElementById('all-layers');
+    if (!master) return;
+
+    const sources = SOURCE_LAYER_IDS
+        .map(id => document.getElementById(id))
+        .filter(Boolean);
+
+    let applying = false;
+
+    const syncMaster = () => {
+        if (applying) return;
+        const on = sources.filter(source => source.checked).length;
+        master.checked = on > 0;
+        master.indeterminate = on > 0 && on < sources.length;
+    };
+
+    master.addEventListener('change', function () {
+        const target = master.checked;
+        applying = true;
+        sources.forEach(source => {
+            if (source.checked === target) return;
+            source.checked = target;
+            source.dispatchEvent(new Event('change'));
+        });
+        applying = false;
+        master.checked = target;
+        master.indeterminate = false;
+    });
+
+    sources.forEach(source => source.addEventListener('change', syncMaster));
+    syncMaster();
+}
+
 function setupLayerToggles() {
     document.getElementById('fire-layer').addEventListener('change', function () {
         if (this.checked) {
@@ -922,12 +960,6 @@ function updateBiodiversityLayer() {
 // Update aurora layer with NOAA SWPC data
 function updateAuroraLayer() {
     auroraLayer.clearLayers();
-
-    // Update Kp status in the toggle label
-    const kpStatusEl = document.getElementById('kp-status');
-    if (kpStatusEl && auroraData.kp_index) {
-        kpStatusEl.textContent = `Kp ${auroraData.kp_index.value.toFixed(1)} - ${auroraData.kp_index.status}`;
-    }
 
     // Aurora points are rendered as semi-transparent circles
     // Using larger radius and lower opacity for aurora glow effect
