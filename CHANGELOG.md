@@ -2,6 +2,11 @@
 
 All notable changes to Terrascan will be documented in this file.
 
+## [3.6.22] - 2026-09-19
+
+### Changed
+- "No stale tasks found" toast reworded to "No tasks running longer than 30 minutes". Dropped the ✨.
+
 ## [3.6.21] - 2026-09-19
 
 ### Fixed

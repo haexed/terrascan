@@ -424,10 +424,10 @@ function cleanupStaleTasks() {
             if (data.success) {
                 const count = data.cleaned_tasks?.length || 0;
                 if (count > 0) {
-                    showNotification(`🧹 Cleaned up ${count} stale task(s)`, 'success');
+                    showNotification(`Cleaned up ${count} task(s) running longer than 30 minutes`, 'success');
                     setTimeout(() => refreshAllData(), 1500);
                 } else {
-                    showNotification('✨ No stale tasks found', 'info');
+                    showNotification('No tasks running longer than 30 minutes', 'info');
                 }
             } else {
                 showNotification(`❌ Cleanup failed: ${data.error}`, 'error');

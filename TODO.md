@@ -31,6 +31,7 @@ Every message this session prefixed "todo" / "todo:", quoted exactly as written.
 21. `tofo footer yellow links on green bg cant have green underline` — fixed: footer link underline now follows the link's own color instead of a fixed green.
 22. `todo remove underline decor on all btn/links in btn` — fixed: `.eco-card a` had lost its `:not(.btn)` exclusion during #20's edit, so `.btn` anchors inside cards (Explore Map, System Status, Learn More, View Task Logs, View on GitHub) showed an underline. Restored the exclusion, verified `text-decoration: none` on all of them via computed style.
 23. `todo find everything like "✨ No stale tasks found". it's a popup which are blocking, and it's factually wrong, and it looks like magic hurray when it's an error message, just do a normal toast.` — first pass wrong: I assumed "No stale tasks found" (`tasks.js`) wasn't the target since it's not a native `alert()`, and fixed 7 actual `alert()` calls elsewhere instead. User reported it was still blocking. Reproduced with Selenium: `.toast-notification` was `top:100px; right:20px`, which measurably overlapped the "Cleanup Stale"/"Refresh Status" buttons' bounding box on `/tasks` — the toast popped up directly on top of the button the user just clicked. Fixed by moving it to `bottom:20px; right:20px`; re-measured, no overlap with the header buttons on any of `/tasks` `/system` `/system/schema`.
+24. `"Running now: 2". "✨ No stale tasks found". it's wrong. and the stars just looks stupid, looks based on assumptions` — checked the actual data: the 2 "running" tasks were both `openaq_latest` running concurrently (18min and 3min old at the time), neither past the 30-min stale threshold, so the message was technically accurate but the wording ("no stale tasks found") implied nothing was wrong when there's an obvious anomaly (same task running twice). Reworded to state the actual criteria checked ("No tasks running longer than 30 minutes" / "Cleaned up N task(s) running longer than 30 minutes"), dropped the ✨. Did not touch the 30-minute threshold itself or the duplicate-concurrent-run issue — that's a separate, real question of whether task triggers should prevent re-running an already-running task, not asked about here.
 24. `todo add version arg to all linked local files (js+css) for easy cache bust per version` — done: `?v={{ version }}` added to all 4 local static includes (`style.css`, `map.css`, `map.js`, `tasks.js`).
 
 ## Git tags
@@ -66,6 +67,10 @@ Replace key-gated weather/air providers with Open-Meteo (free, global, no key). 
 8 real `provider_key` values in `metric_data`: `nasa_firms`, `openaq`, `noaa_ocean`, `noaa_swpc`, `openweather`, `gbif`, `openmeteo_marine`, `ucdp`. Provider metadata (name, icon, coverage) is hardcoded independently in 4+ places with different subsets each: `base.html` footer (5), `system.html` cards (6, missing UCDP + noaa_swpc entirely), `about.html` (8, complete), `map.html` layer toggles (6), README's API key table.
 
 Fix direction: one provider-metadata source (small DB table or config), `/system` cards → table read from it, reuse for footer/about/map labels.
+
+## Task execution
+
+- `openaq_latest` observed running twice concurrently (task_log ids 8202 + 8204, started ~15min apart, both still `running`). Nothing currently prevents the same task from being triggered again while an earlier run of it is still in progress. Worth deciding: block a re-trigger while one's already running, or is concurrent execution intentional?
 
 ## Frontend / UI
 
