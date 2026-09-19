@@ -1,343 +1,180 @@
-# 🌍 Terrascan
+# Terrascan
 
-**Monitor Earth's environmental health in real-time**
+Monitor Earth's environmental health in real-time — [terrascan.io](https://terrascan.io)
 
-![Version](https://img.shields.io/badge/version-3.6.23-blue)
 ![Database](https://img.shields.io/badge/database-PostgreSQL-green)
 ![License](https://img.shields.io/badge/license-MIT-blue)
-![Status](https://img.shields.io/badge/status-production-green)
 
-**Terrascan** gives you instant access to current environmental conditions across the globe:
+Terrascan collects and displays current environmental conditions across the globe:
 
-- 🔥 **Active Wildfires**: Live fire detection from NASA satellites
-- 🌬️ **Air Quality**: Real-time pollution levels from 200+ monitoring stations
-- 🌊 **Ocean Health**: Sea surface temperature, waves, and currents from NOAA & Open-Meteo
-- 🌡️ **Global Weather**: Current conditions and alerts for 24+ major cities
-- 🦋 **Biodiversity**: Species observations from 18 global biodiversity hotspots
-- 📊 **Health Score**: Combined environmental health indicator (0-100)
+- 🔥 **Active wildfires** — live fire detection from NASA satellites
+- 🌬️ **Air quality** — pollution levels from global monitoring stations
+- 🌊 **Ocean health** — sea surface temperature, waves and currents
+- 🌌 **Aurora** — forecast and geomagnetic activity
+- 🦋 **Biodiversity** — species observations from 18 hotspots
+- ⚔️ **Conflicts** — georeferenced armed conflict events
+- **Health score** — combined environmental indicator (0-100)
 
-## 🎯 Data Integrity Promise
-
-**Terrascan follows a strict "real data or no data" policy:**
-
-- ✅ **Real Values**: Actual measurements from environmental monitoring stations
-- 🤷 **NO DATA**: Clearly displayed when data is unavailable or pending
-- ❌ **No Fake Zeros**: Never shows "0" when the real value is NULL/missing
-- 🔍 **Transparent Status**: All metrics show data availability and collection status
-
-*We believe environmental data should be trusted, not fabricated.*
-
-**🌐 Live Site**: [terrascan.io](https://terrascan.io)
+Metrics are NULL when a source has no data; the UI shows "No data" rather than a zero.
 
 ---
 
-## ⚡ Quick Start
-
-### Local Development
-
-1. **Clone the repository**
-   ```bash
-   git clone https://github.com/haexed/terrascan.git
-   cd terrascan
-   ```
-
-2. **Install dependencies**
-   ```bash
-   pip install -r requirements.txt
-   ```
-
-3. **Configure environment**
-   ```bash
-   cp .env.example .env
-   # Edit .env with your API keys
-   ```
-
-4. **Start the application**
-   ```bash
-   python run.py
-   ```
-
-5. **Open your browser**
-   ```
-   http://localhost:5000
-   ```
-
-**🔑 API Keys Required**: Terrascan works with real environmental data from NASA, NOAA, and OpenAQ APIs.
-
-### Get Your API Keys
-
-| Provider | API Key Required | Free Tier | Sign Up Link |
-|----------|------------------|-----------|--------------|
-| 🔥 NASA FIRMS | **Required** | 5,000 transactions/10 min | [NASA FIRMS](https://firms.modaps.eosdis.nasa.gov/api/) |
-| 🌬️ World AQI (Primary) | **Recommended** | 1,000 requests/sec | [AQICN](https://aqicn.org/api/) |
-| 🌬️ OpenAQ (Fallback) | Optional | Limited | [OpenAQ](https://openaq.org/) |
-| 🌊 NOAA | **Free** | Unlimited | No key needed |
-| 🌐 Open-Meteo | **Free** | Unlimited | No key needed (CC-BY 4.0) |
-| 🌡️ OpenWeatherMap | Optional (DB config) | 1000/day | [OpenWeatherMap](https://openweathermap.org/api) |
-| 🦋 GBIF | **Free** | Unlimited | No key needed |
-| ⚔️ UCDP | **Required** | 5,000/day | [UCDP API docs](https://ucdp.uu.se/apidocs/) (email for token) |
-
----
-
-## 🚀 Production Deployment
-
-Terrascan is production-ready and deployed on Railway at [terrascan.io](https://terrascan.io).
-
-### Railway Deployment
-
-1. **Create Railway project**
-   ```bash
-   railway login
-   railway init
-   ```
-
-2. **Add PostgreSQL database**
-   ```bash
-   railway add postgresql
-   ```
-
-3. **Set environment variables**
-   ```bash
-   # Required for fire data
-   railway variables set NASA_FIRMS_API_KEY=your_nasa_firms_key
-
-   # Required for air quality (use at least one)
-   railway variables set WORLD_AQI_API_KEY=your_waqi_key
-   railway variables set OPENAQ_API_KEY=your_openaq_key
-
-   # Optional: OpenWeatherMap configured via database, not env vars
-   # NOAA and GBIF are completely free, no keys needed
-   ```
-
-4. **Deploy**
-   ```bash
-   railway up
-   ```
-
-### Data Collection
-
-Data is collected **on-demand** rather than via scheduled cron jobs:
-
-- **Smart Refresh**: App detects stale data and prompts user to refresh
-- **Manual Refresh**: Users can trigger data collection via `/tasks` page
-- **Scan on Explore**: Map scanning fetches fresh data for viewed regions
-
-This approach minimizes costs for low-traffic deployments (serverless-friendly).
-
-| Task | Description | Freshness TTL |
-|------|-------------|---------------|
-| 🔥 NASA Fires | Active fire detection | 3 hours |
-| 🌬️ OpenAQ | Air quality stations | 12 hours |
-| 🌊 Open-Meteo Marine | Sea surface temperature | 24 hours |
-| 🌡️ OpenWeatherMap | Current conditions | 6 hours |
-| 🦋 GBIF Biodiversity | Species observations | 168 hours |
-| ⚡ NOAA Aurora | Aurora forecast | 1 hour |
-| ⚔️ UCDP Conflicts | Armed conflicts (monthly candidate release) | 168 hours |
-
----
-
-## 📊 System Architecture
-
-### Database
-
-PostgreSQL on Railway (serverless-compatible):
+## Quick start
 
 ```bash
-DATABASE_URL=postgresql://user:pass@host:port/db
+git clone https://github.com/haexed/terrascan.git
+cd terrascan
+pip install -r requirements.txt
+cp .env.example .env     # add DATABASE_URL and any API keys
+python run.py            # http://localhost:5000
 ```
 
-### Database Schema
-
-see: [database/schema.sql](database/schema.sql)
-
-### Data Integrity Implementation
-
-**Strict NULL Handling:**
-```python
-# Backend: Never convert NULL to 0
-value = query_result[0]['metric_value']  # Could be None
-formatted_value = format_nullable_value(value, decimal_places=1)  # Returns None for NULL
-
-# Frontend: Clear NO DATA display
-{{ metric_value | metric(unit="°C") }}  # Shows "🤷 NO DATA" if None
-```
-
-**Status Indicators:**
-- `NO_DATA`: When essential data is unavailable
-- `LIMITED_DATA`: When partial data affects calculations
-- Standard status levels only with complete data sets
-
-### 🐛 Development Debugging Notes
-
-**For future Claude: Always verify server status before claiming it's running!**
-
-Common debugging steps when the server appears to start but doesn't respond:
-1. `ps aux | grep "python run.py"` - Check if process is actually running
-2. `curl -I http://localhost:5000` - Verify HTTP response (don't assume based on startup logs)
-3. If getting 500 errors, restart with `FLASK_ENV=development python run.py` for stack traces
-4. Check `BashOutput` for background processes to see actual error messages
-
-The server startup logs can be misleading - just because it prints "Running on localhost:5000" doesn't mean it's actually handling requests successfully.
-
----
-
-## 🛠️ PostgreSQL Setup
-
-Terrascan requires PostgreSQL for both dev and prod (`DATABASE_URL` in `.env`, see Quick Start above).
+PostgreSQL is required for both development and production. To set up a local database:
 
 ```bash
-# Create a local database + user (psql)
 sudo -u postgres psql -c "CREATE DATABASE terrascan_dev;"
 sudo -u postgres psql -c "CREATE USER terrascan_user WITH PASSWORD 'your_secure_password';"
 sudo -u postgres psql -c "GRANT ALL PRIVILEGES ON DATABASE terrascan_dev TO terrascan_user;"
 
 echo 'DATABASE_URL=postgresql://terrascan_user:your_secure_password@localhost/terrascan_dev' >> .env
 
-# Create schema
-python3 setup_production_railway.py
+python3 setup_production_railway.py   # creates the schema
 ```
 
-### Running tasks
+The live schema is documented at `/system/schema`.
 
-```bash
-python3 tasks/runner.py list                # list all tasks
-python3 tasks/runner.py run nasa_fires_global  # run one task manually
-python3 tasks/runner.py status              # recent run status
-```
+### API keys
 
-Or via the web UI at `/tasks` — runs tasks manually and shows live logs.
+| Provider | Key | Free tier | Sign up |
+|----------|-----|-----------|---------|
+| 🔥 NASA FIRMS | Required | 5,000 transactions/10 min | [firms.modaps.eosdis.nasa.gov](https://firms.modaps.eosdis.nasa.gov/api/) |
+| 🌬️ World AQI | Recommended | 1,000 requests/sec | [aqicn.org](https://aqicn.org/api/) |
+| 🌬️ OpenAQ | Optional fallback | Limited | [openaq.org](https://openaq.org/) |
+| ⚔️ UCDP | Required | 5,000/day | [ucdp.uu.se](https://ucdp.uu.se/apidocs/) (email for token) |
+| 🌡️ OpenWeatherMap | Optional, set in DB config | 1,000/day | [openweathermap.org](https://openweathermap.org/api) |
+| 🌊 NOAA | None needed | Unlimited | — |
+| 🌌 NOAA SWPC | None needed | Unlimited | — |
+| 🌐 Open-Meteo | None needed | Unlimited (CC-BY 4.0) | — |
+| 🦋 GBIF | None needed | Unlimited | — |
+
+Provider display metadata (names, icons, links, coverage, freshness thresholds) lives in the
+`provider_config` table, seeded from `setup_providers.py`. Nothing else hardcodes it.
 
 ---
 
-## 📡 API Reference
+## Data collection
 
-### Core Endpoints
+Data is collected on demand rather than on a cron schedule, which keeps costs low for a
+low-traffic deployment:
+
+- **Smart refresh** — the app detects stale data and prompts for a refresh
+- **Manual refresh** — trigger collection from the `/tasks` page
+- **Scan on explore** — panning the map fetches data for the viewed region
+
+| Task | Source | Freshness TTL |
+|------|--------|---------------|
+| 🔥 `nasa_fires_global` | Active fire detection | 3 hours |
+| 🌬️ `openaq_latest` | Air quality stations | 12 hours |
+| 🌊 `noaa_ocean_temperature` | Coastal water temperature | 24 hours |
+| 🌐 `openmeteo_marine` | Sea surface temperature | 24 hours |
+| 🌌 `noaa_aurora` | Aurora forecast | 1 hour |
+| 🦋 `gbif_species_observations` | Species observations | 168 hours |
+| ⚔️ `ucdp_conflicts` | Armed conflicts (monthly candidate release) | 168 hours |
+| 🌡️ `openweather_current` | Current conditions | 6 hours |
+
+Run tasks from the command line:
+
+```bash
+python3 tasks/runner.py list
+python3 tasks/runner.py run nasa_fires_global
+python3 tasks/runner.py status
+```
+
+Or from `/tasks` in the web UI, which shows live logs. A task that is already running cannot
+be started again.
+
+---
+
+## Deployment
+
+Deployed on Railway.
+
+```bash
+railway login
+railway init
+railway add postgresql
+
+railway variables set FLASK_SECRET_KEY=your_secret   # required, app won't start without it
+railway variables set NASA_FIRMS_API_KEY=your_key
+railway variables set WORLD_AQI_API_KEY=your_key   # or OPENAQ_API_KEY
+railway variables set UCDP_API_TOKEN=your_token
+
+railway up
+```
+
+---
+
+## Endpoints
+
+### Pages
+
+| Path | Description |
+|------|-------------|
+| `/` | Interactive map (main view) |
+| `/status` | Environmental dashboard |
+| `/tasks` | Task monitoring and logs |
+| `/system` | System status and data providers |
+| `/system/schema` | Database schema |
+| `/about` | Project information |
+
+### API
 
 | Endpoint | Method | Description |
 |----------|--------|-------------|
-| `/` | GET | Main dashboard |
-| `/tasks` | GET | Task monitoring |
-| `/system` | GET | System status |
-| `/map` | GET | Interactive map view |
-| `/about` | GET | Project information |
-
-### API Endpoints
-
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/api/map-data` | GET | Map markers data |
-| `/api/freshness` | GET | Data freshness status per source |
-| `/api/refresh` | POST | Trigger data collection |
-| `/api/smart-refresh` | POST | Refresh only stale sources |
+| `/api/health` | GET | Health check |
+| `/api/map-data` | GET | Map markers |
+| `/api/providers` | GET | Provider metadata |
+| `/api/freshness` | GET | Data freshness per source |
+| `/api/scan-area` | POST | Fetch data for a map region |
+| `/api/refresh` | POST | Run every collection task |
+| `/api/smart-refresh` | POST | Run only the stale sources |
 | `/api/tasks` | GET | Task list and status |
 | `/api/tasks/<name>/logs` | GET | Task execution logs |
-| `/api/health` | GET | Health check |
+| `/api/tasks/<name>/run` | POST | Run one task |
 
-### Administrative APIs
-
-**🔒 Note**: Administrative task control is environment-based. No public APIs for task management.
+Task control is environment-based; there is no public API for managing task definitions.
 
 ---
 
-## 🌍 Environmental Impact
+## Contributing
 
-**Terrascan** promotes environmental awareness by:
-
-- **🔥 Fire Monitoring**: Early wildfire detection and tracking
-- **🌬️ Air Quality**: Public health air pollution alerts  
-- **🌊 Ocean Health**: Climate change ocean temperature monitoring
-- **🌡️ Weather Tracking**: Extreme weather event awareness
-- **🦋 Biodiversity**: Species conservation monitoring
-- **📈 Data Transparency**: Open access to environmental data
-- **🎯 Health Scoring**: Simplified environmental health communication
-
-### Data Sources
-
-- **NASA FIRMS**: Fire Information for Resource Management System
-- **OpenAQ**: Open Air Quality platform with global coverage
-- **NOAA**: National Oceanic and Atmospheric Administration
-- **Open-Meteo**: Free weather and marine API (CC-BY 4.0 license)
-- **OpenWeatherMap**: Global weather data and alerts
-- **GBIF**: Global Biodiversity Information Facility
-
----
-
-## 🤝 Contributing
-
-We welcome contributions! Here's how to help:
-
-### Development Setup
+Fork, branch, and open a pull request:
 
 ```bash
-# 1. Fork the repository on GitHub
-# 2. Clone your fork
 git clone https://github.com/your-username/terrascan.git
 cd terrascan
-
-# 3. Create a feature branch
 git checkout -b feature/your-feature-name
-
-# 4. Set up development environment
 pip install -r requirements.txt
 cp .env.example .env
-# Add your API keys to .env
-
-# 5. Make your changes and test
 python run.py
-
-# 6. Commit and push
-git add .
-git commit -m "Add your feature"
-git push origin feature/your-feature-name
-
-# 7. Create a pull request
 ```
 
-### What We Need
-
-- 🐛 **Bug Fixes**: Report issues or submit fixes
-- 🌟 **New Features**: Environmental data sources, visualizations
-- 📚 **Documentation**: Improve setup guides, API docs
-- 🎨 **UI/UX**: Design improvements, mobile responsiveness
-- 🧪 **Testing**: Unit tests, integration tests
-- 🌍 **Localization**: Multi-language support
+Useful areas: additional environmental data sources, visualizations, tests, mobile layout,
+and documentation.
 
 ---
 
-## 🙏 Credits
+## Credits
 
-**Terrascan** is developed through collaborative human-AI partnership:
+Built by [Stig Grindland](https://hæx.com) with Claude (Anthropic).
 
-- **🎯 Project Management & Vision**: [Stig Grindland](https://hæx.com)
-  - Strategic direction and system architecture decisions
-  - Quality assurance and production deployment planning
-  - Environmental data source selection and API integration strategy
+## License
 
-- **⚡ Development & Implementation**: Claude Sonnet (Anthropic)
-  - Full-stack development and database architecture
-  - API integrations and real-time monitoring systems
-  - Security implementation and production optimization
+MIT — see [LICENSE](LICENSE).
 
-This project demonstrates the power of human creativity and AI capability working together to build meaningful environmental technology.
+## Links
 
----
-
-## 📄 License
-
-**MIT License** - Use Terrascan however you want, spread environmental awareness!
-
-See [LICENSE](LICENSE) for full details.
-
----
-
-## 🔗 Links
-
-- **🌐 Live Site**: [terrascan.io](https://terrascan.io)  
-- **📂 Source Code**: [GitHub](https://github.com/haexed/terrascan)
-- **📊 Railway**: [Production Dashboard](https://railway.app)
-- **🐛 Issues**: [GitHub Issues](https://github.com/haexed/terrascan/issues)
-- **💬 Discussions**: [GitHub Discussions](https://github.com/haexed/terrascan/discussions)
-
----
-
-**🌱 Keep watch on our planet. Every day.**
+- [Live site](https://terrascan.io)
+- [Source](https://github.com/haexed/terrascan)
+- [Issues](https://github.com/haexed/terrascan/issues)
+- [Discussions](https://github.com/haexed/terrascan/discussions)
